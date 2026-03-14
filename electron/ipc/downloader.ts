@@ -55,7 +55,7 @@ export function registerDownloaderHandlers() {
     }
 
     if (process.platform === "win32" && options.format === "mp4") {
-      args.push("--postprocessor-args", "-c:a aac -b:a 192k");
+      args.push("--postprocessor-args", "ffmpeg:-c:a aac -b:a 192k");
     }
 
     if (process.platform === "win32") {
@@ -68,9 +68,16 @@ export function registerDownloaderHandlers() {
 
     args.push(options.url);
 
+    const nodeDir = path.dirname(process.execPath);
+    const envPath =
+      process.platform === "win32"
+        ? `${nodeDir};${process.env.PATH ?? ""}`
+        : `${nodeDir}:${process.env.PATH ?? ""}`;
+
     const proc = spawn(ytdlpPath, args, {
       env: {
         ...process.env,
+        PATH: envPath,
         PYTHONIOENCODING: "utf-8",
         PYTHONUTF8: "1",
       },

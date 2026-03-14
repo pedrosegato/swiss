@@ -6,6 +6,7 @@ import { registerBinariesHandlers } from "./ipc/binaries";
 import { registerDownloaderHandlers, killAllDownloads } from "./ipc/downloader";
 import { registerConverterHandlers, killAllConversions } from "./ipc/converter";
 import { registerDialogHandlers } from "./ipc/dialogs";
+import { updateBinary } from "./ipc/binary-manager";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const isMac = process.platform === "darwin";
@@ -115,6 +116,8 @@ app.whenReady().then(() => {
   }
 
   createWindow();
+
+  updateBinary("yt-dlp").catch(() => {});
 
   if (!VITE_DEV_SERVER_URL) {
     autoUpdater.autoDownload = true;
