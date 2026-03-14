@@ -1,0 +1,110 @@
+import { useState, useEffect } from "react";
+import { createFileRoute } from "@tanstack/react-router";
+import { Separator } from "@/components/ui/separator";
+import { UrlInput } from "@/features/downloader/components/url-input";
+import { FormatSelects } from "@/features/downloader/components/format-selects";
+import { QueueHeader } from "@/features/downloader/components/queue-header";
+import { DownloadCard } from "@/features/downloader/components/download-card";
+import { BinaryInstallDialog } from "@/components/binary-install-dialog";
+import { useDownloadStore } from "@/stores/download-store";
+import { useSettingsStore } from "@/stores/settings-store";
+import { useBinariesStore } from "@/stores/binaries-store";
+import { ipc } from "@/lib/ipc";
+import { formatSize } from "@/lib/utils";
+
+export const Route = createFileRoute("/downloader")({
+  component: DownloaderPage,
+});
+
+function DownloaderPage() {
+  const items = useDownloadStore((s) => s.items);
+  const addItem = useDownloadStore((s) => s.addItem);
+  const updateItem = useDownloadStore((s) => s.updateItem);
+  const format = useDownloadStore((s) => s.selectedFormat);
+  const quality = useDownloadStore((s) => s.selectedQuality);
+  const savePath = useDownloadStore((s) => s.selectedSavePath);
+  const useCookies = useSettingsStore((s) => s.useCookies);
+  const cookieBrowser = useSettingsStore((s) => s.cookieBrowser);
+  const ytdlpInstalled = useBinariesStore((s) => s.ytdlp.installed);
+  const ffmpegInstalled = useBinariesStore((s) => s.ffmpeg.installed);
+  const [showInstallDialog, setShowInstallDialog] = useState(false);
+
+  // Listen for metadata from the download process
+  useEffect(() => {
+    const unsubscribe = ipc.onMetadata((data) => {
+      const displayQuality = data.resolution ?? quality;
+      updateItem(data.id, {
+        title: data.title,
+        duration: data.duration,
+        thumbnail: data.thumbnail,
+        fileSize: data.filesize > 0 ? formatSize(data.filesize) : undefined,
+        quality: displayQuality,
+        stage: "downloading",
+      });
+    });
+    return unsubscribe;
+  }, [updateItem, quality]);
+
+  const handleFetch = async (url: string) => {
+    if (!ytdlpInstalled || !ffmpegInstalled) {
+      setShowInstallDialog(true);
+      return;
+    }
+
+    const tempId = crypto.randomUUID();
+
+    addItem({
+      id: tempId,
+      url,
+      title: url,
+      format,
+      quality,
+      stage: "fetching",
+      progress: 0,
+      savePath,
+      createdAt: Date.now(),
+    });
+
+    try {
+      await ipc.startDownload({
+        id: tempId,
+        url,
+        format,
+        quality,
+        savePath,
+        cookieBrowser: useCookies ? cookieBrowser : undefined,
+      });
+    } catch {
+      updateItem(tempId, {
+        stage: "error",
+        errorMessage: "Falha ao iniciar o download",
+      });
+    }
+  };
+
+  return (
+    <>
+      <div className="flex items-baseline gap-3 mb-5">
+        <h1 className="text-lg font-semibold tracking-tight">Download</h1>
+      </div>
+
+      <UrlInput onFetch={handleFetch} />
+      <FormatSelects />
+
+      <Separator className="mb-5" />
+
+      <QueueHeader />
+
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-2.5">
+        {items.map((item) => (
+          <DownloadCard key={item.id} item={item} />
+        ))}
+      </div>
+
+      <BinaryInstallDialog
+        open={showInstallDialog}
+        onOpenChange={setShowInstallDialog}
+      />
+    </>
+  );
+}

@@ -23,8 +23,11 @@ dist-ssr
 *.sln
 *.sw?
 
-# Claude Artifacts
-plans
-CLAUDE.MD
+# Claude
+.claude/
 .claude.worktrees/
 .worktrees/
+plans/
+
+# Build Artifacts
+dist-electron/

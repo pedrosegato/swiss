@@ -1,0 +1,133 @@
+const renderer = (window as any).ipcRenderer as {
+  invoke(channel: string, ...args: unknown[]): Promise<unknown>;
+  on(
+    channel: string,
+    listener: (event: unknown, ...args: unknown[]) => void,
+  ): void;
+  off(channel: string, listener: (...args: unknown[]) => void): void;
+  send(channel: string, ...args: unknown[]): void;
+};
+
+export const ipc = {
+  checkBinaries: () =>
+    renderer.invoke("binaries:check") as Promise<{
+      ytdlp: { version: string | null; installed: boolean };
+      ffmpeg: { version: string | null; installed: boolean };
+    }>,
+
+  installBinary: (name: "yt-dlp" | "ffmpeg") =>
+    renderer.invoke("binaries:install", name) as Promise<{
+      success: boolean;
+      version: string | null;
+      installed: boolean;
+      path: string;
+      source: "system" | "local" | "none";
+    }>,
+
+  updateBinary: (name: "yt-dlp" | "ffmpeg") =>
+    renderer.invoke("binaries:update", name) as Promise<{
+      success: boolean;
+      version: string | null;
+      installed: boolean;
+      path: string;
+      source: "system" | "local" | "none";
+    }>,
+
+  uninstallBinary: (name: "yt-dlp" | "ffmpeg") =>
+    renderer.invoke("binaries:uninstall", name) as Promise<{
+      success: boolean;
+      version: string | null;
+      installed: boolean;
+      path: string;
+      source: "system" | "local" | "none";
+    }>,
+
+  startDownload: (options: {
+    id: string;
+    url: string;
+    format: string;
+    quality: string;
+    savePath: string;
+    cookieBrowser?: string;
+  }) =>
+    renderer.invoke("download:start", options) as Promise<{
+      id: string;
+    }>,
+
+  cancelDownload: (id: string) =>
+    renderer.invoke("download:cancel", id) as Promise<void>,
+
+  startConversion: (options: {
+    inputPath: string;
+    outputFormat: string;
+    quality: string;
+    savePath: string;
+  }) =>
+    renderer.invoke("convert:start", options) as Promise<{
+      id: string;
+    }>,
+
+  cancelConversion: (id: string) =>
+    renderer.invoke("convert:cancel", id) as Promise<void>,
+
+  selectFolder: () =>
+    renderer.invoke("dialog:select-folder") as Promise<string | null>,
+
+  selectFiles: (extensions: string[]) =>
+    renderer.invoke("dialog:select-files", extensions) as Promise<
+      { path: string; name: string; size: number; ext: string }[] | null
+    >,
+
+  openExternal: (url: string) =>
+    renderer.invoke("shell:open-external", url) as Promise<void>,
+
+  onMetadata: (
+    callback: (data: {
+      id: string;
+      title: string;
+      duration: string;
+      thumbnail: string;
+      filesize: number;
+      resolution: string | null;
+    }) => void,
+  ) => {
+    const handler = (_event: unknown, ...args: unknown[]) => {
+      callback(
+        args[0] as {
+          id: string;
+          title: string;
+          duration: string;
+          thumbnail: string;
+          filesize: number;
+          resolution: string | null;
+        },
+      );
+    };
+    renderer.on("download:metadata", handler);
+    return () => renderer.off("download:metadata", handler);
+  },
+
+  onProgress: (
+    callback: (data: {
+      id: string;
+      type: "download" | "convert";
+      progress: number;
+      stage: string;
+      errorMessage?: string;
+    }) => void,
+  ) => {
+    const handler = (_event: unknown, ...args: unknown[]) => {
+      callback(
+        args[0] as {
+          id: string;
+          type: "download" | "convert";
+          progress: number;
+          stage: string;
+          errorMessage?: string;
+        },
+      );
+    };
+    renderer.on("progress:update", handler);
+    return () => renderer.off("progress:update", handler);
+  },
+};

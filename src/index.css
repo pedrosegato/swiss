@@ -2,7 +2,6 @@
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap");
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/geist";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -11,143 +10,77 @@
   --font-mono: "IBM Plex Mono", monospace;
 }
 
+/* Pocket Knife theme — dark-only for now */
+:root {
+  --background: oklch(0.16 0.005 250); /* #121416 */
+  --foreground: oklch(0.93 0.005 250); /* #e8eaed */
+
+  --card: oklch(0.2 0.005 250); /* #1a1d21 */
+  --card-foreground: oklch(0.93 0.005 250); /* #e8eaed */
+
+  --popover: oklch(0.2 0.005 250);
+  --popover-foreground: oklch(0.93 0.005 250);
+
+  --primary: oklch(0.5 0.18 15); /* #c41e3a — Swiss red */
+  --primary-foreground: oklch(1 0 0); /* white */
+
+  --secondary: oklch(0.2 0.005 250); /* #1a1d21 */
+  --secondary-foreground: oklch(0.64 0.01 250); /* #8b9099 */
+
+  --muted: oklch(0.23 0.005 250); /* #1f2227 */
+  --muted-foreground: oklch(0.52 0.01 250); /* #6b7078 */
+
+  --accent: oklch(0.5 0.18 15); /* Swiss red */
+  --accent-foreground: oklch(1 0 0);
+
+  --destructive: oklch(0.63 0.24 25);
+  --destructive-foreground: oklch(1 0 0);
+
+  --border: oklch(0.27 0.005 250); /* #2a2d32 */
+  --input: oklch(0.27 0.005 250);
+  --ring: oklch(0.5 0.18 15); /* Swiss red */
+
+  --radius: 0.25rem;
+
+  /* Pocket Knife custom tokens */
+  --metallic: oklch(0.79 0.01 250); /* #b8bcc2 */
+  --metallic-dim: oklch(0.52 0.01 250); /* #6b7078 */
+  --accent-soft: oklch(0.5 0.18 15 / 0.12);
+  --border-hover: oklch(0.32 0.005 250); /* #3a3d42 */
+}
+
 @layer base {
-  :root {
-    --background: 220 12% 7%;        /* #121416 — base */
-    --foreground: 220 14% 92%;       /* #e8eaed — primary text */
-
-    --card: 220 11% 11%;             /* #1a1d21 — surface */
-    --card-foreground: 220 14% 92%;  /* #e8eaed */
-
-    --popover: 220 11% 11%;
-    --popover-foreground: 220 14% 92%;
-
-    --primary: 349 73% 38%;          /* #c41e3a — Swiss red */
-    --primary-foreground: 0 0% 100%; /* white */
-
-    --secondary: 220 11% 11%;        /* #1a1d21 */
-    --secondary-foreground: 222 6% 57%; /* #8b9099 */
-
-    --muted: 220 9% 14%;             /* #1f2227 */
-    --muted-foreground: 220 6% 45%;  /* #6b7078 */
-
-    --accent: 349 73% 38%;           /* same as primary for accent contexts */
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 220 8% 18%;            /* #2a2d32 */
-    --input: 220 8% 18%;             /* same as border */
-    --ring: 349 73% 38%;             /* Swiss red for focus rings */
-
-    --radius: 0.25rem;
-
-    /* Custom tokens for Pocket Knife specifics */
-    --metallic: 220 6% 74%;          /* #b8bcc2 — success/installed */
-    --metallic-dim: 220 6% 45%;      /* #6b7078 */
-    --accent-soft: 349 73% 38% / 0.12; /* Swiss red at 12% opacity */
-    --border-hover: 220 7% 24%;      /* #3a3d42 */
-  }
   * {
     @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;
   }
-  html {
-    @apply font-sans;
-  }
 }
 
-:root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.809 0.105 251.813);
-  --chart-2: oklch(0.623 0.214 259.815);
-  --chart-3: oklch(0.546 0.245 262.881);
-  --chart-4: oklch(0.488 0.243 264.376);
-  --chart-5: oklch(0.424 0.199 265.638);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-}
-
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.809 0.105 251.813);
-  --chart-2: oklch(0.623 0.214 259.815);
-  --chart-3: oklch(0.546 0.245 262.881);
-  --chart-4: oklch(0.488 0.243 264.376);
-  --chart-5: oklch(0.424 0.199 265.638);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 60% 50% at 50% 50%,
+    rgba(196, 30, 58, 0.04) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 0;
 }
 
 @theme inline {
-  --font-sans: 'Geist Variable', sans-serif;
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
+  --color-metallic: var(--metallic);
+  --color-metallic-dim: var(--metallic-dim);
+  --color-accent-soft: var(--accent-soft);
+  --color-border-hover: var(--border-hover);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);

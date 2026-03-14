@@ -1,9 +1,9 @@
 // @see - https://www.electron.build/configuration/configuration
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
-  "appId": "YourAppID",
+  "appId": "com.swiss.app",
   "asar": true,
-  "productName": "YourAppName",
+  "productName": "Swiss",
   "directories": {
     "output": "release/${version}"
   },
