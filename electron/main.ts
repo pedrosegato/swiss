@@ -11,7 +11,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const isMac = process.platform === "darwin";
 
 app.commandLine.appendSwitch("enable-features", "CanvasOopRasterization");
+app.commandLine.appendSwitch("enable-gpu-rasterization");
 app.commandLine.appendSwitch("disable-lcd-text", "0");
+app.commandLine.appendSwitch("force-color-profile", "srgb");
 
 app.setName("Swiss");
 

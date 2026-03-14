@@ -1,4 +1,6 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap");
+@import "@fontsource-variable/dm-sans";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -73,9 +75,14 @@
   }
   body {
     @apply bg-background text-foreground;
+    text-rendering: geometricPrecision;
+    font-feature-settings: "kern" 1, "liga" 1;
+    font-optical-sizing: auto;
+  }
+  /* macOS: grayscale AA looks better than subpixel on Retina */
+  body.platform-darwin {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    text-rendering: optimizeLegibility;
   }
 }
 
