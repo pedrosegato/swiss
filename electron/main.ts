@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, nativeImage } from "electron";
 import { autoUpdater } from "electron-updater";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
@@ -8,6 +8,8 @@ import { registerConverterHandlers } from "./ipc/converter";
 import { registerDialogHandlers } from "./ipc/dialogs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+app.setName("Swiss");
 
 if (process.platform === "darwin" || process.platform === "linux") {
   const extraPaths = [
@@ -73,6 +75,11 @@ app.on("activate", () => {
 });
 
 app.whenReady().then(() => {
+  if (process.platform === "darwin") {
+    const iconPath = path.join(process.env.APP_ROOT, "build", "icon.png");
+    app.dock.setIcon(nativeImage.createFromPath(iconPath));
+  }
+
   createWindow();
 
   if (!VITE_DEV_SERVER_URL) {
