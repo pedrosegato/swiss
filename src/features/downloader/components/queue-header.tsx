@@ -12,9 +12,8 @@ import {
   TooltipContent,
 } from "@/components/ui/tooltip";
 import { useDownloadStore } from "@/stores/download-store";
-import { SORT_LABELS } from "@/lib/constants";
 import type { SortOption } from "@/lib/types";
-import { Trash2 } from "lucide-react";
+import { Dot, Trash2 } from "lucide-react";
 
 export function QueueHeader() {
   const itemCount = useDownloadStore((s) => s.items.length);
@@ -35,22 +34,21 @@ export function QueueHeader() {
       </span>
       <div className="flex items-center gap-2.5">
         <span className="font-mono text-[10px] text-muted-foreground">
-          {itemCount} itens · {activeCount} ativos
+          {itemCount} itens <Dot className="w-3 h-3 inline" /> {activeCount}{" "}
+          ativos
         </span>
         {itemCount > 0 && (
           <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                  onClick={clearItems}
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </Button>
-              }
-            />
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                onClick={clearItems}
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </Button>
+            </TooltipTrigger>
             <TooltipContent>Limpar histórico</TooltipContent>
           </Tooltip>
         )}
@@ -59,7 +57,7 @@ export function QueueHeader() {
           onValueChange={(v) => setSortBy(v as SortOption)}
         >
           <SelectTrigger className="h-7 text-[11px] w-[130px]">
-            <SelectValue>{(v: string) => SORT_LABELS[v] ?? v}</SelectValue>
+            <SelectValue />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="recent">Mais recentes</SelectItem>

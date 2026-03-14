@@ -1,8 +1,9 @@
-import { ipcMain, BrowserWindow } from "electron";
+import { ipcMain, BrowserWindow, app } from "electron";
 import { spawn, execFile, type ChildProcess } from "node:child_process";
 import { promisify } from "node:util";
 import { dirname, basename, extname, join } from "node:path";
 import { homedir } from "node:os";
+import { readFile, unlink } from "node:fs/promises";
 import { getSpawnPath } from "./binary-manager";
 
 const exec = promisify(execFile);
@@ -10,7 +11,7 @@ const activeConversions = new Map<string, ChildProcess>();
 
 export function registerConverterHandlers() {
   ipcMain.handle("convert:start", async (event, options) => {
-    const id = crypto.randomUUID();
+    const id = options.id;
     const win = BrowserWindow.fromWebContents(event.sender);
     if (!win) return { id };
 
@@ -69,15 +70,50 @@ export function registerConverterHandlers() {
       activeConversions.delete(id);
     }
   });
+
+  ipcMain.handle(
+    "convert:thumbnail",
+    async (_event, filePath: string): Promise<string | null> => {
+      const ffmpegPath = await getSpawnPath("ffmpeg");
+      const tmpPath = join(
+        app.getPath("temp"),
+        `swiss-thumb-${Date.now()}.jpg`,
+      );
+      try {
+        await exec(ffmpegPath, [
+          "-i",
+          filePath,
+          "-ss",
+          "00:00:01",
+          "-vframes",
+          "1",
+          "-vf",
+          "scale=384:-2",
+          "-q:v",
+          "2",
+          "-y",
+          tmpPath,
+        ]);
+        const buf = await readFile(tmpPath);
+        unlink(tmpPath).catch(() => {});
+        return `data:image/jpeg;base64,${buf.toString("base64")}`;
+      } catch {
+        return null;
+      }
+    },
+  );
 }
 
 async function getMediaDuration(filePath: string): Promise<number> {
   const ffprobePath = await getSpawnPath("ffprobe");
   try {
     const { stdout } = await exec(ffprobePath, [
-      "-v", "error",
-      "-show_entries", "format=duration",
-      "-of", "csv=p=0",
+      "-v",
+      "error",
+      "-show_entries",
+      "format=duration",
+      "-of",
+      "csv=p=0",
       filePath,
     ]);
     return parseFloat(stdout.trim()) || 0;

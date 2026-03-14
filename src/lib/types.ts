@@ -21,6 +21,7 @@ export type ConvertStage = "queued" | "converting" | "completed" | "error";
 
 export interface DownloadItem {
   id: string;
+  videoId?: string;
   url: string;
   title: string;
   duration?: string;
@@ -42,6 +43,8 @@ export interface ConvertItem {
   inputSize: string;
   inputExt: string;
   outputFormat: ConvertFormat;
+  thumbnail?: string;
+  thumbnailLoading?: boolean;
   quality: string;
   stage: ConvertStage;
   progress: number;

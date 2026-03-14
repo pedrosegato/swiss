@@ -58,6 +58,7 @@ export const ipc = {
     renderer.invoke("download:cancel", id) as Promise<void>,
 
   startConversion: (options: {
+    id: string;
     inputPath: string;
     outputFormat: string;
     quality: string;
@@ -69,6 +70,9 @@ export const ipc = {
 
   cancelConversion: (id: string) =>
     renderer.invoke("convert:cancel", id) as Promise<void>,
+
+  extractThumbnail: (filePath: string) =>
+    renderer.invoke("convert:thumbnail", filePath) as Promise<string | null>,
 
   selectFolder: () =>
     renderer.invoke("dialog:select-folder") as Promise<string | null>,
@@ -106,6 +110,7 @@ export const ipc = {
   onMetadata: (
     callback: (data: {
       id: string;
+      videoId: string;
       title: string;
       duration: string;
       thumbnail: string;
@@ -117,6 +122,7 @@ export const ipc = {
       callback(
         args[0] as {
           id: string;
+          videoId: string;
           title: string;
           duration: string;
           thumbnail: string;

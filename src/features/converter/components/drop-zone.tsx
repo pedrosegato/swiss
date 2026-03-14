@@ -2,43 +2,89 @@ import { useCallback } from "react";
 import { ipc } from "@/lib/ipc";
 import { formatSize } from "@/lib/utils";
 import { useConvertStore } from "@/stores/convert-store";
-import { Download } from "lucide-react";
+import { useSettingsStore } from "@/stores/settings-store";
+import { isVideoFormat, CONVERT_ALL_FORMATS } from "@/lib/constants";
+import { Dot, Download } from "lucide-react";
 
 export function DropZone() {
-  const { addItems, outputFormat, quality, savePath } = useConvertStore();
+  const { addItems, updateItem, outputFormat, quality } = useConvertStore();
+  const savePath = useSettingsStore((s) => s.downloadPath);
 
   const handleBrowse = useCallback(async () => {
-    const files = await ipc.selectFiles([
-      "mp4",
-      "mkv",
-      "avi",
-      "mov",
-      "mp3",
-      "wav",
-      "flac",
-      "wma",
-    ]);
+    const files = await ipc.selectFiles([...CONVERT_ALL_FORMATS]);
     if (!files) return;
 
-    const items = files.map((f) => ({
-      id: crypto.randomUUID(),
-      inputPath: f.path,
-      inputName: f.name,
-      inputSize: formatSize(f.size),
-      inputExt: f.ext,
-      outputFormat,
-      quality,
-      stage: "queued" as const,
-      progress: 0,
-      savePath,
-    }));
+    const items = files.map((f) => {
+      const isVideo = isVideoFormat(f.ext.replace(".", ""));
+      return {
+        id: crypto.randomUUID(),
+        inputPath: f.path,
+        inputName: f.name,
+        inputSize: formatSize(f.size),
+        inputExt: f.ext,
+        outputFormat,
+        quality,
+        stage: "queued" as const,
+        progress: 0,
+        savePath,
+        thumbnailLoading: isVideo,
+      };
+    });
     addItems(items);
-  }, [addItems, outputFormat, quality, savePath]);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    // TODO: Handle dropped files via IPC to get file info
-  }, []);
+    for (const item of items) {
+      if (item.thumbnailLoading) {
+        ipc.extractThumbnail(item.inputPath).then((thumbnail) => {
+          updateItem(item.id, {
+            thumbnailLoading: false,
+            ...(thumbnail ? { thumbnail } : {}),
+          });
+        });
+      }
+    }
+  }, [addItems, updateItem, outputFormat, quality, savePath]);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      const droppedFiles = Array.from(e.dataTransfer.files).filter((f) => {
+        const ext = f.name.split(".").pop()?.toLowerCase() ?? "";
+        return (CONVERT_ALL_FORMATS as readonly string[]).includes(ext);
+      });
+      if (droppedFiles.length === 0) return;
+
+      const items = droppedFiles.map((f) => {
+        const ext = `.${f.name.split(".").pop()?.toLowerCase() ?? ""}`;
+        const isVideo = isVideoFormat(ext.replace(".", ""));
+        return {
+          id: crypto.randomUUID(),
+          inputPath: (f as File & { path: string }).path,
+          inputName: f.name,
+          inputSize: formatSize(f.size),
+          inputExt: ext,
+          outputFormat,
+          quality,
+          stage: "queued" as const,
+          progress: 0,
+          savePath,
+          thumbnailLoading: isVideo,
+        };
+      });
+      addItems(items);
+
+      for (const item of items) {
+        if (item.thumbnailLoading) {
+          ipc.extractThumbnail(item.inputPath).then((thumbnail) => {
+            updateItem(item.id, {
+              thumbnailLoading: false,
+              ...(thumbnail ? { thumbnail } : {}),
+            });
+          });
+        }
+      }
+    },
+    [addItems, updateItem, outputFormat, quality, savePath],
+  );
 
   return (
     <div
@@ -55,8 +101,13 @@ export function DropZone() {
             procure
           </strong>
         </div>
-        <div className="font-mono text-[10.5px] text-muted-foreground">
-          mp4 · mkv · avi · mov · mp3 · wav · flac · wma
+        <div className="font-mono text-[10.5px] text-muted-foreground flex items-center flex-wrap justify-center">
+          {CONVERT_ALL_FORMATS.map((fmt, i) => (
+            <span key={fmt} className="flex items-center">
+              {i > 0 && <Dot className="w-3 h-3" />}
+              {fmt}
+            </span>
+          ))}
         </div>
       </div>
     </div>

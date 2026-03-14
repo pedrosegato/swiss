@@ -65,6 +65,11 @@ export const BROWSERS = [
   "opera",
 ] as const;
 
+export const CONVERT_ALL_FORMATS = [
+  ...CONVERT_VIDEO_FORMATS,
+  ...CONVERT_AUDIO_FORMATS,
+] as const;
+
 export function isVideoFormat(fmt: string): boolean {
   return (
     VIDEO_FORMATS.includes(fmt as VideoFormat) ||

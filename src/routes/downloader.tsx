@@ -2,7 +2,14 @@ import { useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Separator } from "@/components/ui/separator";
 import { UrlInput } from "@/features/downloader/components/url-input";
-import { FormatSelects } from "@/features/downloader/components/format-selects";
+import { FormatSelects } from "@/components/format-selects";
+import {
+  VIDEO_FORMATS,
+  AUDIO_FORMATS,
+  VIDEO_QUALITIES,
+  AUDIO_QUALITIES,
+} from "@/lib/constants";
+import type { DownloadFormat } from "@/lib/types";
 import { QueueHeader } from "@/features/downloader/components/queue-header";
 import { DownloadCard } from "@/features/downloader/components/download-card";
 import { BinaryInstallDialog } from "@/components/binary-install-dialog";
@@ -21,19 +28,21 @@ function DownloaderPage() {
   const addItem = useDownloadStore((s) => s.addItem);
   const updateItem = useDownloadStore((s) => s.updateItem);
   const format = useDownloadStore((s) => s.selectedFormat);
+  const setFormat = useDownloadStore((s) => s.setSelectedFormat);
   const quality = useDownloadStore((s) => s.selectedQuality);
-  const savePath = useDownloadStore((s) => s.selectedSavePath);
+  const setQuality = useDownloadStore((s) => s.setSelectedQuality);
+  const savePath = useSettingsStore((s) => s.downloadPath);
   const useCookies = useSettingsStore((s) => s.useCookies);
   const cookieBrowser = useSettingsStore((s) => s.cookieBrowser);
   const ytdlpInstalled = useBinariesStore((s) => s.ytdlp.installed);
   const ffmpegInstalled = useBinariesStore((s) => s.ffmpeg.installed);
   const [showInstallDialog, setShowInstallDialog] = useState(false);
 
-  // Listen for metadata from the download process
   useEffect(() => {
     const unsubscribe = ipc.onMetadata((data) => {
       const displayQuality = data.resolution ?? quality;
       updateItem(data.id, {
+        videoId: data.videoId,
         title: data.title,
         duration: data.duration,
         thumbnail: data.thumbnail,
@@ -89,7 +98,16 @@ function DownloaderPage() {
       </div>
 
       <UrlInput onFetch={handleFetch} />
-      <FormatSelects />
+      <FormatSelects
+        format={format}
+        onFormatChange={(v) => setFormat(v as DownloadFormat)}
+        quality={quality}
+        onQualityChange={setQuality}
+        videoFormats={VIDEO_FORMATS}
+        audioFormats={AUDIO_FORMATS}
+        videoQualities={VIDEO_QUALITIES}
+        audioQualities={AUDIO_QUALITIES}
+      />
 
       <Separator className="mb-5" />
 

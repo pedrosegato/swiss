@@ -31,3 +31,4 @@ plans/
 
 # Build Artifacts
 dist-electron/
+release/

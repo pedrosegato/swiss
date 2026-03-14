@@ -16,10 +16,8 @@ export function registerDownloaderHandlers() {
     const ffmpegPath = await getSpawnPath("ffmpeg");
     const ffmpegDir = path.dirname(ffmpegPath);
 
-    // --print outputs metadata as first line before download starts
-    // Use a unique separator since \t escape may not work via spawn
     const SEP = "<<|>>";
-    const printTpl = `%(title)s${SEP}%(duration)s${SEP}%(thumbnail)s${SEP}%(filesize_approx)s${SEP}%(height)s`;
+    const printTpl = `%(id)s${SEP}%(title)s${SEP}%(duration)s${SEP}%(thumbnail)s${SEP}%(filesize_approx)s${SEP}%(height)s`;
 
     const videoFormats = ["mp4", "mkv", "webm"];
     const isVideo = videoFormats.includes(options.format);
@@ -67,21 +65,28 @@ export function registerDownloaderHandlers() {
         const trimmed = line.trim();
         if (!trimmed) continue;
 
-        // Metadata line from --print has tab separators; progress lines don't
         if (!metadataSent && trimmed.includes(SEP)) {
           const parts = trimmed.split(SEP);
-          if (parts.length >= 5) {
+          if (parts.length >= 6) {
             metadataSent = true;
-            const title = parts[0] || "Unknown";
-            const duration = parseFloat(parts[1]) || 0;
-            const thumbnail = parts[2] || "";
-            const filesize = parseFloat(parts[3]) || 0;
-            const height = parseInt(parts[4]) || 0;
+            const videoId = parts[0] || "";
+            const title = parts[1] || "Unknown";
+            const duration = parseFloat(parts[2]) || 0;
+            const thumbnail = parts[3] || "";
+            const filesize = parseFloat(parts[4]) || 0;
+            const height = parseInt(parts[5]) || 0;
             const resolution =
-              height >= 2160 ? "4K" : height >= 1440 ? "1440p" : height > 0 ? `${height}p` : null;
+              height >= 2160
+                ? "4K"
+                : height >= 1440
+                  ? "1440p"
+                  : height > 0
+                    ? `${height}p`
+                    : null;
 
             win.webContents.send("download:metadata", {
               id,
+              videoId,
               title,
               duration: formatDuration(duration),
               thumbnail,
@@ -91,7 +96,6 @@ export function registerDownloaderHandlers() {
           }
         }
 
-        // Progress lines
         const match = trimmed.match(/(\d+\.?\d*)%/);
         if (match) {
           const progress = Math.round(parseFloat(match[1]));
@@ -120,7 +124,8 @@ export function registerDownloaderHandlers() {
           type: "download",
           progress: 0,
           stage: "error",
-          errorMessage: stderrBuffer.trim() || `Processo encerrou com código ${code}`,
+          errorMessage:
+            stderrBuffer.trim() || `Processo encerrou com código ${code}`,
         });
       }
     });

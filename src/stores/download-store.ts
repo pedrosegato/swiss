@@ -7,7 +7,6 @@ interface DownloadState {
   sortBy: SortOption;
   selectedFormat: DownloadFormat;
   selectedQuality: string;
-  selectedSavePath: string;
 
   addItem: (item: DownloadItem) => void;
   updateItem: (id: string, updates: Partial<DownloadItem>) => void;
@@ -16,7 +15,6 @@ interface DownloadState {
   setSortBy: (sort: SortOption) => void;
   setSelectedFormat: (fmt: DownloadFormat) => void;
   setSelectedQuality: (q: string) => void;
-  setSelectedSavePath: (path: string) => void;
 }
 
 export const useDownloadStore = create<DownloadState>()(
@@ -26,7 +24,6 @@ export const useDownloadStore = create<DownloadState>()(
       sortBy: "recent",
       selectedFormat: "mp4",
       selectedQuality: "Máxima",
-      selectedSavePath: "~/Downloads",
 
       addItem: (item) => set((s) => ({ items: [...s.items, item] })),
       updateItem: (id, updates) =>
@@ -39,7 +36,6 @@ export const useDownloadStore = create<DownloadState>()(
       setSortBy: (sort) => set({ sortBy: sort }),
       setSelectedFormat: (fmt) => set({ selectedFormat: fmt }),
       setSelectedQuality: (q) => set({ selectedQuality: q }),
-      setSelectedSavePath: (path) => set({ selectedSavePath: path }),
     }),
     {
       name: "swiss-downloads",
@@ -49,7 +45,6 @@ export const useDownloadStore = create<DownloadState>()(
         sortBy: state.sortBy,
         selectedFormat: state.selectedFormat,
         selectedQuality: state.selectedQuality,
-        selectedSavePath: state.selectedSavePath,
       }),
       onRehydrateStorage: () => (state) => {
         if (!state) return;

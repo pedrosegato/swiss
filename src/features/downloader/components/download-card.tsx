@@ -19,6 +19,7 @@ export function DownloadCard({ item }: DownloadCardProps) {
   const isQueued = item.stage === "queued";
   const isFetching = item.stage === "fetching";
   const [showLog, setShowLog] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   if (isFetching) {
     return (
@@ -42,32 +43,33 @@ export function DownloadCard({ item }: DownloadCardProps) {
   }
 
   return (
-    <Card
-      className="overflow-hidden transition-all hover:border-border/80 hover:-translate-y-px cursor-pointer flex flex-col p-0 gap-0"
-      onClick={() => item.url && ipc.openExternal(item.url)}
-    >
-      {/* Thumbnail */}
-      <div className="w-full aspect-video bg-muted/20 relative overflow-hidden">
-        {item.thumbnail ? (
-          <img
-            src={item.thumbnail}
-            className="w-full h-full object-cover block"
-            alt=""
-          />
-        ) : null}
-        {item.duration ? (
-          <span className="absolute bottom-1.5 right-1.5 font-mono text-[9.5px] font-medium text-white bg-black/70 px-1.5 py-0.5 rounded-sm tracking-wide">
-            {item.duration}
-          </span>
-        ) : null}
+    <Card className="overflow-hidden transition-all hover:border-border/80 hover:-translate-y-px flex flex-col p-0 gap-0">
+      {/* Thumbnail + Title — click opens video */}
+      <div
+        className="cursor-pointer"
+        onClick={() => item.url && ipc.openExternal(item.url)}
+      >
+        <div className="w-full aspect-video bg-muted/20 relative overflow-hidden">
+          {item.thumbnail ? (
+            <img
+              src={item.thumbnail}
+              className="w-full h-full object-cover block"
+              alt=""
+            />
+          ) : null}
+          {item.duration ? (
+            <span className="absolute bottom-1.5 right-1.5 font-mono text-[9.5px] font-medium text-white bg-black/70 px-1.5 py-0.5 rounded-sm tracking-wide">
+              {item.duration}
+            </span>
+          ) : null}
+        </div>
+        <div className="px-3 pt-2.5 text-[12.5px] font-medium leading-snug line-clamp-2">
+          {item.title}
+        </div>
       </div>
 
       {/* Body */}
-      <div className="px-3 pt-2.5 pb-3 flex flex-col flex-1">
-        <div className="text-[12.5px] font-medium leading-snug line-clamp-2 flex-1">
-          {item.title}
-        </div>
-
+      <div className="px-3 pt-1.5 pb-3 flex flex-col flex-1">
         <div className="mt-auto">
           <div
             className={cn(
@@ -89,7 +91,7 @@ export function DownloadCard({ item }: DownloadCardProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-5 text-[9.5px] px-0 gap-1 text-muted-foreground hover:text-foreground"
+                className="h-5 text-[9.5px] !px-0 gap-1 text-muted-foreground hover:text-foreground !hover:bg-transparent"
                 onClick={(e) => {
                   e.stopPropagation();
                   setShowLog(!showLog);
@@ -99,8 +101,17 @@ export function DownloadCard({ item }: DownloadCardProps) {
                 {showLog ? "Ocultar log" : "Ver log"}
               </Button>
               {showLog && item.errorMessage ? (
-                <pre className="mt-1 text-[9px] text-destructive/80 bg-muted/50 rounded p-2 max-h-24 overflow-auto whitespace-pre-wrap break-all font-mono">
-                  {item.errorMessage}
+                <pre
+                  className="mt-1 text-[9px] text-destructive/80 bg-muted/50 rounded p-2 max-h-24 overflow-auto whitespace-pre-wrap break-all font-mono cursor-pointer hover:bg-muted/70 transition-colors"
+                  title="Clique para copiar"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigator.clipboard.writeText(item.errorMessage!);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 1500);
+                  }}
+                >
+                  {copied ? "Copiado!" : item.errorMessage}
                 </pre>
               ) : null}
             </div>

@@ -11,9 +11,11 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useBinariesStore } from "@/stores/binaries-store";
+import { Button } from "@/components/ui/button";
 import { SettingRow } from "@/features/settings/components/setting-row";
-import { PathDisplay } from "@/features/settings/components/path-display";
 import { VersionCard } from "@/features/settings/components/version-card";
+import { ipc } from "@/lib/ipc";
+import { FolderOpen } from "lucide-react";
 import { BROWSERS } from "@/lib/constants";
 import type { Browser } from "@/lib/types";
 
@@ -55,11 +57,7 @@ function SettingsPage() {
               onValueChange={(v) => v && setCookieBrowser(v as Browser)}
             >
               <SelectTrigger className="w-[120px] text-xs h-9">
-                <SelectValue>
-                  {(v: string) =>
-                    v ? v.charAt(0).toUpperCase() + v.slice(1) : "—"
-                  }
-                </SelectValue>
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {BROWSERS.map((b) => (
@@ -83,7 +81,22 @@ function SettingsPage() {
           <div className="text-[11.5px] text-muted-foreground">
             Onde os arquivos baixados são salvos por padrão
           </div>
-          <PathDisplay path={downloadPath} onChangePath={setDownloadPath} />
+          <div className="flex items-center h-9 mt-2">
+            <div className="flex-1 min-w-0 h-full flex items-center border border-r-0 rounded-l-md bg-transparent px-3 text-xs text-muted-foreground truncate">
+              {downloadPath}
+            </div>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9 rounded-l-none shrink-0"
+              onClick={async () => {
+                const selected = await ipc.selectFolder();
+                if (selected) setDownloadPath(selected);
+              }}
+            >
+              <FolderOpen className="w-3.5 h-3.5" />
+            </Button>
+          </div>
         </Card>
       </Section>
 

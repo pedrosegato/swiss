@@ -1,11 +1,12 @@
 import { create } from "zustand";
 import type { ConvertItem, ConvertFormat } from "@/lib/types";
+import { ipc } from "@/lib/ipc";
+import { useSettingsStore } from "@/stores/settings-store";
 
 interface ConvertState {
   items: ConvertItem[];
   outputFormat: ConvertFormat;
   quality: string;
-  savePath: string;
 
   addItem: (item: ConvertItem) => void;
   addItems: (items: ConvertItem[]) => void;
@@ -14,14 +15,13 @@ interface ConvertState {
   clearItems: () => void;
   setOutputFormat: (fmt: ConvertFormat) => void;
   setQuality: (q: string) => void;
-  setSavePath: (path: string) => void;
+  startAll: () => void;
 }
 
 export const useConvertStore = create<ConvertState>((set) => ({
   items: [],
   outputFormat: "mp4",
-  quality: "1080p",
-  savePath: "same",
+  quality: "Original",
 
   addItem: (item) => set((s) => ({ items: [...s.items, item] })),
   addItems: (items) => set((s) => ({ items: [...s.items, ...items] })),
@@ -34,5 +34,25 @@ export const useConvertStore = create<ConvertState>((set) => ({
   clearItems: () => set({ items: [] }),
   setOutputFormat: (fmt) => set({ outputFormat: fmt }),
   setQuality: (q) => set({ quality: q }),
-  setSavePath: (path) => set({ savePath: path }),
+  startAll: () => {
+    const { items } = useConvertStore.getState();
+    const savePath = useSettingsStore.getState().downloadPath;
+    for (const item of items) {
+      if (item.stage !== "queued") continue;
+      set((s) => ({
+        items: s.items.map((i) =>
+          i.id === item.id
+            ? { ...i, stage: "converting" as const, progress: 0 }
+            : i,
+        ),
+      }));
+      ipc.startConversion({
+        id: item.id,
+        inputPath: item.inputPath,
+        outputFormat: item.outputFormat,
+        quality: item.quality,
+        savePath,
+      });
+    }
+  },
 }));
