@@ -83,8 +83,6 @@ ipcMain.handle("dock:set-progress", (_event, progress: number) => {
   }
 });
 
-ipcMain.handle("app:get-downloads-path", () => app.getPath("downloads"));
-
 ipcMain.handle("window:minimize", () => win?.minimize());
 ipcMain.handle("window:maximize", () => {
   if (win?.isMaximized()) win.unmaximize();

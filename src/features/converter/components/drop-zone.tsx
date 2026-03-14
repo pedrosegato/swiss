@@ -14,6 +14,7 @@ export function DropZone() {
   const savePath = useSettingsStore((s) => s.downloadPath);
 
   const handleBrowse = useCallback(async () => {
+    if (!savePath) return;
     const files = await ipc.selectFiles([...CONVERT_ALL_FORMATS]);
     if (!files) return;
 
@@ -54,7 +55,7 @@ export function DropZone() {
         const ext = f.name.split(".").pop()?.toLowerCase() ?? "";
         return (CONVERT_ALL_FORMATS as readonly string[]).includes(ext);
       });
-      if (droppedFiles.length === 0) return;
+      if (droppedFiles.length === 0 || !savePath) return;
 
       const items = droppedFiles.map((f) => {
         const ext = `.${f.name.split(".").pop()?.toLowerCase() ?? ""}`;

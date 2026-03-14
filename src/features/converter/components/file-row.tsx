@@ -42,6 +42,7 @@ export function FileRow({ id }: FileRowProps) {
       outputPath: undefined,
     });
     const savePath = useSettingsStore.getState().downloadPath;
+    if (!savePath) return;
     ipc.startConversion({
       id: item.id,
       inputPath: item.inputPath,

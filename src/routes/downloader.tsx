@@ -64,6 +64,8 @@ function DownloaderPage() {
       return;
     }
 
+    if (!savePath) return;
+
     const tempId = crypto.randomUUID();
 
     addItem({

@@ -37,6 +37,7 @@ export const useConvertStore = create<ConvertState>((set) => ({
   startAll: () => {
     const { items } = useConvertStore.getState();
     const savePath = useSettingsStore.getState().downloadPath;
+    if (!savePath) return;
     const toStart = items.filter((i) => i.stage === "queued");
     if (toStart.length === 0) return;
 

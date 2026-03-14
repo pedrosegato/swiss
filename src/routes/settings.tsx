@@ -83,7 +83,7 @@ function SettingsPage() {
           </div>
           <div className="flex items-center h-9 mt-2">
             <div className="flex-1 min-w-0 h-full flex items-center border border-r-0 rounded-l-md bg-transparent px-3 text-xs text-muted-foreground truncate">
-              {downloadPath}
+              {downloadPath || "Nenhuma pasta selecionada"}
             </div>
             <Button
               variant="outline"

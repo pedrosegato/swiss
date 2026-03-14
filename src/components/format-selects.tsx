@@ -116,7 +116,7 @@ export function FormatSelects({
       <FieldLabel label="Salvar em" className="flex-1 min-w-[180px]">
         <div className="flex items-center h-9">
           <div className="flex-1 min-w-0 h-full flex items-center border border-r-0 rounded-l-md bg-transparent px-3 text-xs text-muted-foreground truncate">
-            {savePath}
+            {savePath || "Selecione uma pasta"}
           </div>
           <Button
             variant="outline"

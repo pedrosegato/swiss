@@ -10,12 +10,11 @@ interface SettingsState {
   setDownloadPath: (path: string) => void;
   setUseCookies: (enabled: boolean) => void;
   setCookieBrowser: (browser: Browser) => void;
-  initDownloadPath: (path: string) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       downloadPath: "",
       useCookies: false,
       cookieBrowser: "chrome",
@@ -23,11 +22,6 @@ export const useSettingsStore = create<SettingsState>()(
       setDownloadPath: (path) => set({ downloadPath: path }),
       setUseCookies: (enabled) => set({ useCookies: enabled }),
       setCookieBrowser: (browser) => set({ cookieBrowser: browser }),
-      initDownloadPath: (path) => {
-        if (!get().downloadPath) {
-          set({ downloadPath: path });
-        }
-      },
     }),
     {
       name: "swiss-settings",

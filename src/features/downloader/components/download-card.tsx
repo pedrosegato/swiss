@@ -49,6 +49,7 @@ export function DownloadCard({ id }: DownloadCardProps) {
       errorMessage: undefined,
     });
     const savePath = useSettingsStore.getState().downloadPath;
+    if (!savePath) return;
     ipc.startDownload({
       id: item.id,
       url: item.url,
