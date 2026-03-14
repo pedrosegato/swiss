@@ -2,7 +2,7 @@
   <img src="build/icon.png" width="128" height="128" alt="Swiss">
 </p>
 
-<h1 align="center">Swiss</h1>
+<h1 align="center">swiss</h1>
 
 <p align="center">Desktop app for downloading videos and converting media files.<br>Built with Electron, React, and TypeScript.</p>
 <br>
@@ -25,3 +25,15 @@ Uses <a href="https://github.com/yt-dlp/yt-dlp">yt-dlp</a> for downloading from 
 | Build     | Vite + vite-plugin-electron                     |
 | Packaging | electron-builder (dmg/nsis/AppImage)            |
 | Updates   | electron-updater (GitHub Releases)              |
+
+## Installation
+
+Download the latest release from [GitHub Releases](https://github.com/pedrosegato/swiss/releases).
+
+### macOS
+
+The app is not code-signed. macOS will block it on first open. To fix:
+
+```bash
+xattr -cr /Applications/Swiss.app
+```
