@@ -1,7 +1,7 @@
 import { ipcMain, BrowserWindow, Notification } from "electron";
 import { spawn, type ChildProcess } from "node:child_process";
 import path from "node:path";
-import { getSpawnPath, getDenoPath } from "./binary-manager";
+import { getSpawnPath, getDenoPath, getYtdlpSpawnInfo } from "./binary-manager";
 import { formatDuration, buildFormatString } from "../lib/format";
 import { existsSync } from "node:fs";
 
@@ -24,7 +24,7 @@ export function registerDownloaderHandlers() {
     const win = BrowserWindow.fromWebContents(event.sender);
     if (!win) return { id };
 
-    const ytdlpPath = await getSpawnPath("yt-dlp");
+    const ytdlpInfo = await getYtdlpSpawnInfo();
     const ffmpegPath = await getSpawnPath("ffmpeg");
     const ffmpegDir = path.dirname(ffmpegPath);
 
@@ -73,7 +73,7 @@ export function registerDownloaderHandlers() {
     const sep = process.platform === "win32" ? ";" : ":";
     const envPath = `${denoDir}${sep}${process.env.PATH ?? ""}`;
 
-    const proc = spawn(ytdlpPath, args, {
+    const proc = spawn(ytdlpInfo.command, [...ytdlpInfo.prefixArgs, ...args], {
       env: {
         ...process.env,
         PATH: envPath,
