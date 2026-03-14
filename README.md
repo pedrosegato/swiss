@@ -1,6 +1,10 @@
-# Swiss
+<p align="center">
+  <img src="build/icon.png" width="128" height="128" alt="Swiss">
+</p>
 
-Desktop app for downloading videos and converting media files. Built with Electron, React, and TypeScript.
+<h1 align="center">Swiss</h1>
+
+<p align="center">Desktop app for downloading videos and converting media files.<br>Built with Electron, React, and TypeScript.</p>
 
 Uses **yt-dlp** for downloading from 1000+ sites and **ffmpeg** for format conversion. Both binaries are managed automatically — installed on first launch if not already present.
 
