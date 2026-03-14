@@ -2,6 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 import { navItems } from "@/lib/nav-items";
 import { PocketKnifeIcon } from "lucide-react";
+import { UpdateBanner } from "./update-banner";
 
 export function Navbar() {
   const { location } = useRouterState();
@@ -38,6 +39,8 @@ export function Navbar() {
           );
         })}
       </div>
+
+      <UpdateBanner />
     </nav>
   );
 }

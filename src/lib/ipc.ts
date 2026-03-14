@@ -81,6 +81,28 @@ export const ipc = {
   openExternal: (url: string) =>
     renderer.invoke("shell:open-external", url) as Promise<void>,
 
+  installUpdate: () => renderer.invoke("updater:install") as Promise<void>,
+
+  onUpdaterStatus: (
+    callback: (data: {
+      status: "available" | "downloading" | "ready";
+      version?: string;
+      percent?: number;
+    }) => void,
+  ) => {
+    const handler = (_event: unknown, ...args: unknown[]) => {
+      callback(
+        args[0] as {
+          status: "available" | "downloading" | "ready";
+          version?: string;
+          percent?: number;
+        },
+      );
+    };
+    renderer.on("updater:status", handler);
+    return () => renderer.off("updater:status", handler);
+  },
+
   onMetadata: (
     callback: (data: {
       id: string;

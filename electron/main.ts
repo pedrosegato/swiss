@@ -1,4 +1,5 @@
 import { app, BrowserWindow } from "electron";
+import { autoUpdater } from "electron-updater";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { registerBinariesHandlers } from "./ipc/binaries";
@@ -8,7 +9,6 @@ import { registerDialogHandlers } from "./ipc/dialogs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Electron on macOS doesn't inherit the shell PATH — add common binary locations
 if (process.platform === "darwin" || process.platform === "linux") {
   const extraPaths = [
     "/usr/local/bin",
@@ -72,4 +72,41 @@ app.on("activate", () => {
   }
 });
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  createWindow();
+
+  if (!VITE_DEV_SERVER_URL) {
+    autoUpdater.autoDownload = true;
+    autoUpdater.autoInstallOnAppQuit = true;
+
+    autoUpdater.on("update-available", (info) => {
+      win?.webContents.send("updater:status", {
+        status: "available",
+        version: info.version,
+      });
+    });
+
+    autoUpdater.on("download-progress", (progress) => {
+      win?.webContents.send("updater:status", {
+        status: "downloading",
+        percent: Math.round(progress.percent),
+      });
+    });
+
+    autoUpdater.on("update-downloaded", (info) => {
+      win?.webContents.send("updater:status", {
+        status: "ready",
+        version: info.version,
+      });
+    });
+
+    autoUpdater.checkForUpdates();
+
+    setInterval(() => autoUpdater.checkForUpdates(), 30 * 60 * 1000);
+  }
+});
+
+import { ipcMain } from "electron";
+ipcMain.handle("updater:install", () => {
+  autoUpdater.quitAndInstall();
+});
