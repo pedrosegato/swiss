@@ -117,3 +117,9 @@ import { ipcMain } from "electron";
 ipcMain.handle("updater:install", () => {
   autoUpdater.quitAndInstall();
 });
+
+ipcMain.handle("dock:set-progress", (_event, progress: number) => {
+  if (win) {
+    win.setProgressBar(progress);
+  }
+});

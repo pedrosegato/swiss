@@ -1,9 +1,10 @@
-import { ipcMain, BrowserWindow, app } from "electron";
+import { ipcMain, BrowserWindow, app, Notification } from "electron";
 import { spawn, execFile, type ChildProcess } from "node:child_process";
 import { promisify } from "node:util";
 import { dirname, basename, extname, join } from "node:path";
 import { homedir } from "node:os";
-import { readFile, unlink } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { readFile, stat, unlink } from "node:fs/promises";
 import { getSpawnPath } from "./binary-manager";
 
 const exec = promisify(execFile);
@@ -32,6 +33,11 @@ export function registerConverterHandlers() {
     const proc = spawn(ffmpegPath, args);
     activeConversions.set(id, proc);
 
+    let stderrBuffer = "";
+    proc.stderr.on("data", (data: Buffer) => {
+      stderrBuffer += data.toString();
+    });
+
     proc.stdout.on("data", (data: Buffer) => {
       const text = data.toString();
       const timeMatch = text.match(/out_time_us=(\d+)/);
@@ -50,14 +56,45 @@ export function registerConverterHandlers() {
       }
     });
 
-    proc.on("close", (code) => {
+    proc.on("close", async (code) => {
       activeConversions.delete(id);
-      win.webContents.send("progress:update", {
-        id,
-        type: "convert",
-        progress: 100,
-        stage: code === 0 ? "completed" : "error",
-      });
+      if (code === 0) {
+        let outputSize: number | undefined;
+        try {
+          const s = await stat(outputPath);
+          outputSize = s.size;
+        } catch {}
+
+        const outputName = basename(outputPath);
+        new Notification({
+          title: "Conversão concluída",
+          body: outputName,
+        }).show();
+
+        win.webContents.send("progress:update", {
+          id,
+          type: "convert",
+          progress: 100,
+          stage: "completed",
+          outputSize,
+          outputPath,
+        });
+      } else {
+        const errMsg =
+          stderrBuffer.trim() || `ffmpeg encerrou com código ${code}`;
+        const isDiskFull =
+          /no space left|disk full|não há espaço/i.test(errMsg);
+
+        win.webContents.send("progress:update", {
+          id,
+          type: "convert",
+          progress: 0,
+          stage: "error",
+          errorMessage: isDiskFull
+            ? "Disco cheio — libere espaço e tente novamente"
+            : errMsg,
+        });
+      }
     });
 
     return { id };
@@ -144,5 +181,14 @@ function buildOutputPath(options: {
       ? dirname(options.inputPath)
       : options.savePath.replace("~", homedir());
   const name = basename(options.inputPath, extname(options.inputPath));
-  return join(dir, `${name}.${options.outputFormat}`);
+  let outputPath = join(dir, `${name}.${options.outputFormat}`);
+
+  // Handle filename conflicts
+  let counter = 1;
+  while (existsSync(outputPath)) {
+    outputPath = join(dir, `${name}_${counter}.${options.outputFormat}`);
+    counter++;
+  }
+
+  return outputPath;
 }

@@ -32,6 +32,7 @@ export interface DownloadItem {
   progress: number;
   fileSize?: string;
   savePath: string;
+  outputPath?: string;
   createdAt: number;
   errorMessage?: string;
 }
@@ -49,6 +50,8 @@ export interface ConvertItem {
   stage: ConvertStage;
   progress: number;
   savePath: string;
+  outputPath?: string;
+  outputSize?: number;
   errorMessage?: string;
 }
 

@@ -19,6 +19,8 @@ function RootLayout() {
   const setFfmpeg = useBinariesStore((s) => s.setFfmpeg);
   const updateDownload = useDownloadStore((s) => s.updateItem);
   const updateConvert = useConvertStore((s) => s.updateItem);
+  const downloadItems = useDownloadStore((s) => s.items);
+  const convertItems = useConvertStore((s) => s.items);
   const [showInstallDialog, setShowInstallDialog] = useState(false);
 
   useEffect(() => {
@@ -34,20 +36,46 @@ function RootLayout() {
 
   useEffect(() => {
     const unsubscribe = ipc.onProgress(
-      ({ id, type, progress, stage, errorMessage }) => {
+      ({ id, type, progress, stage, errorMessage, outputSize, outputPath }) => {
         if (type === "download") {
           updateDownload(id, {
             progress,
             stage: stage as DownloadStage,
             errorMessage,
+            outputPath,
           });
         } else {
-          updateConvert(id, { progress, stage: stage as ConvertStage });
+          updateConvert(id, {
+            progress,
+            stage: stage as ConvertStage,
+            errorMessage,
+            outputSize,
+            outputPath,
+          });
         }
       },
     );
     return unsubscribe;
   }, [updateDownload, updateConvert]);
+
+  // Dock/taskbar progress
+  useEffect(() => {
+    const activeDownloads = downloadItems.filter(
+      (i) => i.stage === "downloading" || i.stage === "converting",
+    );
+    const activeConverts = convertItems.filter(
+      (i) => i.stage === "converting",
+    );
+    const allActive = [...activeDownloads, ...activeConverts];
+
+    if (allActive.length === 0) {
+      ipc.setDockProgress(-1);
+    } else {
+      const avg =
+        allActive.reduce((sum, i) => sum + i.progress, 0) / allActive.length;
+      ipc.setDockProgress(avg / 100);
+    }
+  }, [downloadItems, convertItems]);
 
   return (
     <TooltipProvider>

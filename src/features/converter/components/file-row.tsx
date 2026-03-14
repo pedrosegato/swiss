@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { ConvertItem, ConvertFormat } from "@/lib/types";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -17,14 +18,26 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
-import { ArrowRight, Film, Minus, Music, X } from "lucide-react";
+import { cn, formatSize } from "@/lib/utils";
+import {
+  ArrowRight,
+  Bug,
+  Film,
+  FolderOpen,
+  Minus,
+  Music,
+  RefreshCw,
+  Square,
+  X,
+} from "lucide-react";
 import {
   isVideoFormat,
   CONVERT_VIDEO_FORMATS,
   CONVERT_AUDIO_FORMATS,
 } from "@/lib/constants";
 import { useConvertStore } from "@/stores/convert-store";
+import { useSettingsStore } from "@/stores/settings-store";
+import { ipc } from "@/lib/ipc";
 
 interface FileRowProps {
   item: ConvertItem;
@@ -39,6 +52,41 @@ export function FileRow({ item }: FileRowProps) {
   const isQueued = item.stage === "queued";
   const isInputVideo = isVideoFormat(item.inputExt.replace(".", ""));
   const Icon = isInputVideo ? Film : Music;
+  const [showLog, setShowLog] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleCancel = () => {
+    ipc.cancelConversion(item.id);
+    updateItem(item.id, {
+      stage: "error",
+      progress: 0,
+      errorMessage: "Cancelado pelo usuário",
+    });
+  };
+
+  const handleRetry = () => {
+    updateItem(item.id, {
+      stage: "converting",
+      progress: 0,
+      errorMessage: undefined,
+      outputSize: undefined,
+      outputPath: undefined,
+    });
+    const savePath = useSettingsStore.getState().downloadPath;
+    ipc.startConversion({
+      id: item.id,
+      inputPath: item.inputPath,
+      outputFormat: item.outputFormat,
+      quality: item.quality,
+      savePath,
+    });
+  };
+
+  const handleOpenFolder = () => {
+    if (item.outputPath) {
+      ipc.showItemInFolder(item.outputPath);
+    }
+  };
 
   return (
     <tr className="bg-card transition-colors hover:bg-card/80 group">
@@ -76,7 +124,7 @@ export function FileRow({ item }: FileRowProps) {
             variant="outline"
             className="font-mono text-[10px] text-muted-foreground"
           >
-            {item.inputExt}
+            .{item.inputExt}
           </Badge>
           <ArrowRight className="w-3 h-3 text-muted-foreground" />
           {isQueued ? (
@@ -116,11 +164,32 @@ export function FileRow({ item }: FileRowProps) {
         </div>
       </td>
 
-      <td className="px-3 py-2.5 border-y border-border w-[130px]">
-        {isError && item.errorMessage ? (
-          <p className="text-[10px] text-destructive/80 line-clamp-2">
-            {item.errorMessage}
-          </p>
+      <td className="px-3 py-2.5 border-y border-border w-[160px]">
+        {isError ? (
+          <div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-5 text-[9.5px] !px-0 gap-1 text-muted-foreground hover:text-foreground !hover:bg-transparent"
+              onClick={() => setShowLog(!showLog)}
+            >
+              <Bug className="w-3 h-3" />
+              {showLog ? "Ocultar log" : "Ver log"}
+            </Button>
+            {showLog && item.errorMessage ? (
+              <pre
+                className="mt-1 text-[9px] text-destructive/80 bg-muted/50 rounded p-2 max-h-24 overflow-auto whitespace-pre-wrap break-all font-mono cursor-pointer hover:bg-muted/70 transition-colors"
+                title="Clique para copiar"
+                onClick={() => {
+                  navigator.clipboard.writeText(item.errorMessage!);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 1500);
+                }}
+              >
+                {copied ? "Copiado!" : item.errorMessage}
+              </pre>
+            ) : null}
+          </div>
         ) : (
           <div className="flex items-center gap-2">
             <Progress value={item.progress} className="h-[3px] flex-1" />
@@ -128,7 +197,7 @@ export function FileRow({ item }: FileRowProps) {
               className={cn(
                 "font-mono text-[10px] min-w-[28px] text-right",
                 isDone
-                  ? "text-muted-foreground"
+                  ? "text-success"
                   : isConverting
                     ? "text-primary"
                     : "text-muted-foreground/60",
@@ -146,20 +215,73 @@ export function FileRow({ item }: FileRowProps) {
         )}
       </td>
 
+      <td className="px-3 py-2.5 border-y border-border">
+        <span className="font-mono text-[10.5px] text-muted-foreground whitespace-nowrap">
+          {isDone && item.outputSize ? formatSize(item.outputSize) : null}
+        </span>
+      </td>
+
       <td className="px-1.5 py-2.5 border border-l-0 border-border rounded-r">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 text-muted-foreground/40 hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={() => removeItem(item.id)}
-            >
-              <X className="w-3 h-3" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Remover</TooltipContent>
-        </Tooltip>
+        <div className="flex items-center gap-0.5">
+          {isConverting && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                  onClick={handleCancel}
+                >
+                  <Square className="w-2.5 h-2.5 fill-current" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Cancelar</TooltipContent>
+            </Tooltip>
+          )}
+          {isError && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                  onClick={handleRetry}
+                >
+                  <RefreshCw className="w-3 h-3" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Tentar novamente</TooltipContent>
+            </Tooltip>
+          )}
+          {isDone && item.outputPath && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                  onClick={handleOpenFolder}
+                >
+                  <FolderOpen className="w-3 h-3" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Abrir pasta</TooltipContent>
+            </Tooltip>
+          )}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 text-muted-foreground/40 hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={() => removeItem(item.id)}
+              >
+                <X className="w-3 h-3" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Remover</TooltipContent>
+          </Tooltip>
+        </div>
       </td>
     </tr>
   );

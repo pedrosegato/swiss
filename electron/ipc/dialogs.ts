@@ -1,5 +1,6 @@
 import { ipcMain, dialog, shell } from "electron";
 import { stat } from "node:fs/promises";
+import { homedir } from "node:os";
 import path from "node:path";
 
 export function registerDialogHandlers() {
@@ -39,4 +40,20 @@ export function registerDialogHandlers() {
   ipcMain.handle("shell:open-external", async (_event, url: string) => {
     await shell.openExternal(url);
   });
+
+  ipcMain.handle(
+    "shell:show-item-in-folder",
+    async (_event, filePath: string) => {
+      const resolved = filePath.replace(/^~/, homedir());
+      shell.showItemInFolder(resolved);
+    },
+  );
+
+  ipcMain.handle(
+    "shell:open-path",
+    async (_event, dirPath: string) => {
+      const resolved = dirPath.replace(/^~/, homedir());
+      await shell.openPath(resolved);
+    },
+  );
 }

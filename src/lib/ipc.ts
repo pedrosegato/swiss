@@ -85,6 +85,15 @@ export const ipc = {
   openExternal: (url: string) =>
     renderer.invoke("shell:open-external", url) as Promise<void>,
 
+  showItemInFolder: (filePath: string) =>
+    renderer.invoke("shell:show-item-in-folder", filePath) as Promise<void>,
+
+  openPath: (dirPath: string) =>
+    renderer.invoke("shell:open-path", dirPath) as Promise<void>,
+
+  setDockProgress: (progress: number) =>
+    renderer.invoke("dock:set-progress", progress) as Promise<void>,
+
   installUpdate: () => renderer.invoke("updater:install") as Promise<void>,
 
   onUpdaterStatus: (
@@ -142,6 +151,8 @@ export const ipc = {
       progress: number;
       stage: string;
       errorMessage?: string;
+      outputSize?: number;
+      outputPath?: string;
     }) => void,
   ) => {
     const handler = (_event: unknown, ...args: unknown[]) => {
@@ -152,6 +163,8 @@ export const ipc = {
           progress: number;
           stage: string;
           errorMessage?: string;
+          outputSize?: number;
+          outputPath?: string;
         },
       );
     };
