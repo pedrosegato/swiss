@@ -32,14 +32,14 @@ export function Navbar() {
               key={to}
               to={to}
               className={cn(
-                "relative flex items-center gap-1.5 text-[12.5px] px-2.5 py-1.5 cursor-pointer transition-colors no-underline",
+                "relative inline-flex flex-row items-center gap-1.5 text-[12.5px] leading-none px-2.5 py-1.5 cursor-pointer transition-colors no-underline",
                 isActive
-                  ? "text-primary font-semibold"
+                  ? "text-primary font-bold"
                   : "text-secondary-foreground hover:text-foreground",
               )}
             >
               <Icon className="w-3.5 h-3.5 shrink-0" />
-              {label}
+              <span className="leading-none">{label}</span>
             </Link>
           );
         })}

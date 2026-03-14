@@ -1,7 +1,7 @@
 {
   "name": "swiss",
   "private": true,
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Desktop app for downloading videos and converting media files",
   "author": "pedro",
   "type": "module",
@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@fontsource-variable/dm-sans": "^5.2.8",
+    "@fontsource-variable/inter": "^5.2.8",
     "@fontsource/ibm-plex-mono": "^5.2.7",
     "@tanstack/react-query": "^5.90.21",
     "@tanstack/react-router": "^1.166.8",
