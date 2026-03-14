@@ -1,4 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
+import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { navItems } from "@/lib/nav-items";
 import { PocketKnifeIcon } from "lucide-react";
@@ -40,6 +41,13 @@ export function Navbar() {
             >
               <Icon className="w-3.5 h-3.5 shrink-0" />
               <span className="leading-none">{label}</span>
+              {isActive && (
+                <motion.span
+                  layoutId="nav-indicator"
+                  className="absolute -bottom-[7px] left-2 right-2 h-[2px] bg-primary rounded-full"
+                  transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                />
+              )}
             </Link>
           );
         })}

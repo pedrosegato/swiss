@@ -105,10 +105,50 @@ async function canUsePipModule(): Promise<string | null> {
   }
 }
 
+async function tryInstallPipModule(): Promise<string | null> {
+  if (process.platform === "win32") return null;
+  const python = await findPython();
+  try {
+    await exec(python, ["-m", "pip", "--version"], { timeout: 5_000 });
+  } catch {
+    return null;
+  }
+
+  const strategies = [
+    [
+      python,
+      "-m",
+      "pip",
+      "install",
+      "--user",
+      "--break-system-packages",
+      "yt-dlp",
+    ],
+    [python, "-m", "pip", "install", "--user", "yt-dlp"],
+  ];
+
+  for (const args of strategies) {
+    try {
+      await exec(args[0], args.slice(1), { timeout: 120_000 });
+      // Verify it worked
+      await exec(python, ["-m", "yt_dlp", "--version"], { timeout: 5_000 });
+      return python;
+    } catch {
+      continue;
+    }
+  }
+  return null;
+}
+
 export async function getYtdlpSpawnInfo(): Promise<SpawnInfo> {
   if (ytdlpSpawnCache) return ytdlpSpawnCache;
 
-  const python = await canUsePipModule();
+  let python = await canUsePipModule();
+
+  if (!python) {
+    python = await tryInstallPipModule();
+  }
+
   if (python) {
     ytdlpSpawnCache = { command: python, prefixArgs: ["-m", "yt_dlp"] };
     return ytdlpSpawnCache;

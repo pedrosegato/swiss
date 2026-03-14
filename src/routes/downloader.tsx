@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useShallow } from "zustand/shallow";
 import { createFileRoute } from "@tanstack/react-router";
+import { AnimatePresence, motion } from "motion/react";
 import { Separator } from "@/components/ui/separator";
 import { UrlInput } from "@/features/downloader/components/url-input";
 import { FormatSelects } from "@/components/format-selects";
@@ -19,6 +20,8 @@ import { useSettingsStore } from "@/stores/settings-store";
 import { useBinariesStore } from "@/stores/binaries-store";
 import { ipc } from "@/lib/ipc";
 import { formatSize } from "@/lib/utils";
+import { toast } from "sonner";
+import { Download } from "lucide-react";
 
 export const Route = createFileRoute("/downloader")({
   component: DownloaderPage,
@@ -64,7 +67,10 @@ function DownloaderPage() {
       return;
     }
 
-    if (!savePath) return;
+    if (!savePath) {
+      toast.warning("Selecione uma pasta de destino antes de baixar.");
+      return;
+    }
 
     const tempId = crypto.randomUUID();
 
@@ -119,11 +125,42 @@ function DownloaderPage() {
 
       <QueueHeader />
 
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-2.5">
-        {itemIds.map((id) => (
-          <DownloadCard key={id} id={id} />
-        ))}
-      </div>
+      {itemIds.length === 0 ? (
+        <motion.div
+          className="flex flex-col items-center justify-center py-16 text-muted-foreground"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.1 }}
+        >
+          <motion.div
+            animate={{ y: [0, -4, 0] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+          >
+            <Download className="w-8 h-8 mb-3 text-muted-foreground/40" />
+          </motion.div>
+          <p className="text-[13px]">Nenhum download na fila</p>
+          <p className="text-[11px] text-muted-foreground/60 mt-1">
+            Cole uma URL acima para começar
+          </p>
+        </motion.div>
+      ) : (
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-2.5">
+          <AnimatePresence mode="popLayout">
+            {itemIds.map((id, i) => (
+              <motion.div
+                key={id}
+                layout
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2, delay: i < 12 ? i * 0.03 : 0 }}
+              >
+                <DownloadCard id={id} />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+      )}
 
       <BinaryInstallDialog
         open={showInstallDialog}

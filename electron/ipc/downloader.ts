@@ -54,8 +54,11 @@ export function registerDownloaderHandlers() {
       args.push("-x", "--audio-format", options.format);
     }
 
-    if (process.platform === "win32" && options.format === "mp4") {
-      args.push("--postprocessor-args", "ffmpeg:-c:a aac -b:a 192k");
+    if (isVideo && options.format === "mp4") {
+      args.push(
+        "--postprocessor-args",
+        "ffmpeg:-c:v libx264 -preset fast -crf 23 -c:a aac -b:a 192k",
+      );
     }
 
     if (process.platform === "win32") {
@@ -68,7 +71,6 @@ export function registerDownloaderHandlers() {
 
     args.push(options.url);
 
-    // Add Deno to PATH so yt-dlp can use it for YouTube JS challenges
     const denoDir = path.dirname(getDenoPath());
     const sep = process.platform === "win32" ? ";" : ":";
     const envPath = `${denoDir}${sep}${process.env.PATH ?? ""}`;

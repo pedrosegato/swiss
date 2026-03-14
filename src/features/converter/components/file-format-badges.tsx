@@ -31,7 +31,7 @@ export function FileFormatBadges({
         variant="outline"
         className="font-mono text-[10px] text-muted-foreground"
       >
-        .{inputExt}
+        {inputExt}
       </Badge>
       <ArrowRight className="w-3 h-3 text-muted-foreground shrink-0" />
       {isQueued ? (

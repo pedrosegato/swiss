@@ -1,8 +1,14 @@
 import { useState, useEffect, useRef } from "react";
-import { createRootRoute, Outlet } from "@tanstack/react-router";
+import {
+  createRootRoute,
+  Outlet,
+  useRouterState,
+} from "@tanstack/react-router";
+import { motion } from "motion/react";
 import { Navbar } from "@/components/navbar";
 import { BinaryInstallDialog } from "@/components/binary-install-dialog";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/components/ui/sonner";
 import { ipc } from "@/lib/ipc";
 import { useBinariesStore } from "@/stores/binaries-store";
 import { useDownloadStore } from "@/stores/download-store";
@@ -14,6 +20,7 @@ export const Route = createRootRoute({
 });
 
 function RootLayout() {
+  const { location } = useRouterState();
   const setYtdlp = useBinariesStore((s) => s.setYtdlp);
   const setFfmpeg = useBinariesStore((s) => s.setFfmpeg);
   const updateDownload = useDownloadStore((s) => s.updateItem);
@@ -92,13 +99,20 @@ function RootLayout() {
   return (
     <TooltipProvider>
       <Navbar />
-      <main className="relative z-[1] px-4 py-5 sm:p-7">
+      <motion.main
+        key={location.pathname}
+        className="relative z-[1] px-4 py-5 sm:p-7"
+        initial={{ opacity: 0, y: 4 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.15, ease: "easeOut" }}
+      >
         <Outlet />
-      </main>
+      </motion.main>
       <BinaryInstallDialog
         open={showInstallDialog}
         onOpenChange={setShowInstallDialog}
       />
+      <Toaster position="bottom-right" />
     </TooltipProvider>
   );
 }

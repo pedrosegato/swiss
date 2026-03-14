@@ -11,6 +11,17 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useDownloadStore } from "@/stores/download-store";
 import type { SortOption } from "@/lib/types";
 import { Dot, Trash2 } from "lucide-react";
@@ -38,19 +49,43 @@ export function QueueHeader() {
           ativos
         </span>
         {itemCount > 0 && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                onClick={clearItems}
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Limpar histórico</TooltipContent>
-          </Tooltip>
+          <AlertDialog>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </AlertDialogTrigger>
+              </TooltipTrigger>
+              <TooltipContent>Limpar histórico</TooltipContent>
+            </Tooltip>
+            <AlertDialogContent size="sm">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="text-[14px]">
+                  Limpar histórico?
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-[12px]">
+                  Todos os downloads da fila serão removidos. Downloads ativos
+                  serão cancelados.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel size="sm">Cancelar</AlertDialogCancel>
+                <AlertDialogAction
+                  size="sm"
+                  variant="destructive"
+                  onClick={clearItems}
+                >
+                  Limpar
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         )}
         <Select
           value={sortBy}

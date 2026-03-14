@@ -79,7 +79,7 @@ export function VersionCard({ binary }: VersionCardProps) {
               binary.downloading
                 ? "bg-yellow-500 animate-pulse"
                 : binary.installed
-                  ? "bg-muted-foreground"
+                  ? "bg-success"
                   : "bg-primary",
             )}
           />
