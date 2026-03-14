@@ -15,6 +15,7 @@ import { ipc } from "@/lib/ipc";
 import { useDownloadStore } from "@/stores/download-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { FolderOpen, RefreshCw, Square } from "lucide-react";
+import { toast } from "sonner";
 
 interface DownloadCardProps {
   id: string;
@@ -43,13 +44,18 @@ export function DownloadCard({ id }: DownloadCardProps) {
 
   const handleRetry = (e: React.MouseEvent) => {
     e.stopPropagation();
+    const savePath = useSettingsStore.getState().downloadPath;
+    if (!savePath) {
+      toast.warning(
+        "Selecione uma pasta de destino antes de tentar novamente.",
+      );
+      return;
+    }
     updateItem(item.id, {
       stage: "fetching",
       progress: 0,
       errorMessage: undefined,
     });
-    const savePath = useSettingsStore.getState().downloadPath;
-    if (!savePath) return;
     ipc.startDownload({
       id: item.id,
       url: item.url,

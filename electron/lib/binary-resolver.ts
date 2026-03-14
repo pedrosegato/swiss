@@ -60,14 +60,33 @@ export async function resolveBinary(name: BinaryName): Promise<BinaryStatus> {
   }
 
   const localPath = getLocalBinPath(name);
-  const localVersion = await tryGetVersion(localPath, versionFlag);
-  if (localVersion) {
-    return {
-      installed: true,
-      version: localVersion,
-      path: localPath,
-      source: "local",
-    };
+  const maxAttempts = process.platform === "win32" ? 3 : 1;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    if (attempt > 0) {
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+    const localVersion = await tryGetVersion(localPath, versionFlag);
+    if (localVersion) {
+      return {
+        installed: true,
+        version: localVersion,
+        path: localPath,
+        source: "local",
+      };
+    }
+  }
+
+  if (process.platform === "win32") {
+    const { existsSync } = await import("node:fs");
+    if (existsSync(localPath)) {
+      return {
+        installed: true,
+        version: "installed",
+        path: localPath,
+        source: "local",
+      };
+    }
   }
 
   return { installed: false, version: null, path: localPath, source: "none" };

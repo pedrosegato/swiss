@@ -22,6 +22,13 @@ import { ipc } from "@/lib/ipc";
 import { formatSize } from "@/lib/utils";
 import { toast } from "sonner";
 import { Download } from "lucide-react";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+} from "@/components/ui/empty";
 
 export const Route = createFileRoute("/downloader")({
   component: DownloaderPage,
@@ -74,10 +81,17 @@ function DownloaderPage() {
 
     const tempId = crypto.randomUUID();
 
+    let displayTitle: string;
+    try {
+      displayTitle = new URL(url).hostname.replace(/^www\./, "");
+    } catch {
+      displayTitle = url;
+    }
+
     addItem({
       id: tempId,
       url,
-      title: url,
+      title: displayTitle,
       format,
       quality,
       stage: "fetching",
@@ -121,27 +135,41 @@ function DownloaderPage() {
         audioQualities={AUDIO_QUALITIES}
       />
 
-      <Separator className="mb-5" />
-
-      <QueueHeader />
+      {itemIds.length > 0 && (
+        <>
+          <Separator className="mb-5" />
+          <QueueHeader />
+        </>
+      )}
 
       {itemIds.length === 0 ? (
         <motion.div
-          className="flex flex-col items-center justify-center py-16 text-muted-foreground"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.1 }}
         >
-          <motion.div
-            animate={{ y: [0, -4, 0] }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-          >
-            <Download className="w-8 h-8 mb-3 text-muted-foreground/40" />
-          </motion.div>
-          <p className="text-[13px]">Nenhum download na fila</p>
-          <p className="text-[11px] text-muted-foreground/60 mt-1">
-            Cole uma URL acima para começar
-          </p>
+          <Empty className="py-12 border-0">
+            <EmptyHeader>
+              <EmptyMedia>
+                <motion.div
+                  animate={{ y: [0, -4, 0] }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                >
+                  <Download className="w-8 h-8 text-muted-foreground" />
+                </motion.div>
+              </EmptyMedia>
+              <EmptyTitle className="text-[14px]">
+                Nenhum download na fila
+              </EmptyTitle>
+              <EmptyDescription className="text-[12px]">
+                Cole uma URL acima para começar
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         </motion.div>
       ) : (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-2.5">

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ipc } from "@/lib/ipc";
 import { useBinariesStore } from "@/stores/binaries-store";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Download, Trash2, RefreshCw } from "lucide-react";
 
 interface VersionCardProps {
@@ -113,15 +114,22 @@ export function VersionCard({ binary }: VersionCardProps) {
               <RefreshCw className="w-3 h-3" />
               Atualizar
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-6 text-[10px] px-2 text-destructive hover:text-destructive"
-              onClick={handleUninstall}
-            >
-              <Trash2 className="w-3 h-3" />
-              Remover
-            </Button>
+            <ConfirmDialog
+              trigger={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 text-[10px] px-2 text-destructive hover:text-destructive"
+                >
+                  <Trash2 className="w-3 h-3" />
+                  Remover
+                </Button>
+              }
+              title={`Remover ${binary.name}?`}
+              description={`${binary.name} será desinstalado. Downloads e conversões não funcionarão sem este binário.`}
+              confirmLabel="Remover"
+              onConfirm={handleUninstall}
+            />
           </div>
         ) : null}
       </div>

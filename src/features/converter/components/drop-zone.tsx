@@ -5,6 +5,7 @@ import { useConvertStore } from "@/stores/convert-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { isVideoFormat, CONVERT_ALL_FORMATS } from "@/lib/constants";
 import { Dot, Download } from "lucide-react";
+import { toast } from "sonner";
 
 export function DropZone() {
   const [isDragging, setIsDragging] = useState(false);
@@ -15,59 +16,24 @@ export function DropZone() {
   const quality = useConvertStore((s) => s.quality);
   const savePath = useSettingsStore((s) => s.downloadPath);
 
-  const handleBrowse = useCallback(async () => {
-    if (!savePath) return;
-    const files = await ipc.selectFiles([...CONVERT_ALL_FORMATS]);
-    if (!files) return;
-
-    const items = files.map((f) => {
-      const isVideo = isVideoFormat(f.ext.replace(".", ""));
-      return {
-        id: crypto.randomUUID(),
-        inputPath: f.path,
-        inputName: f.name,
-        inputSize: formatSize(f.size),
-        inputExt: f.ext,
-        outputFormat,
-        quality,
-        stage: "queued" as const,
-        progress: 0,
-        savePath,
-        thumbnailLoading: isVideo,
-      };
-    });
-    addItems(items);
-
-    for (const item of items) {
-      if (item.thumbnailLoading) {
-        ipc.extractThumbnail(item.inputPath).then((thumbnail) => {
-          updateItem(item.id, {
-            thumbnailLoading: false,
-            ...(thumbnail ? { thumbnail } : {}),
-          });
-        });
+  const processFiles = useCallback(
+    (files: { path: string; name: string; size: number; ext: string }[]) => {
+      if (!savePath) {
+        toast.warning(
+          "Selecione uma pasta de destino antes de adicionar arquivos.",
+        );
+        return;
       }
-    }
-  }, [addItems, updateItem, outputFormat, quality, savePath]);
+      if (files.length === 0) return;
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      const droppedFiles = Array.from(e.dataTransfer.files).filter((f) => {
-        const ext = f.name.split(".").pop()?.toLowerCase() ?? "";
-        return (CONVERT_ALL_FORMATS as readonly string[]).includes(ext);
-      });
-      if (droppedFiles.length === 0 || !savePath) return;
-
-      const items = droppedFiles.map((f) => {
-        const ext = `.${f.name.split(".").pop()?.toLowerCase() ?? ""}`;
-        const isVideo = isVideoFormat(ext.replace(".", ""));
+      const items = files.map((f) => {
+        const isVideo = isVideoFormat(f.ext.replace(".", ""));
         return {
           id: crypto.randomUUID(),
-          inputPath: (f as File & { path: string }).path,
+          inputPath: f.path,
           inputName: f.name,
           inputSize: formatSize(f.size),
-          inputExt: ext,
+          inputExt: f.ext,
           outputFormat,
           quality,
           stage: "queued" as const,
@@ -92,9 +58,40 @@ export function DropZone() {
     [addItems, updateItem, outputFormat, quality, savePath],
   );
 
+  const handleBrowse = useCallback(async () => {
+    if (!savePath) {
+      toast.warning(
+        "Selecione uma pasta de destino antes de adicionar arquivos.",
+      );
+      return;
+    }
+    const files = await ipc.selectFiles([...CONVERT_ALL_FORMATS]);
+    if (!files) return;
+    processFiles(files);
+  }, [savePath, processFiles]);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      const droppedFiles = Array.from(e.dataTransfer.files)
+        .filter((f) => {
+          const ext = f.name.split(".").pop()?.toLowerCase() ?? "";
+          return (CONVERT_ALL_FORMATS as readonly string[]).includes(ext);
+        })
+        .map((f) => ({
+          path: (f as File & { path: string }).path,
+          name: f.name,
+          size: f.size,
+          ext: `.${f.name.split(".").pop()?.toLowerCase() ?? ""}`,
+        }));
+      processFiles(droppedFiles);
+    },
+    [processFiles],
+  );
+
   return (
     <div
-      onClick={handleBrowse}
+      className="relative mb-5"
       onDrop={(e) => {
         dragCounter.current = 0;
         setIsDragging(false);
@@ -104,7 +101,7 @@ export function DropZone() {
       onDragEnter={(e) => {
         e.preventDefault();
         dragCounter.current++;
-        setIsDragging(true);
+        if (!isDragging) setIsDragging(true);
       }}
       onDragLeave={() => {
         dragCounter.current--;
@@ -113,47 +110,54 @@ export function DropZone() {
           setIsDragging(false);
         }
       }}
-      className={cn(
-        "border-[1.5px] border-dashed rounded-md p-8 text-center mb-5 transition-all cursor-pointer space-y-3",
-        isDragging
-          ? "border-primary/60 bg-primary/5"
-          : "border-border hover:border-primary hover:bg-primary/10",
-      )}
     >
-      <Download
+      <div
+        onClick={handleBrowse}
         className={cn(
-          "mx-auto transition-all duration-200",
+          "border-[1.5px] border-dashed rounded-md p-8 text-center transition-colors cursor-pointer space-y-3",
           isDragging
-            ? "text-primary/60 -translate-y-1"
-            : "text-muted-foreground",
+            ? "border-primary/60 bg-primary/5"
+            : "border-border hover:border-border-hover",
         )}
-      />
-      <div>
-        <div className="text-[13px] text-secondary-foreground">
-          {isDragging ? (
-            <span className="text-primary/80 font-medium">
-              Solte para adicionar
-            </span>
-          ) : (
-            <>
-              Solte arquivos aqui ou{" "}
-              <strong className="text-primary font-medium cursor-pointer">
-                procure
-              </strong>
-            </>
+      >
+        <Download
+          className={cn(
+            "mx-auto transition-transform duration-200",
+            isDragging
+              ? "text-primary/60 -translate-y-1"
+              : "text-muted-foreground",
+          )}
+        />
+        <div>
+          <div className="text-[13px] text-secondary-foreground">
+            {isDragging ? (
+              <span className="text-primary/80 font-medium">
+                Solte para adicionar
+              </span>
+            ) : (
+              <>
+                Solte arquivos aqui ou{" "}
+                <strong className="text-primary font-medium cursor-pointer">
+                  procure
+                </strong>
+              </>
+            )}
+          </div>
+          {!isDragging && (
+            <div className="font-mono text-[10.5px] text-muted-foreground flex items-center flex-wrap justify-center">
+              {CONVERT_ALL_FORMATS.map((fmt, i) => (
+                <span key={fmt} className="flex items-center">
+                  {i > 0 && <Dot className="w-3 h-3" />}
+                  {fmt}
+                </span>
+              ))}
+            </div>
           )}
         </div>
-        {!isDragging && (
-          <div className="font-mono text-[10.5px] text-muted-foreground flex items-center flex-wrap justify-center">
-            {CONVERT_ALL_FORMATS.map((fmt, i) => (
-              <span key={fmt} className="flex items-center">
-                {i > 0 && <Dot className="w-3 h-3" />}
-                {fmt}
-              </span>
-            ))}
-          </div>
-        )}
       </div>
+      {isDragging && (
+        <div className="absolute inset-0 rounded-md pointer-events-none" />
+      )}
     </div>
   );
 }

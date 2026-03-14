@@ -1,5 +1,11 @@
 import { ipcMain, BrowserWindow } from "electron";
-import { resolveBinary, downloadBinary, uninstallBinary, updateBinary, getSpawnPath } from "./binary-manager";
+import {
+  resolveBinary,
+  downloadBinary,
+  uninstallBinary,
+  updateBinary,
+  getSpawnPath,
+} from "./binary-manager";
 
 export function registerBinariesHandlers() {
   ipcMain.handle("binaries:check", async () => {
@@ -10,38 +16,71 @@ export function registerBinariesHandlers() {
     return { ytdlp, ffmpeg };
   });
 
-  ipcMain.handle("binaries:install", async (event, name: "yt-dlp" | "ffmpeg") => {
-    const win = BrowserWindow.fromWebContents(event.sender);
-    const success = await downloadBinary(name, (percent) => {
-      win?.webContents.send("binaries:install-progress", { name, percent });
-    });
+  ipcMain.handle(
+    "binaries:install",
+    async (event, name: "yt-dlp" | "ffmpeg") => {
+      const win = BrowserWindow.fromWebContents(event.sender);
+      const success = await downloadBinary(name, (percent) => {
+        win?.webContents.send("binaries:install-progress", { name, percent });
+      });
 
-    if (success) {
-      const info = await resolveBinary(name);
-      return { success: true, ...info };
-    }
-    return { success: false, installed: false, version: null, path: "", source: "none" as const };
-  });
+      if (success) {
+        if (process.platform === "win32") {
+          await new Promise((r) => setTimeout(r, 1500));
+        }
+        const info = await resolveBinary(name);
+        return { success: true, ...info };
+      }
+      return {
+        success: false,
+        installed: false,
+        version: null,
+        path: "",
+        source: "none" as const,
+      };
+    },
+  );
 
-  ipcMain.handle("binaries:uninstall", async (_event, name: "yt-dlp" | "ffmpeg") => {
-    const success = await uninstallBinary(name);
-    if (success) {
-      const info = await resolveBinary(name);
-      return { success: true, ...info };
-    }
-    return { success: false, installed: false, version: null, path: "", source: "none" as const };
-  });
+  ipcMain.handle(
+    "binaries:uninstall",
+    async (_event, name: "yt-dlp" | "ffmpeg") => {
+      const success = await uninstallBinary(name);
+      if (success) {
+        const info = await resolveBinary(name);
+        return { success: true, ...info };
+      }
+      return {
+        success: false,
+        installed: false,
+        version: null,
+        path: "",
+        source: "none" as const,
+      };
+    },
+  );
 
-  ipcMain.handle("binaries:update", async (_event, name: "yt-dlp" | "ffmpeg") => {
-    const success = await updateBinary(name);
-    if (success) {
-      const info = await resolveBinary(name);
-      return { success: true, ...info };
-    }
-    return { success: false, installed: false, version: null, path: "", source: "none" as const };
-  });
+  ipcMain.handle(
+    "binaries:update",
+    async (_event, name: "yt-dlp" | "ffmpeg") => {
+      const success = await updateBinary(name);
+      if (success) {
+        const info = await resolveBinary(name);
+        return { success: true, ...info };
+      }
+      return {
+        success: false,
+        installed: false,
+        version: null,
+        path: "",
+        source: "none" as const,
+      };
+    },
+  );
 
-  ipcMain.handle("binaries:get-path", async (_event, name: "yt-dlp" | "ffmpeg") => {
-    return getSpawnPath(name);
-  });
+  ipcMain.handle(
+    "binaries:get-path",
+    async (_event, name: "yt-dlp" | "ffmpeg") => {
+      return getSpawnPath(name);
+    },
+  );
 }

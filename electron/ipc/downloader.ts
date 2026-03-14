@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow, Notification } from "electron";
+import { ipcMain, BrowserWindow } from "electron";
 import { spawn, type ChildProcess } from "node:child_process";
 import path from "node:path";
 import { getSpawnPath, getDenoPath, getYtdlpSpawnInfo } from "./binary-manager";
@@ -179,11 +179,6 @@ export function registerDownloaderHandlers() {
             outputPath = guessedPath;
           }
         }
-
-        new Notification({
-          title: "Download concluído",
-          body: lastTitle || "Arquivo baixado com sucesso",
-        }).show();
 
         safeSend(win, "progress:update", {
           id,

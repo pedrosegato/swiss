@@ -17,7 +17,14 @@ app.commandLine.appendSwitch("force-color-profile", "srgb");
 
 app.setName("Swiss");
 
-if (process.platform === "darwin" || process.platform === "linux") {
+if (process.platform === "win32") {
+  const localBin = path.join(
+    process.env.LOCALAPPDATA ??
+      path.join(process.env.USERPROFILE ?? "", "AppData", "Local"),
+    "Programs",
+  );
+  process.env.PATH = `${localBin};${process.env.PATH}`;
+} else {
   const extraPaths = [
     "/usr/local/bin",
     "/opt/homebrew/bin",
