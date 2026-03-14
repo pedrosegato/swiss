@@ -26,15 +26,12 @@ export function Navbar() {
               className={cn(
                 "relative flex items-center gap-1.5 text-[12.5px] px-3 py-1.5 cursor-pointer transition-colors no-underline",
                 isActive
-                  ? "text-foreground font-medium"
+                  ? "text-primary font-semibold"
                   : "text-secondary-foreground hover:text-foreground",
               )}
             >
               <Icon className="w-3.5 h-3.5" />
               {label}
-              {isActive ? (
-                <span className="absolute bottom-[-1px] left-3 right-3 h-0.5 bg-primary rounded-sm" />
-              ) : null}
             </Link>
           );
         })}

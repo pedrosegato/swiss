@@ -40,12 +40,25 @@ export const useDownloadStore = create<DownloadState>()(
     {
       name: "swiss-downloads",
       version: 1,
-      partialize: (state) => ({
-        items: state.items,
-        sortBy: state.sortBy,
-        selectedFormat: state.selectedFormat,
-        selectedQuality: state.selectedQuality,
-      }),
+      partialize: (state) => {
+        const MAX_PERSISTED = 200;
+        const THIRTY_DAYS = 30 * 24 * 3600 * 1000;
+        const now = Date.now();
+
+        const items = state.items
+          .filter(
+            (i) =>
+              i.stage !== "completed" || now - (i.createdAt ?? 0) < THIRTY_DAYS,
+          )
+          .slice(-MAX_PERSISTED);
+
+        return {
+          items,
+          sortBy: state.sortBy,
+          selectedFormat: state.selectedFormat,
+          selectedQuality: state.selectedQuality,
+        };
+      },
       onRehydrateStorage: () => (state) => {
         if (!state) return;
         state.items = state.items.map((item) =>

@@ -1,30 +1,27 @@
-# React + TypeScript + Vite
+# Swiss
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Desktop app for downloading videos and converting media files. Built with Electron, React, and TypeScript.
 
-Currently, two official plugins are available:
+Uses **yt-dlp** for downloading from 1000+ sites and **ffmpeg** for format conversion. Both binaries are managed automatically — installed on first launch if not already present.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Features
 
-## Expanding the ESLint configuration
+- **Downloader** — Paste a URL, pick format (mp4, mkv, webm, mp3, wav, flac, aac) and quality, download. Supports all sites yt-dlp supports (YouTube, Twitter/X, Instagram, TikTok, etc). Cookie-based auth for private/age-restricted content.
+- **Converter** — Drag & drop files, choose output format (mp4, mkv, avi, webm, mov, mp3, wav, flac, aac, wma), convert. Batch processing supported.
+- **Settings** — Download path, cookie browser selection, binary management (install/update/uninstall yt-dlp and ffmpeg), auto-updates.
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+## Tech Stack
 
-- Configure the top-level `parserOptions` property like this:
+| Layer | Tech |
+|-------|------|
+| Shell | Electron 30 |
+| UI | React 18, TypeScript, Tailwind CSS 4, shadcn/ui |
+| Routing | TanStack Router (file-based) |
+| State | Zustand (persisted to localStorage) |
+| Build | Vite + vite-plugin-electron |
+| Packaging | electron-builder (dmg/nsis/AppImage) |
+| Updates | electron-updater (GitHub Releases) |
 
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
-```
+## License
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+Private.

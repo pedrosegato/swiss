@@ -37,16 +37,7 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - run: pnpm build
+      - name: Build & publish to GitHub Releases
+        run: pnpm build:ci
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: swiss-${{ matrix.platform }}
-          path: |
-            release/**/*.dmg
-            release/**/*.exe
-            release/**/*.AppImage
-            release/**/*.yml
-          if-no-files-found: ignore
