@@ -29,13 +29,26 @@ export function buildFormatString(format: string, quality: string): string {
     return "bestaudio/best";
   }
 
+  const codecFilter = format === "mp4" ? "[vcodec~='^(h264|avc)']" : "";
+  const audioCodecFilter = format === "mp4" ? "[acodec~='^(aac|mp4a)']" : "";
+
   if (quality === "Máxima") {
+    if (format === "mp4") {
+      return `bestvideo${codecFilter}+bestaudio${audioCodecFilter}/bestvideo+bestaudio/best`;
+    }
     return "bestvideo+bestaudio/best";
   }
 
   const height = QUALITY_TO_HEIGHT[quality];
   if (!height) {
+    if (format === "mp4") {
+      return `bestvideo${codecFilter}+bestaudio${audioCodecFilter}/bestvideo+bestaudio/best`;
+    }
     return "bestvideo+bestaudio/best";
+  }
+
+  if (format === "mp4") {
+    return `bestvideo[height<=${height}]${codecFilter}+bestaudio${audioCodecFilter}/bestvideo[height<=${height}]+bestaudio/best[height<=${height}]/bestvideo+bestaudio/best`;
   }
 
   return `bestvideo[height<=${height}]+bestaudio/best[height<=${height}]/bestvideo+bestaudio/best`;

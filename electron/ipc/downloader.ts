@@ -57,7 +57,7 @@ export function registerDownloaderHandlers() {
     if (isVideo && options.format === "mp4") {
       args.push(
         "--postprocessor-args",
-        "ffmpeg:-c:v libx264 -preset fast -crf 23 -c:a aac -b:a 192k",
+        "ffmpeg:-c:v libx264 -preset ultrafast -crf 18 -c:a aac -b:a 192k",
       );
     }
 
@@ -91,9 +91,19 @@ export function registerDownloaderHandlers() {
     let lastVideoId = "";
 
     proc.stderr.on("data", (data: Buffer) => {
-      stderrBuffer += data.toString();
+      const text = data.toString();
+      stderrBuffer += text;
       if (stderrBuffer.length > 65536)
         stderrBuffer = stderrBuffer.slice(-65536);
+
+      if (/\[Merger\]|\[ExtractAudio\]|\[FFmpegVideoConvertor\]|\[FixupM3u8\]/.test(text)) {
+        safeSend(win, "progress:update", {
+          id,
+          type: "download",
+          progress: 100,
+          stage: "converting",
+        });
+      }
     });
 
     proc.stdout.on("data", (data: Buffer) => {
