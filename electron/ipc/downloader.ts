@@ -1,7 +1,7 @@
 import { ipcMain, BrowserWindow, Notification } from "electron";
 import { spawn, type ChildProcess } from "node:child_process";
 import path from "node:path";
-import { getSpawnPath } from "./binary-manager";
+import { getSpawnPath, getDenoPath } from "./binary-manager";
 import { formatDuration, buildFormatString } from "../lib/format";
 import { existsSync } from "node:fs";
 
@@ -68,11 +68,10 @@ export function registerDownloaderHandlers() {
 
     args.push(options.url);
 
-    const nodeDir = path.dirname(process.execPath);
-    const envPath =
-      process.platform === "win32"
-        ? `${nodeDir};${process.env.PATH ?? ""}`
-        : `${nodeDir}:${process.env.PATH ?? ""}`;
+    // Add Deno to PATH so yt-dlp can use it for YouTube JS challenges
+    const denoDir = path.dirname(getDenoPath());
+    const sep = process.platform === "win32" ? ";" : ":";
+    const envPath = `${denoDir}${sep}${process.env.PATH ?? ""}`;
 
     const proc = spawn(ytdlpPath, args, {
       env: {

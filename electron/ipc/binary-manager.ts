@@ -238,6 +238,61 @@ async function tryPipInstall(): Promise<boolean> {
   return installed;
 }
 
+function getDenoDownloadUrl(): string {
+  const platform = process.platform;
+  const arch = process.arch;
+  const variants: Record<string, string> = {
+    "darwin-arm64":
+      "https://github.com/denoland/deno/releases/latest/download/deno-aarch64-apple-darwin.zip",
+    "darwin-x64":
+      "https://github.com/denoland/deno/releases/latest/download/deno-x86_64-apple-darwin.zip",
+    "win32-x64":
+      "https://github.com/denoland/deno/releases/latest/download/deno-x86_64-pc-windows-msvc.zip",
+    "linux-x64":
+      "https://github.com/denoland/deno/releases/latest/download/deno-x86_64-unknown-linux-gnu.zip",
+  };
+  return variants[`${platform}-${arch}`] ?? variants["linux-x64"];
+}
+
+export function getDenoPath(): string {
+  const ext = process.platform === "win32" ? ".exe" : "";
+  return join(getLocalBinDir(), `deno${ext}`);
+}
+
+export async function ensureDeno(): Promise<void> {
+  const denoPath = getDenoPath();
+  if (existsSync(denoPath)) return;
+
+  const dir = getLocalBinDir();
+  await mkdir(dir, { recursive: true });
+
+  const url = getDenoDownloadUrl();
+  const zipPath = join(dir, "deno-download.zip");
+
+  // Download the zip
+  const response = await fetch(url, { redirect: "follow" });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  const nodeStream = Readable.fromWeb(response.body as any);
+  await pipeline(nodeStream, createWriteStream(zipPath));
+
+  // Extract deno binary from zip
+  const { execFile: execFileCb } = await import("node:child_process");
+  const execPromise = promisify(execFileCb);
+  if (process.platform === "win32") {
+    await execPromise("powershell.exe", [
+      "-NoProfile",
+      "-Command",
+      `Expand-Archive -Force -Path "${zipPath}" -DestinationPath "${dir}"`,
+    ]);
+  } else {
+    await execPromise("unzip", ["-o", zipPath, "-d", dir]);
+    chmodSync(denoPath, 0o755);
+  }
+
+  // Clean up zip
+  try { await unlink(zipPath); } catch {}
+}
+
 async function downloadBinaryFile(
   url: string,
   destPath: string,
@@ -305,6 +360,12 @@ export async function downloadBinary(
     const url = getDownloadUrl(name);
     const destPath = getLocalBinPath(name);
     await downloadBinaryFile(url, destPath, onProgress);
+
+    if (name === "yt-dlp") {
+      await ensureDeno().catch((err) =>
+        console.error("Failed to install Deno:", err),
+      );
+    }
 
     await ensureShellPath();
     return true;
