@@ -15,7 +15,7 @@ app.commandLine.appendSwitch("enable-gpu-rasterization");
 app.commandLine.appendSwitch("disable-lcd-text", "0");
 app.commandLine.appendSwitch("force-color-profile", "srgb");
 
-app.setName("Swiss");
+app.setName("swiss");
 
 if (process.platform === "win32") {
   const localBin = path.join(

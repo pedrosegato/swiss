@@ -26,7 +26,7 @@ export function WindowControls() {
       <Button
         variant="ghost"
         size="icon"
-        className="h-12 w-12 rounded-none text-muted-foreground !hover:bg-destructive hover:text-destructive-foreground"
+        className="h-12 w-12 rounded-none text-muted-foreground hover:!bg-destructive hover:!text-destructive-foreground"
         onClick={() => ipc.closeWindow()}
       >
         <X className="w-4 h-4" />

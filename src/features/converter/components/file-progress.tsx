@@ -1,6 +1,6 @@
-import { Minus } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { ErrorLog } from "@/components/error-log";
+import { CONVERT_STAGE_LABELS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { ConvertStage } from "@/lib/types";
 
@@ -21,28 +21,37 @@ export function FileProgress({
 
   const isDone = stage === "completed";
   const isConverting = stage === "converting";
+  const isQueued = stage === "queued";
 
   return (
-    <div className="flex items-center gap-2">
-      <Progress value={progress} className="h-[3px] flex-1" />
-      <span
-        className={cn(
-          "font-mono text-[10px] min-w-[28px] text-right",
-          isDone
-            ? "text-success"
-            : isConverting
-              ? "text-primary"
-              : "text-muted-foreground/60",
-        )}
-      >
-        {isDone ? (
-          "ok"
-        ) : isConverting ? (
-          `${progress}%`
-        ) : (
-          <Minus className="w-3 h-3" />
-        )}
-      </span>
+    <div>
+      <Progress value={progress} className="h-[3px]" />
+      <div className="flex items-center justify-between mt-1">
+        <span
+          className={cn(
+            "text-[10px]",
+            isDone
+              ? "text-success"
+              : isConverting
+                ? "text-secondary-foreground"
+                : "text-muted-foreground/60",
+          )}
+        >
+          {CONVERT_STAGE_LABELS[stage]}
+        </span>
+        <span
+          className={cn(
+            "font-mono text-[10px] font-medium",
+            isDone
+              ? "text-muted-foreground"
+              : isConverting
+                ? "text-primary"
+                : "text-muted-foreground/60",
+          )}
+        >
+          {isDone ? "Concluído" : isConverting ? `${progress}%` : isQueued ? "Na fila" : "—"}
+        </span>
+      </div>
     </div>
   );
 }
