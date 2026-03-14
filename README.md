@@ -5,8 +5,8 @@
 <h1 align="center">Swiss</h1>
 
 <p align="center">Desktop app for downloading videos and converting media files.<br>Built with Electron, React, and TypeScript.</p>
-
-Uses **yt-dlp** for downloading from 1000+ sites and **ffmpeg** for format conversion. Both binaries are managed automatically — installed on first launch if not already present.
+<br>
+Uses <a href="https://github.com/yt-dlp/yt-dlp">yt-dlp</a> for downloading from 1000+ sites and <a href="https://github.com/FFmpeg/FFmpeg">ffmpeg</a> for format conversion. Both binaries are managed automatically — installed on first launch if not already present.
 
 ## Features
 
@@ -16,12 +16,12 @@ Uses **yt-dlp** for downloading from 1000+ sites and **ffmpeg** for format conve
 
 ## Tech Stack
 
-| Layer | Tech |
-|-------|------|
-| Shell | Electron 30 |
-| UI | React 18, TypeScript, Tailwind CSS 4, shadcn/ui |
-| Routing | TanStack Router (file-based) |
-| State | Zustand (persisted to localStorage) |
-| Build | Vite + vite-plugin-electron |
-| Packaging | electron-builder (dmg/nsis/AppImage) |
-| Updates | electron-updater (GitHub Releases) |
+| Layer     | Tech                                            |
+| --------- | ----------------------------------------------- |
+| Shell     | Electron 30                                     |
+| UI        | React 18, TypeScript, Tailwind CSS 4, shadcn/ui |
+| Routing   | TanStack Router (file-based)                    |
+| State     | Zustand (persisted to localStorage)             |
+| Build     | Vite + vite-plugin-electron                     |
+| Packaging | electron-builder (dmg/nsis/AppImage)            |
+| Updates   | electron-updater (GitHub Releases)              |
