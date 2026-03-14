@@ -53,6 +53,7 @@ export function Navbar() {
         })}
       </div>
 
+      <div className="ml-auto" />
       <UpdateBanner />
       <WindowControls />
     </nav>

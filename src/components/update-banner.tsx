@@ -19,7 +19,7 @@ export function UpdateBanner() {
   if (!update) return null;
 
   return (
-    <div className="flex items-center gap-2 ml-auto [-webkit-app-region:no-drag]">
+    <div className="flex items-center gap-2 mr-2 [-webkit-app-region:no-drag]">
       {update.status === "downloading" ? (
         <span className="text-[10.5px] text-muted-foreground">
           Baixando v{update.version}... {update.percent}%
