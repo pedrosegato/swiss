@@ -1,10 +1,10 @@
-import { app, BrowserWindow, nativeImage } from "electron";
+import { app, BrowserWindow, ipcMain, nativeImage } from "electron";
 import { autoUpdater } from "electron-updater";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { registerBinariesHandlers } from "./ipc/binaries";
-import { registerDownloaderHandlers } from "./ipc/downloader";
-import { registerConverterHandlers } from "./ipc/converter";
+import { registerDownloaderHandlers, killAllDownloads } from "./ipc/downloader";
+import { registerConverterHandlers, killAllConversions } from "./ipc/converter";
 import { registerDialogHandlers } from "./ipc/dialogs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -44,8 +44,14 @@ function createWindow() {
     backgroundColor: "#121416",
     icon: path.join(process.env.VITE_PUBLIC, "icon.png"),
     webPreferences: {
+      contextIsolation: true,
+      nodeIntegration: false,
       preload: path.join(__dirname, "preload.mjs"),
     },
+  });
+
+  win.on("closed", () => {
+    win = null;
   });
 
   if (VITE_DEV_SERVER_URL) {
@@ -55,16 +61,30 @@ function createWindow() {
   }
 }
 
-// Register all IPC handlers
 registerBinariesHandlers();
 registerDownloaderHandlers();
 registerConverterHandlers();
 registerDialogHandlers();
 
+ipcMain.handle("updater:install", () => {
+  autoUpdater.quitAndInstall();
+});
+
+ipcMain.handle("dock:set-progress", (_event, progress: number) => {
+  if (win && !win.isDestroyed()) {
+    win.setProgressBar(Math.max(-1, Math.min(1, progress)));
+  }
+});
+
+// Kill all child processes before quitting
+app.on("before-quit", () => {
+  killAllDownloads();
+  killAllConversions();
+});
+
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     app.quit();
-    win = null;
   }
 });
 
@@ -85,6 +105,10 @@ app.whenReady().then(() => {
   if (!VITE_DEV_SERVER_URL) {
     autoUpdater.autoDownload = true;
     autoUpdater.autoInstallOnAppQuit = true;
+
+    autoUpdater.on("error", (err) => {
+      console.error("Auto-updater error:", err);
+    });
 
     autoUpdater.on("update-available", (info) => {
       win?.webContents.send("updater:status", {
@@ -110,16 +134,5 @@ app.whenReady().then(() => {
     autoUpdater.checkForUpdates();
 
     setInterval(() => autoUpdater.checkForUpdates(), 30 * 60 * 1000);
-  }
-});
-
-import { ipcMain } from "electron";
-ipcMain.handle("updater:install", () => {
-  autoUpdater.quitAndInstall();
-});
-
-ipcMain.handle("dock:set-progress", (_event, progress: number) => {
-  if (win) {
-    win.setProgressBar(progress);
   }
 });

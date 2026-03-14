@@ -1,3 +1,4 @@
+import { useShallow } from "zustand/shallow";
 import { createFileRoute } from "@tanstack/react-router";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,8 @@ export const Route = createFileRoute("/converter")({
 });
 
 function ConverterPage() {
-  const items = useConvertStore((s) => s.items);
+  const itemIds = useConvertStore(useShallow((s) => s.items.map((i) => i.id)));
+  const itemCount = useConvertStore((s) => s.items.length);
   const clearItems = useConvertStore((s) => s.clearItems);
   const startAll = useConvertStore((s) => s.startAll);
   const format = useConvertStore((s) => s.outputFormat);
@@ -45,10 +47,10 @@ function ConverterPage() {
 
       <div className="flex items-center justify-between mb-2.5">
         <span className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
-          {items.length} {items.length === 1 ? "arquivo" : "arquivos"}
+          {itemCount} {itemCount === 1 ? "arquivo" : "arquivos"}
         </span>
         <div className="flex items-center gap-2">
-          {items.length > 0 && (
+          {itemCount > 0 && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -69,14 +71,14 @@ function ConverterPage() {
         </div>
       </div>
 
-      {items.length > 0 && (
+      {itemIds.length > 0 && (
         <table
           className="w-full border-collapse"
           style={{ borderSpacing: "0 3px" }}
         >
           <tbody>
-            {items.map((item) => (
-              <FileRow key={item.id} item={item} />
+            {itemIds.map((id) => (
+              <FileRow key={id} id={id} />
             ))}
           </tbody>
         </table>

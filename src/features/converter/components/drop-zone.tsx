@@ -7,7 +7,10 @@ import { isVideoFormat, CONVERT_ALL_FORMATS } from "@/lib/constants";
 import { Dot, Download } from "lucide-react";
 
 export function DropZone() {
-  const { addItems, updateItem, outputFormat, quality } = useConvertStore();
+  const addItems = useConvertStore((s) => s.addItems);
+  const updateItem = useConvertStore((s) => s.updateItem);
+  const outputFormat = useConvertStore((s) => s.outputFormat);
+  const quality = useConvertStore((s) => s.quality);
   const savePath = useSettingsStore((s) => s.downloadPath);
 
   const handleBrowse = useCallback(async () => {

@@ -1,5 +1,3 @@
-import { useState } from "react";
-import type { DownloadItem } from "@/lib/types";
 import { DOWNLOAD_STAGE_LABELS } from "@/lib/constants";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -11,31 +9,28 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
+import { ErrorLog } from "@/components/error-log";
 import { cn } from "@/lib/utils";
 import { ipc } from "@/lib/ipc";
 import { useDownloadStore } from "@/stores/download-store";
 import { useSettingsStore } from "@/stores/settings-store";
-import {
-  Bug,
-  FolderOpen,
-  RefreshCw,
-  Square,
-} from "lucide-react";
+import { FolderOpen, RefreshCw, Square } from "lucide-react";
 
 interface DownloadCardProps {
-  item: DownloadItem;
+  id: string;
 }
 
-export function DownloadCard({ item }: DownloadCardProps) {
+export function DownloadCard({ id }: DownloadCardProps) {
+  const item = useDownloadStore((s) => s.items.find((i) => i.id === id));
   const updateItem = useDownloadStore((s) => s.updateItem);
+
+  if (!item) return null;
+
   const isDone = item.stage === "completed";
   const isQueued = item.stage === "queued";
   const isFetching = item.stage === "fetching";
-  const isActive =
-    item.stage === "downloading" || item.stage === "converting";
+  const isActive = item.stage === "downloading" || item.stage === "converting";
   const isError = item.stage === "error";
-  const [showLog, setShowLog] = useState(false);
-  const [copied, setCopied] = useState(false);
 
   const handleCancel = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -95,7 +90,6 @@ export function DownloadCard({ item }: DownloadCardProps) {
 
   return (
     <Card className="overflow-hidden transition-all hover:border-border/80 hover:-translate-y-px flex flex-col p-0 gap-0">
-      {/* Thumbnail + Title — click opens video */}
       <div
         className="cursor-pointer"
         onClick={() => item.url && ipc.openExternal(item.url)}
@@ -119,10 +113,8 @@ export function DownloadCard({ item }: DownloadCardProps) {
         </div>
       </div>
 
-      {/* Body */}
       <div className="px-3 pt-1.5 pb-3 flex flex-col flex-1">
         <div className="mt-auto">
-          {/* Stage label + action buttons */}
           <div className="flex items-center justify-between mb-1">
             <span
               className={cn(
@@ -189,32 +181,7 @@ export function DownloadCard({ item }: DownloadCardProps) {
 
           {isError ? (
             <div className="mb-1.5">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-5 text-[9.5px] !px-0 gap-1 text-muted-foreground hover:text-foreground !hover:bg-transparent"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowLog(!showLog);
-                }}
-              >
-                <Bug className="w-3 h-3" />
-                {showLog ? "Ocultar log" : "Ver log"}
-              </Button>
-              {showLog && item.errorMessage ? (
-                <pre
-                  className="mt-1 text-[9px] text-destructive/80 bg-muted/50 rounded p-2 max-h-24 overflow-auto whitespace-pre-wrap break-all font-mono cursor-pointer hover:bg-muted/70 transition-colors"
-                  title="Clique para copiar"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigator.clipboard.writeText(item.errorMessage!);
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 1500);
-                  }}
-                >
-                  {copied ? "Copiado!" : item.errorMessage}
-                </pre>
-              ) : null}
+              <ErrorLog message={item.errorMessage} onStopPropagation />
             </div>
           ) : (
             <Progress value={item.progress} className="h-[3px] mb-1.5" />
@@ -250,7 +217,6 @@ export function DownloadCard({ item }: DownloadCardProps) {
             </span>
           </div>
 
-          {/* Output filename */}
           {isDone && item.outputPath && (
             <p className="text-[9px] text-muted-foreground/60 font-mono mt-1 truncate">
               {item.outputPath.split("/").pop()}

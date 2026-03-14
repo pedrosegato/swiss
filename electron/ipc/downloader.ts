@@ -7,6 +7,17 @@ import { existsSync } from "node:fs";
 
 const activeDownloads = new Map<string, ChildProcess>();
 
+function safeSend(win: BrowserWindow, channel: string, data: unknown) {
+  if (!win.isDestroyed()) win.webContents.send(channel, data);
+}
+
+export function killAllDownloads() {
+  for (const proc of activeDownloads.values()) {
+    proc.kill("SIGTERM");
+  }
+  activeDownloads.clear();
+}
+
 export function registerDownloaderHandlers() {
   ipcMain.handle("download:start", async (event, options) => {
     const id = options.id;
@@ -59,6 +70,8 @@ export function registerDownloaderHandlers() {
 
     proc.stderr.on("data", (data: Buffer) => {
       stderrBuffer += data.toString();
+      if (stderrBuffer.length > 65536)
+        stderrBuffer = stderrBuffer.slice(-65536);
     });
 
     proc.stdout.on("data", (data: Buffer) => {
@@ -94,7 +107,7 @@ export function registerDownloaderHandlers() {
               else if (resH > 0) resolution = `${resH}p`;
             }
 
-            win.webContents.send("download:metadata", {
+            safeSend(win, "download:metadata", {
               id,
               videoId,
               title,
@@ -109,7 +122,7 @@ export function registerDownloaderHandlers() {
         const match = trimmed.match(/(\d+\.?\d*)%/);
         if (match) {
           const progress = Math.round(parseFloat(match[1]));
-          win.webContents.send("progress:update", {
+          safeSend(win, "progress:update", {
             id,
             type: "download",
             progress,
@@ -122,7 +135,6 @@ export function registerDownloaderHandlers() {
     proc.on("close", (code) => {
       activeDownloads.delete(id);
       if (code === 0) {
-        // Parse output path from stderr — [Merger] or [download] Destination
         let outputPath: string | undefined;
         const mergerMatch = stderrBuffer.match(
           /\[Merger\] Merging formats into "(.+?)"/,
@@ -138,7 +150,6 @@ export function registerDownloaderHandlers() {
           }
         }
 
-        // Check for existing file if we couldn't parse the path
         if (!outputPath && metadataSent) {
           const ext = options.format;
           const guessedPath = `${options.savePath}/${lastTitle}_${lastVideoId}.${ext}`;
@@ -152,7 +163,7 @@ export function registerDownloaderHandlers() {
           body: lastTitle || "Arquivo baixado com sucesso",
         }).show();
 
-        win.webContents.send("progress:update", {
+        safeSend(win, "progress:update", {
           id,
           type: "download",
           progress: 100,
@@ -162,10 +173,11 @@ export function registerDownloaderHandlers() {
       } else {
         const errMsg =
           stderrBuffer.trim() || `Processo encerrou com código ${code}`;
-        const isDiskFull =
-          /no space left|disk full|não há espaço/i.test(errMsg);
+        const isDiskFull = /no space left|disk full|não há espaço/i.test(
+          errMsg,
+        );
 
-        win.webContents.send("progress:update", {
+        safeSend(win, "progress:update", {
           id,
           type: "download",
           progress: 0,

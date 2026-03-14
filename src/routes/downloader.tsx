@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useShallow } from "zustand/shallow";
 import { createFileRoute } from "@tanstack/react-router";
 import { Separator } from "@/components/ui/separator";
 import { UrlInput } from "@/features/downloader/components/url-input";
@@ -24,7 +25,7 @@ export const Route = createFileRoute("/downloader")({
 });
 
 function DownloaderPage() {
-  const items = useDownloadStore((s) => s.items);
+  const itemIds = useDownloadStore(useShallow((s) => s.items.map((i) => i.id)));
   const addItem = useDownloadStore((s) => s.addItem);
   const updateItem = useDownloadStore((s) => s.updateItem);
   const format = useDownloadStore((s) => s.selectedFormat);
@@ -38,9 +39,12 @@ function DownloaderPage() {
   const ffmpegInstalled = useBinariesStore((s) => s.ffmpeg.installed);
   const [showInstallDialog, setShowInstallDialog] = useState(false);
 
+  const qualityRef = useRef(quality);
+  qualityRef.current = quality;
+
   useEffect(() => {
     const unsubscribe = ipc.onMetadata((data) => {
-      const displayQuality = data.resolution ?? quality;
+      const displayQuality = data.resolution ?? qualityRef.current;
       updateItem(data.id, {
         videoId: data.videoId,
         title: data.title,
@@ -52,7 +56,7 @@ function DownloaderPage() {
       });
     });
     return unsubscribe;
-  }, [updateItem, quality]);
+  }, [updateItem]);
 
   const handleFetch = async (url: string) => {
     if (!ytdlpInstalled || !ffmpegInstalled) {
@@ -114,8 +118,8 @@ function DownloaderPage() {
       <QueueHeader />
 
       <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-2.5">
-        {items.map((item) => (
-          <DownloadCard key={item.id} item={item} />
+        {itemIds.map((id) => (
+          <DownloadCard key={id} id={id} />
         ))}
       </div>
 

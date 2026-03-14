@@ -1,5 +1,4 @@
-import { useState } from "react";
-import type { ConvertItem, ConvertFormat } from "@/lib/types";
+import type { ConvertFormat } from "@/lib/types";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,10 +17,10 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
+import { ErrorLog } from "@/components/error-log";
 import { cn, formatSize } from "@/lib/utils";
 import {
   ArrowRight,
-  Bug,
   Film,
   FolderOpen,
   Minus,
@@ -40,20 +39,22 @@ import { useSettingsStore } from "@/stores/settings-store";
 import { ipc } from "@/lib/ipc";
 
 interface FileRowProps {
-  item: ConvertItem;
+  id: string;
 }
 
-export function FileRow({ item }: FileRowProps) {
+export function FileRow({ id }: FileRowProps) {
+  const item = useConvertStore((s) => s.items.find((i) => i.id === id));
   const updateItem = useConvertStore((s) => s.updateItem);
   const removeItem = useConvertStore((s) => s.removeItem);
+
+  if (!item) return null;
+
   const isDone = item.stage === "completed";
   const isError = item.stage === "error";
   const isConverting = item.stage === "converting";
   const isQueued = item.stage === "queued";
   const isInputVideo = isVideoFormat(item.inputExt.replace(".", ""));
   const Icon = isInputVideo ? Film : Music;
-  const [showLog, setShowLog] = useState(false);
-  const [copied, setCopied] = useState(false);
 
   const handleCancel = () => {
     ipc.cancelConversion(item.id);
@@ -166,30 +167,7 @@ export function FileRow({ item }: FileRowProps) {
 
       <td className="px-3 py-2.5 border-y border-border w-[160px]">
         {isError ? (
-          <div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-5 text-[9.5px] !px-0 gap-1 text-muted-foreground hover:text-foreground !hover:bg-transparent"
-              onClick={() => setShowLog(!showLog)}
-            >
-              <Bug className="w-3 h-3" />
-              {showLog ? "Ocultar log" : "Ver log"}
-            </Button>
-            {showLog && item.errorMessage ? (
-              <pre
-                className="mt-1 text-[9px] text-destructive/80 bg-muted/50 rounded p-2 max-h-24 overflow-auto whitespace-pre-wrap break-all font-mono cursor-pointer hover:bg-muted/70 transition-colors"
-                title="Clique para copiar"
-                onClick={() => {
-                  navigator.clipboard.writeText(item.errorMessage!);
-                  setCopied(true);
-                  setTimeout(() => setCopied(false), 1500);
-                }}
-              >
-                {copied ? "Copiado!" : item.errorMessage}
-              </pre>
-            ) : null}
-          </div>
+          <ErrorLog message={item.errorMessage} />
         ) : (
           <div className="flex items-center gap-2">
             <Progress value={item.progress} className="h-[3px] flex-1" />

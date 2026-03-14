@@ -37,15 +37,18 @@ export const useConvertStore = create<ConvertState>((set) => ({
   startAll: () => {
     const { items } = useConvertStore.getState();
     const savePath = useSettingsStore.getState().downloadPath;
-    for (const item of items) {
-      if (item.stage !== "queued") continue;
-      set((s) => ({
-        items: s.items.map((i) =>
-          i.id === item.id
-            ? { ...i, stage: "converting" as const, progress: 0 }
-            : i,
-        ),
-      }));
+    const toStart = items.filter((i) => i.stage === "queued");
+    if (toStart.length === 0) return;
+
+    set((s) => ({
+      items: s.items.map((i) =>
+        i.stage === "queued"
+          ? { ...i, stage: "converting" as const, progress: 0 }
+          : i,
+      ),
+    }));
+
+    for (const item of toStart) {
       ipc.startConversion({
         id: item.id,
         inputPath: item.inputPath,

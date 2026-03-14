@@ -32,12 +32,11 @@ function getLocalBinPath(name: BinaryName): string {
 
 async function tryGetVersion(
   binPath: string,
-  versionFlag = "--version"
+  versionFlag = "--version",
 ): Promise<string | null> {
   try {
     const { stdout } = await exec(binPath, [versionFlag]);
     const firstLine = stdout.trim().split("\n")[0];
-    // ffmpeg returns "ffmpeg version X.Y ..." — extract just the version
     const ffmpegMatch = firstLine.match(/^ffmpeg version (\S+)/);
     if (ffmpegMatch) return ffmpegMatch[1];
     return firstLine;
@@ -57,13 +56,12 @@ async function whichBinary(name: string): Promise<string | null> {
 }
 
 export async function resolveBinary(name: BinaryName): Promise<BinaryStatus> {
-  const versionFlag = (name === "ffmpeg" || name === "ffprobe") ? "-version" : "--version";
+  const versionFlag =
+    name === "ffmpeg" || name === "ffprobe" ? "-version" : "--version";
   const localBinDir = getLocalBinDir();
 
-  // 1. Try system PATH
   const systemVersion = await tryGetVersion(name, versionFlag);
   if (systemVersion) {
-    // Check if the resolved path is inside our managed directory (~/.local/bin)
     const resolvedPath = await whichBinary(name);
     const isLocal = resolvedPath?.startsWith(localBinDir);
     return {
@@ -74,19 +72,32 @@ export async function resolveBinary(name: BinaryName): Promise<BinaryStatus> {
     };
   }
 
-  // 2. Try explicit local path
   const localPath = getLocalBinPath(name);
   const localVersion = await tryGetVersion(localPath, versionFlag);
   if (localVersion) {
-    return { installed: true, version: localVersion, path: localPath, source: "local" };
+    return {
+      installed: true,
+      version: localVersion,
+      path: localPath,
+      source: "local",
+    };
   }
 
-  // 3. Not found
   return { installed: false, version: null, path: localPath, source: "none" };
 }
 
+const pathCache = new Map<BinaryName, string>();
+
+export function clearPathCache(name?: BinaryName) {
+  if (name) pathCache.delete(name);
+  else pathCache.clear();
+}
+
 export async function getSpawnPath(name: BinaryName): Promise<string> {
+  const cached = pathCache.get(name);
+  if (cached) return cached;
   const status = await resolveBinary(name);
+  if (status.installed) pathCache.set(name, status.path);
   return status.path;
 }
 
@@ -130,11 +141,7 @@ async function ensureShellPath(): Promise<void> {
   const binDir = getLocalBinDir();
   const exportLine = `export PATH="${binDir}:$PATH"`;
 
-  // Check common shell config files
-  const rcFiles = [
-    join(home, ".zshrc"),
-    join(home, ".bashrc"),
-  ];
+  const rcFiles = [join(home, ".zshrc"), join(home, ".bashrc")];
 
   for (const rcFile of rcFiles) {
     if (!existsSync(rcFile)) continue;
@@ -147,7 +154,6 @@ async function ensureShellPath(): Promise<void> {
 }
 
 async function findPython(): Promise<string> {
-  // Prefer Homebrew Python (newer, avoids deprecated Python warnings)
   const candidates = [
     "/opt/homebrew/bin/python3",
     "/usr/local/bin/python3",
@@ -157,9 +163,7 @@ async function findPython(): Promise<string> {
     try {
       await exec(py, ["--version"]);
       return py;
-    } catch {
-      // Try next
-    }
+    } catch {}
   }
   return "python3";
 }
@@ -176,9 +180,16 @@ async function getPipUserBinDir(python: string): Promise<string | null> {
 async function tryPipInstall(): Promise<boolean> {
   const python = await findPython();
 
-  // Try with --break-system-packages first (Python 3.11+), then without (older Python)
   const argVariants = [
-    [python, "-m", "pip", "install", "--user", "--break-system-packages", "yt-dlp"],
+    [
+      python,
+      "-m",
+      "pip",
+      "install",
+      "--user",
+      "--break-system-packages",
+      "yt-dlp",
+    ],
     [python, "-m", "pip", "install", "--user", "yt-dlp"],
   ];
 
@@ -188,15 +199,11 @@ async function tryPipInstall(): Promise<boolean> {
     try {
       await exec(args[0], args.slice(1), { timeout: 120_000 });
       installed = true;
-    } catch {
-      // Try next variant
-    }
+    } catch {}
   }
 
   if (!installed) return false;
 
-  // On macOS, pip --user installs to ~/Library/Python/X.Y/bin/ not ~/.local/bin
-  // Create a symlink so it's in our managed PATH
   const pipBinDir = await getPipUserBinDir(python);
   if (pipBinDir) {
     const pipYtdlp = join(pipBinDir, "yt-dlp");
@@ -207,9 +214,7 @@ async function tryPipInstall(): Promise<boolean> {
       await mkdir(localBin, { recursive: true });
       try {
         await unlink(localYtdlp);
-      } catch {
-        // doesn't exist yet
-      }
+      } catch {}
       await symlink(pipYtdlp, localYtdlp);
     }
   }
@@ -257,22 +262,19 @@ async function downloadBinaryFile(
     chmodSync(destPath, 0o755);
   }
 
-  // Remove macOS quarantine flag so Gatekeeper doesn't block the binary
   if (process.platform === "darwin") {
     try {
       await exec("xattr", ["-d", "com.apple.quarantine", destPath]);
-    } catch {
-      // Attribute may not exist — ignore
-    }
+    } catch {}
   }
 }
 
 export async function downloadBinary(
   name: BinaryName,
-  onProgress?: (percent: number) => void
+  onProgress?: (percent: number) => void,
 ): Promise<boolean> {
+  clearPathCache(name);
   try {
-    // For yt-dlp: prefer pip install (instant startup) over PyInstaller binary (15-20s startup)
     if (name === "yt-dlp") {
       const pipSuccess = await tryPipInstall();
       if (pipSuccess) {
@@ -281,7 +283,6 @@ export async function downloadBinary(
       }
     }
 
-    // Fallback: download standalone binary
     const dir = getLocalBinDir();
     await mkdir(dir, { recursive: true });
 
@@ -298,12 +299,11 @@ export async function downloadBinary(
 }
 
 export async function updateBinary(name: BinaryName): Promise<boolean> {
+  clearPathCache(name);
   if (name === "yt-dlp") {
-    // Try pip upgrade first (fastest startup)
     const pipSuccess = await tryPipInstall();
     if (pipSuccess) return true;
 
-    // Fallback: yt-dlp --update or re-download
     const binPath = await getSpawnPath(name);
     try {
       await exec(binPath, ["--update"]);
@@ -312,42 +312,34 @@ export async function updateBinary(name: BinaryName): Promise<boolean> {
       return downloadBinary(name);
     }
   }
-  // ffmpeg has no self-update — just re-download latest
   return downloadBinary(name);
 }
 
 export async function uninstallBinary(name: BinaryName): Promise<boolean> {
+  clearPathCache(name);
   let removed = false;
 
-  // For yt-dlp: try pip uninstall first (handles pip-installed version)
   if (name === "yt-dlp") {
     try {
       await exec("pip3", ["uninstall", "-y", "yt-dlp"], { timeout: 30_000 });
       removed = true;
-    } catch {
-      // Not installed via pip
-    }
+    } catch {}
   }
 
-  // Also try deleting the actual binary file wherever it is
+  const localBinDir = getLocalBinDir();
   const resolvedPath = await whichBinary(name);
-  if (resolvedPath) {
+  if (resolvedPath && resolvedPath.startsWith(localBinDir)) {
     try {
       await unlink(resolvedPath);
       removed = true;
-    } catch {
-      // Permission denied or already gone
-    }
+    } catch {}
   }
 
-  // Try the expected local path too
   try {
     const localPath = getLocalBinPath(name);
     await unlink(localPath);
     removed = true;
-  } catch {
-    // Not there
-  }
+  } catch {}
 
   return removed;
 }

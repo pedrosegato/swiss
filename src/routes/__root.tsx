@@ -1,6 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createRootRoute, Outlet } from "@tanstack/react-router";
-import { useEffect } from "react";
 import { Navbar } from "@/components/navbar";
 import { BinaryInstallDialog } from "@/components/binary-install-dialog";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -19,8 +18,6 @@ function RootLayout() {
   const setFfmpeg = useBinariesStore((s) => s.setFfmpeg);
   const updateDownload = useDownloadStore((s) => s.updateItem);
   const updateConvert = useConvertStore((s) => s.updateItem);
-  const downloadItems = useDownloadStore((s) => s.items);
-  const convertItems = useConvertStore((s) => s.items);
   const [showInstallDialog, setShowInstallDialog] = useState(false);
 
   useEffect(() => {
@@ -58,24 +55,39 @@ function RootLayout() {
     return unsubscribe;
   }, [updateDownload, updateConvert]);
 
-  // Dock/taskbar progress
+  const rafRef = useRef(0);
   useEffect(() => {
-    const activeDownloads = downloadItems.filter(
-      (i) => i.stage === "downloading" || i.stage === "converting",
-    );
-    const activeConverts = convertItems.filter(
-      (i) => i.stage === "converting",
-    );
-    const allActive = [...activeDownloads, ...activeConverts];
+    const unsub1 = useDownloadStore.subscribe(() => scheduleDockUpdate());
+    const unsub2 = useConvertStore.subscribe(() => scheduleDockUpdate());
 
-    if (allActive.length === 0) {
-      ipc.setDockProgress(-1);
-    } else {
-      const avg =
-        allActive.reduce((sum, i) => sum + i.progress, 0) / allActive.length;
-      ipc.setDockProgress(avg / 100);
+    function scheduleDockUpdate() {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(() => {
+        const downloads = useDownloadStore.getState().items;
+        const converts = useConvertStore.getState().items;
+        const active = [
+          ...downloads.filter(
+            (i) => i.stage === "downloading" || i.stage === "converting",
+          ),
+          ...converts.filter((i) => i.stage === "converting"),
+        ];
+
+        if (active.length === 0) {
+          ipc.setDockProgress(-1);
+        } else {
+          const avg =
+            active.reduce((sum, i) => sum + i.progress, 0) / active.length;
+          ipc.setDockProgress(avg / 100);
+        }
+      });
     }
-  }, [downloadItems, convertItems]);
+
+    return () => {
+      unsub1();
+      unsub2();
+      cancelAnimationFrame(rafRef.current);
+    };
+  }, []);
 
   return (
     <TooltipProvider>

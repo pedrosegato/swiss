@@ -10,6 +10,17 @@ import { getSpawnPath } from "./binary-manager";
 const exec = promisify(execFile);
 const activeConversions = new Map<string, ChildProcess>();
 
+function safeSend(win: BrowserWindow, channel: string, data: unknown) {
+  if (!win.isDestroyed()) win.webContents.send(channel, data);
+}
+
+export function killAllConversions() {
+  for (const proc of activeConversions.values()) {
+    proc.kill("SIGTERM");
+  }
+  activeConversions.clear();
+}
+
 export function registerConverterHandlers() {
   ipcMain.handle("convert:start", async (event, options) => {
     const id = options.id;
@@ -36,6 +47,8 @@ export function registerConverterHandlers() {
     let stderrBuffer = "";
     proc.stderr.on("data", (data: Buffer) => {
       stderrBuffer += data.toString();
+      if (stderrBuffer.length > 65536)
+        stderrBuffer = stderrBuffer.slice(-65536);
     });
 
     proc.stdout.on("data", (data: Buffer) => {
@@ -47,7 +60,7 @@ export function registerConverterHandlers() {
           Math.round((currentSeconds / durationSeconds) * 100),
           99,
         );
-        win.webContents.send("progress:update", {
+        safeSend(win, "progress:update", {
           id,
           type: "convert",
           progress,
@@ -71,7 +84,7 @@ export function registerConverterHandlers() {
           body: outputName,
         }).show();
 
-        win.webContents.send("progress:update", {
+        safeSend(win, "progress:update", {
           id,
           type: "convert",
           progress: 100,
@@ -82,10 +95,11 @@ export function registerConverterHandlers() {
       } else {
         const errMsg =
           stderrBuffer.trim() || `ffmpeg encerrou com código ${code}`;
-        const isDiskFull =
-          /no space left|disk full|não há espaço/i.test(errMsg);
+        const isDiskFull = /no space left|disk full|não há espaço/i.test(
+          errMsg,
+        );
 
-        win.webContents.send("progress:update", {
+        safeSend(win, "progress:update", {
           id,
           type: "convert",
           progress: 0,
@@ -132,10 +146,11 @@ export function registerConverterHandlers() {
           tmpPath,
         ]);
         const buf = await readFile(tmpPath);
-        unlink(tmpPath).catch(() => {});
         return `data:image/jpeg;base64,${buf.toString("base64")}`;
       } catch {
         return null;
+      } finally {
+        unlink(tmpPath).catch(() => {});
       }
     },
   );
@@ -183,7 +198,6 @@ function buildOutputPath(options: {
   const name = basename(options.inputPath, extname(options.inputPath));
   let outputPath = join(dir, `${name}.${options.outputFormat}`);
 
-  // Handle filename conflicts
   let counter = 1;
   while (existsSync(outputPath)) {
     outputPath = join(dir, `${name}_${counter}.${options.outputFormat}`);

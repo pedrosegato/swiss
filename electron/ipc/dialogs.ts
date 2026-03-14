@@ -38,6 +38,12 @@ export function registerDialogHandlers() {
   );
 
   ipcMain.handle("shell:open-external", async (_event, url: string) => {
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return;
+    } catch {
+      return;
+    }
     await shell.openExternal(url);
   });
 
@@ -49,11 +55,8 @@ export function registerDialogHandlers() {
     },
   );
 
-  ipcMain.handle(
-    "shell:open-path",
-    async (_event, dirPath: string) => {
-      const resolved = dirPath.replace(/^~/, homedir());
-      await shell.openPath(resolved);
-    },
-  );
+  ipcMain.handle("shell:open-path", async (_event, dirPath: string) => {
+    const resolved = dirPath.replace(/^~/, homedir());
+    await shell.openPath(resolved);
+  });
 }
