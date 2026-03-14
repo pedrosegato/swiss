@@ -17,6 +17,18 @@ app.commandLine.appendSwitch("force-color-profile", "srgb");
 
 app.setName("swiss");
 
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  app.quit();
+} else {
+  app.on("second-instance", () => {
+    if (win) {
+      if (win.isMinimized()) win.restore();
+      win.focus();
+    }
+  });
+}
+
 if (process.platform === "win32") {
   const localBin = path.join(
     process.env.LOCALAPPDATA ??
