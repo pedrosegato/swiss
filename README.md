@@ -21,7 +21,3 @@ Uses **yt-dlp** for downloading from 1000+ sites and **ffmpeg** for format conve
 | Build | Vite + vite-plugin-electron |
 | Packaging | electron-builder (dmg/nsis/AppImage) |
 | Updates | electron-updater (GitHub Releases) |
-
-## License
-
-Private.
