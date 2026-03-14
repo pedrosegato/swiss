@@ -1,0 +1,599 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Swiss — Downloader v6b</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg-base: #121416;
+        --bg-surface: #1a1d21;
+        --border: #2a2d32;
+        --border-hover: #3a3d42;
+        --text-primary: #e8eaed;
+        --text-secondary: #8b9099;
+        --text-muted: #4a4f57;
+        --accent: #c41e3a;
+        --accent-hover: #a8182f;
+        --accent-soft: rgba(196, 30, 58, 0.12);
+        --metallic: #b8bcc2;
+        --metallic-dim: #6b7078;
+      }
+
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+
+      body {
+        font-family: "DM Sans", sans-serif;
+        background: var(--bg-base);
+        color: var(--text-primary);
+        min-height: 100vh;
+        position: relative;
+        overflow-x: hidden;
+      }
+
+      /* ─── Subtle radial glow (no blobs, no grain) ─── */
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background: radial-gradient(ellipse 60% 50% at 50% 50%, rgba(196, 30, 58, 0.04) 0%, transparent 70%);
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      /* ─── Navbar ─── */
+      .navbar {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        padding: 0 24px;
+        height: 48px;
+        background: rgba(18, 20, 22, 0.92);
+        backdrop-filter: blur(20px);
+        border-bottom: 1px solid var(--border);
+        -webkit-app-region: drag;
+      }
+      .nav-brand {
+        font-weight: 600;
+        font-size: 13px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--text-primary);
+        margin-right: 32px;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .nav-brand .dot {
+        width: 6px;
+        height: 6px;
+        background: var(--accent);
+        border-radius: 50%;
+      }
+      .nav-links {
+        display: flex;
+        gap: 2px;
+        -webkit-app-region: no-drag;
+      }
+      .nav-link {
+        font-size: 12.5px;
+        font-weight: 400;
+        color: var(--text-secondary);
+        padding: 6px 12px;
+        cursor: pointer;
+        transition: color 0.15s;
+        text-decoration: none;
+        position: relative;
+      }
+      .nav-link:hover {
+        color: var(--text-primary);
+      }
+      .nav-link.active {
+        color: var(--text-primary);
+        font-weight: 500;
+      }
+      .nav-link.active::after {
+        content: "";
+        position: absolute;
+        bottom: -1px;
+        left: 12px;
+        right: 12px;
+        height: 2px;
+        background: var(--accent);
+        border-radius: 1px;
+      }
+      .nav-spacer { flex: 1; }
+      .nav-meta {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10px;
+        color: var(--text-muted);
+        letter-spacing: 0.3px;
+        -webkit-app-region: no-drag;
+      }
+
+      /* ─── Content ─── */
+      .content {
+        position: relative;
+        z-index: 1;
+        padding: 28px 28px;
+      }
+
+      .page-header {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        margin-bottom: 22px;
+      }
+      .page-title {
+        font-size: 18px;
+        font-weight: 600;
+        letter-spacing: -0.3px;
+      }
+      .page-desc {
+        font-size: 12px;
+        color: var(--text-muted);
+        font-weight: 300;
+      }
+
+      /* ─── URL Input ─── */
+      .input-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 14px;
+      }
+      .url-field {
+        flex: 1;
+        background: var(--bg-surface);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 10px 14px;
+        color: var(--text-primary);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 12px;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+      .url-field:focus {
+        border-color: var(--accent);
+      }
+      .url-field::placeholder {
+        color: var(--text-muted);
+        font-family: "DM Sans", sans-serif;
+        font-size: 12.5px;
+      }
+
+      .btn {
+        background: var(--accent);
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        padding: 10px 22px;
+        font-family: "DM Sans", sans-serif;
+        font-size: 12.5px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s;
+        white-space: nowrap;
+      }
+      .btn:hover {
+        background: var(--accent-hover);
+      }
+
+      /* ─── Format Select ─── */
+      .selects-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 28px;
+      }
+      .select-group {
+        position: relative;
+      }
+      .select-group label {
+        display: block;
+        font-size: 10px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.7px;
+        font-weight: 500;
+        margin-bottom: 5px;
+      }
+      .glass-select {
+        appearance: none;
+        background: var(--bg-surface);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 8px 34px 8px 12px;
+        color: var(--text-primary);
+        font-family: "DM Sans", sans-serif;
+        font-size: 12.5px;
+        font-weight: 450;
+        outline: none;
+        cursor: pointer;
+        transition: border-color 0.15s;
+        min-width: 160px;
+      }
+      .glass-select:hover { border-color: var(--border-hover); }
+      .glass-select:focus { border-color: var(--accent); }
+      .glass-select option { background: var(--bg-surface); color: var(--text-primary); }
+      .glass-select optgroup { color: var(--text-muted); font-weight: 600; font-size: 11px; }
+      .glass-select optgroup option { color: var(--text-primary); font-weight: 400; font-size: 13px; }
+      .select-group::after {
+        content: "▾";
+        position: absolute;
+        right: 11px;
+        bottom: 9px;
+        font-size: 10px;
+        color: var(--text-muted);
+        pointer-events: none;
+      }
+
+      /* ─── Divider ─── */
+      .divider {
+        height: 1px;
+        background: var(--border);
+        margin-bottom: 22px;
+      }
+
+      /* ─── Queue ─── */
+      .queue-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+      }
+      .queue-label {
+        font-size: 11px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        font-weight: 500;
+      }
+      .queue-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .queue-count {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10px;
+        color: var(--text-muted);
+      }
+      .queue-sort {
+        appearance: none;
+        background: var(--bg-surface);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 4px 24px 4px 8px;
+        color: var(--text-secondary);
+        font-family: "DM Sans", sans-serif;
+        font-size: 11px;
+        outline: none;
+        cursor: pointer;
+        transition: border-color 0.15s;
+      }
+      .queue-sort:hover { border-color: var(--border-hover); }
+      .queue-sort option { background: var(--bg-surface); color: var(--text-primary); }
+      .sort-wrapper { position: relative; }
+      .sort-wrapper::after {
+        content: "▾";
+        position: absolute;
+        right: 7px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 9px;
+        color: var(--text-muted);
+        pointer-events: none;
+      }
+
+      /* ─── Video Cards Grid ─── */
+      .cards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 10px;
+      }
+
+      .video-card {
+        background: linear-gradient(180deg, #1c1f24 0%, #1a1d21 100%);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        overflow: hidden;
+        transition: border-color 0.15s, transform 0.15s;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        text-decoration: none;
+        color: inherit;
+      }
+      .video-card:hover {
+        border-color: var(--border-hover);
+        transform: translateY(-1px);
+      }
+
+      .card-thumb {
+        width: 100%;
+        aspect-ratio: 16/9;
+        background: rgba(255, 255, 255, 0.02);
+        position: relative;
+        overflow: hidden;
+      }
+      .card-thumb-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .card-thumb.empty {
+        background: linear-gradient(135deg, rgba(196, 30, 58, 0.05) 0%, rgba(184, 188, 194, 0.03) 100%);
+      }
+
+      .card-badge {
+        position: absolute;
+        bottom: 6px;
+        right: 6px;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 9.5px;
+        font-weight: 500;
+        color: #fff;
+        background: rgba(0, 0, 0, 0.7);
+        padding: 2px 6px;
+        border-radius: 3px;
+        letter-spacing: 0.3px;
+      }
+
+      .card-body {
+        padding: 10px 12px 12px;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+      }
+      .card-title {
+        font-size: 12.5px;
+        font-weight: 500;
+        line-height: 1.35;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        flex: 1;
+      }
+
+      .card-bottom { margin-top: auto; }
+      .card-stage {
+        font-size: 10.5px;
+        font-weight: 400;
+        color: var(--text-secondary);
+        margin-bottom: 4px;
+      }
+      .card-stage.done { color: var(--metallic); }
+      .card-stage.queued { color: var(--text-muted); }
+      .card-progress { margin-bottom: 6px; }
+      .card-bar {
+        width: 100%;
+        height: 3px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 2px;
+        overflow: hidden;
+      }
+      .card-fill {
+        height: 100%;
+        border-radius: 2px;
+        background: var(--accent);
+        transition: width 0.4s ease;
+      }
+      .card-fill.done {
+        background: var(--metallic);
+      }
+
+      .card-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .card-meta {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10px;
+        color: var(--text-muted);
+        display: flex;
+        gap: 8px;
+      }
+      .card-pct {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10.5px;
+        font-weight: 500;
+      }
+      .card-pct.active { color: var(--accent); }
+      .card-pct.done { color: var(--metallic); }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar">
+      <div class="nav-brand"><span class="dot"></span>SWISS</div>
+      <div class="nav-links">
+        <a class="nav-link active">Downloader</a>
+        <a class="nav-link">Converter</a>
+        <a class="nav-link">Settings</a>
+      </div>
+      <div class="nav-spacer"></div>
+      <div class="nav-meta">yt-dlp 2024.12 · ffmpeg 7.1</div>
+    </nav>
+
+    <div class="content">
+      <div class="page-header">
+        <h1 class="page-title">Download</h1>
+        <span class="page-desc">YouTube, Twitter, Instagram, TikTok e mais</span>
+      </div>
+
+      <div class="input-row">
+        <input
+          class="url-field"
+          placeholder="Paste a URL..."
+          value="https://youtube.com/watch?v=dQw4w9WgXcQ"
+        />
+        <button class="btn">Fetch</button>
+      </div>
+
+      <div class="selects-row">
+        <div class="select-group">
+          <label>Format</label>
+          <select class="glass-select" id="formatSelect" onchange="updateQuality()">
+            <optgroup label="Vídeo">
+              <option value="mp4" selected>MP4</option>
+              <option value="mkv">MKV</option>
+              <option value="webm">WebM</option>
+            </optgroup>
+            <optgroup label="Áudio">
+              <option value="mp3">MP3</option>
+              <option value="wav">WAV</option>
+              <option value="flac">FLAC</option>
+              <option value="aac">AAC</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="select-group">
+          <label>Quality</label>
+          <select class="glass-select" id="qualitySelect">
+            <option>1080p</option>
+            <option>720p</option>
+            <option>480p</option>
+            <option>360p</option>
+          </select>
+        </div>
+        <div class="select-group">
+          <label>Save to</label>
+          <select class="glass-select">
+            <option>~/Downloads</option>
+            <option>~/Videos</option>
+            <option>~/Music</option>
+            <option>Custom...</option>
+          </select>
+        </div>
+      </div>
+
+      <script>
+        const videoFormats = ["mp4", "mkv", "webm"];
+        const formatSelect = document.getElementById("formatSelect");
+        const qualitySelect = document.getElementById("qualitySelect");
+        function updateQuality() {
+          const isVideo = videoFormats.includes(formatSelect.value);
+          if (isVideo) {
+            qualitySelect.innerHTML =
+              "<option>1080p</option><option>720p</option><option>480p</option><option>360p</option>";
+          } else {
+            qualitySelect.innerHTML =
+              "<option>320 kbps</option><option>256 kbps</option><option>192 kbps</option><option>128 kbps</option>";
+          }
+        }
+      </script>
+
+      <div class="divider"></div>
+
+      <div class="queue-bar">
+        <span class="queue-label">Queue</span>
+        <div class="queue-right">
+          <span class="queue-count">4 items · 2 active</span>
+          <div class="sort-wrapper">
+            <select class="queue-sort">
+              <option>Most recent</option>
+              <option>Oldest first</option>
+              <option>Largest first</option>
+              <option>Smallest first</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="cards-grid">
+        <a class="video-card" href="https://youtube.com/watch?v=dQw4w9WgXcQ" target="_blank">
+          <div class="card-thumb empty">
+            <span class="card-badge">3:33</span>
+          </div>
+          <div class="card-body">
+            <div class="card-title">Never Gonna Give You Up — Rick Astley</div>
+            <div class="card-bottom">
+              <div class="card-stage">Downloading...</div>
+              <div class="card-progress">
+                <div class="card-bar">
+                  <div class="card-fill" style="width: 85%"></div>
+                </div>
+              </div>
+              <div class="card-footer">
+                <span class="card-meta"><span>1080p</span><span>mp4</span><span>42 MB</span></span>
+                <span class="card-pct active">85%</span>
+              </div>
+            </div>
+          </div>
+        </a>
+
+        <a class="video-card" href="https://youtube.com/watch?v=example2" target="_blank">
+          <div class="card-thumb empty">
+            <span class="card-badge">1:24:07</span>
+          </div>
+          <div class="card-body">
+            <div class="card-title">Podcast Ep. 124 — Design Systems Deep Dive</div>
+            <div class="card-bottom">
+              <div class="card-stage done">Completed</div>
+              <div class="card-progress">
+                <div class="card-bar">
+                  <div class="card-fill done" style="width: 100%"></div>
+                </div>
+              </div>
+              <div class="card-footer">
+                <span class="card-meta"><span>mp3</span><span>best</span><span>8 MB</span></span>
+                <span class="card-pct done">done</span>
+              </div>
+            </div>
+          </div>
+        </a>
+
+        <a class="video-card" href="https://youtube.com/watch?v=example3" target="_blank">
+          <div class="card-thumb empty">
+            <span class="card-badge">12:48</span>
+          </div>
+          <div class="card-body">
+            <div class="card-title">React Hooks Deep Dive — Fireship</div>
+            <div class="card-bottom">
+              <div class="card-stage">Converting...</div>
+              <div class="card-progress">
+                <div class="card-bar">
+                  <div class="card-fill" style="width: 31%"></div>
+                </div>
+              </div>
+              <div class="card-footer">
+                <span class="card-meta"><span>720p</span><span>mp4</span><span>156 MB</span></span>
+                <span class="card-pct active">31%</span>
+              </div>
+            </div>
+          </div>
+        </a>
+
+        <a class="video-card" href="https://youtube.com/watch?v=example4" target="_blank">
+          <div class="card-thumb empty">
+            <span class="card-badge">8:21</span>
+          </div>
+          <div class="card-body">
+            <div class="card-title">Vikings of Canada — I'm Sick of This</div>
+            <div class="card-bottom">
+              <div class="card-stage queued">Queued</div>
+              <div class="card-progress">
+                <div class="card-bar">
+                  <div class="card-fill" style="width: 0%"></div>
+                </div>
+              </div>
+              <div class="card-footer">
+                <span class="card-meta"><span>1080p</span><span>mp4</span></span>
+                <span class="card-pct" style="color: var(--text-muted)">queued</span>
+              </div>
+            </div>
+          </div>
+        </a>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Swiss — Converter v6b</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg-base: #121416;
+        --bg-surface: #1a1d21;
+        --border: #2a2d32;
+        --border-hover: #3a3d42;
+        --text-primary: #e8eaed;
+        --text-secondary: #8b9099;
+        --text-muted: #4a4f57;
+        --accent: #c41e3a;
+        --accent-hover: #a8182f;
+        --accent-soft: rgba(196, 30, 58, 0.12);
+        --metallic: #b8bcc2;
+        --metallic-dim: #6b7078;
+      }
+
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+
+      body {
+        font-family: "DM Sans", sans-serif;
+        background: var(--bg-base);
+        color: var(--text-primary);
+        min-height: 100vh;
+        position: relative;
+        overflow-x: hidden;
+      }
+
+      /* ─── Subtle radial glow ─── */
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background: radial-gradient(ellipse 60% 50% at 50% 50%, rgba(196, 30, 58, 0.04) 0%, transparent 70%);
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      /* ─── Navbar ─── */
+      .navbar {
+        position: sticky; top: 0; z-index: 100;
+        display: flex; align-items: center;
+        padding: 0 24px; height: 48px;
+        background: rgba(18, 20, 22, 0.92);
+        backdrop-filter: blur(20px);
+        border-bottom: 1px solid var(--border);
+        -webkit-app-region: drag;
+      }
+      .nav-brand {
+        font-weight: 600; font-size: 13px;
+        letter-spacing: 2px; text-transform: uppercase;
+        color: var(--text-primary); margin-right: 32px;
+        display: flex; align-items: center; gap: 7px;
+      }
+      .nav-brand .dot { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; }
+      .nav-links { display: flex; gap: 2px; -webkit-app-region: no-drag; }
+      .nav-link {
+        font-size: 12.5px; font-weight: 400; color: var(--text-secondary);
+        padding: 6px 12px; cursor: pointer; transition: color 0.15s;
+        text-decoration: none; position: relative;
+      }
+      .nav-link:hover { color: var(--text-primary); }
+      .nav-link.active { color: var(--text-primary); font-weight: 500; }
+      .nav-link.active::after {
+        content: ""; position: absolute;
+        bottom: -1px; left: 12px; right: 12px;
+        height: 2px; background: var(--accent); border-radius: 1px;
+      }
+      .nav-spacer { flex: 1; }
+      .nav-meta {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10px; color: var(--text-muted);
+        letter-spacing: 0.3px; -webkit-app-region: no-drag;
+      }
+
+      /* ─── Content ─── */
+      .content { position: relative; z-index: 1; padding: 28px 28px; }
+
+      .page-header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 22px; }
+      .page-title { font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
+      .page-desc { font-size: 12px; color: var(--text-muted); font-weight: 300; }
+
+      /* ─── Drop Zone ─── */
+      .dropzone {
+        border: 1.5px dashed var(--border);
+        border-radius: 6px;
+        padding: 32px;
+        text-align: center;
+        margin-bottom: 22px;
+        transition: all 0.2s;
+        cursor: pointer;
+      }
+      .dropzone:hover {
+        border-color: var(--accent);
+        background: var(--accent-soft);
+      }
+      .drop-icon { font-size: 24px; margin-bottom: 8px; color: var(--text-muted); }
+      .drop-text { font-size: 13px; color: var(--text-secondary); font-weight: 400; }
+      .drop-text strong { color: var(--accent); font-weight: 500; cursor: pointer; }
+      .drop-hint {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10.5px; color: var(--text-muted);
+        margin-top: 5px;
+      }
+
+      /* ─── Conversion Setup ─── */
+      .convert-row {
+        display: flex;
+        gap: 10px;
+        align-items: flex-end;
+        margin-bottom: 28px;
+      }
+
+      .select-group { position: relative; }
+      .select-group label {
+        display: block;
+        font-size: 10px; color: var(--text-muted);
+        text-transform: uppercase; letter-spacing: 0.7px;
+        font-weight: 500; margin-bottom: 5px;
+      }
+      .glass-select {
+        appearance: none;
+        background: var(--bg-surface);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 8px 34px 8px 12px;
+        color: var(--text-primary);
+        font-family: "DM Sans", sans-serif;
+        font-size: 12.5px; font-weight: 450;
+        outline: none; cursor: pointer;
+        transition: border-color 0.15s;
+        min-width: 160px;
+      }
+      .glass-select:hover { border-color: var(--border-hover); }
+      .glass-select:focus { border-color: var(--accent); }
+      .glass-select option { background: var(--bg-surface); color: var(--text-primary); }
+      .glass-select optgroup { color: var(--text-muted); font-weight: 600; font-size: 11px; }
+      .glass-select optgroup option { color: var(--text-primary); font-weight: 400; font-size: 13px; }
+      .select-group::after {
+        content: "▾"; position: absolute;
+        right: 11px; bottom: 9px;
+        font-size: 10px; color: var(--text-muted); pointer-events: none;
+      }
+
+      .convert-spacer { flex: 1; }
+
+      .btn {
+        background: var(--accent); color: #fff;
+        border: none; border-radius: 4px;
+        padding: 10px 22px;
+        font-family: "DM Sans", sans-serif;
+        font-size: 12.5px; font-weight: 600;
+        cursor: pointer; transition: all 0.15s;
+        white-space: nowrap;
+      }
+      .btn:hover { background: var(--accent-hover); }
+
+      .btn-ghost {
+        background: transparent;
+        border: 1px solid var(--metallic-dim);
+        color: var(--metallic);
+        border-radius: 4px;
+        padding: 9px 18px;
+        font-family: "DM Sans", sans-serif;
+        font-size: 12.5px; font-weight: 400;
+        cursor: pointer; transition: all 0.15s;
+      }
+      .btn-ghost:hover { border-color: var(--metallic); color: var(--text-primary); }
+
+      /* ─── Divider ─── */
+      .divider {
+        height: 1px;
+        background: var(--border);
+        margin-bottom: 20px;
+      }
+
+      /* ─── Files Header ─── */
+      .files-bar {
+        display: flex; align-items: center; justify-content: space-between;
+        margin-bottom: 10px;
+      }
+      .files-label {
+        font-size: 11px; color: var(--text-muted);
+        text-transform: uppercase; letter-spacing: 0.6px; font-weight: 500;
+      }
+      .files-right { display: flex; align-items: center; gap: 10px; }
+      .files-count {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10px; color: var(--text-muted);
+      }
+
+      /* ─── File Table ─── */
+      .f-table { width: 100%; border-collapse: separate; border-spacing: 0 3px; }
+      .f-row {
+        background: linear-gradient(180deg, #1c1f24 0%, #1a1d21 100%);
+        transition: background 0.12s;
+      }
+      .f-row:hover { background: #1e2126; }
+      .f-row td {
+        padding: 10px 12px;
+        border-top: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+        vertical-align: middle;
+      }
+      .f-row td:first-child { border-left: 1px solid var(--border); border-radius: 4px 0 0 4px; }
+      .f-row td:last-child { border-right: 1px solid var(--border); border-radius: 0 4px 4px 0; }
+
+      .f-icon {
+        width: 34px; height: 34px;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 4px;
+        display: flex; align-items: center; justify-content: center;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 9px; color: var(--text-muted);
+        text-transform: uppercase; font-weight: 500;
+        letter-spacing: 0.3px;
+      }
+
+      .f-name {
+        font-size: 12.5px; font-weight: 450;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        max-width: 280px;
+      }
+      .f-size {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10.5px; color: var(--text-muted);
+        white-space: nowrap;
+      }
+
+      .f-arrow { color: var(--text-muted); font-size: 13px; text-align: center; }
+
+      .f-output {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px; color: var(--accent);
+        background: var(--accent-soft);
+        padding: 3px 8px; border-radius: 3px;
+        font-weight: 500; white-space: nowrap;
+      }
+
+      .f-progress-cell { width: 110px; }
+      .f-bar-track {
+        width: 100%; height: 3px;
+        background: rgba(255, 255, 255, 0.04);
+        border-radius: 2px; overflow: hidden;
+        margin-bottom: 4px;
+      }
+      .f-bar-fill { height: 100%; border-radius: 2px; background: var(--accent); transition: width 0.3s ease; }
+      .f-bar-fill.done { background: var(--metallic); }
+      .f-stage { font-size: 10px; color: var(--text-secondary); }
+      .f-stage.done { color: var(--metallic); }
+      .f-stage.queued { color: var(--text-muted); }
+
+      .f-status {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10.5px;
+        text-align: right; white-space: nowrap;
+        min-width: 42px;
+      }
+      .f-status.active { color: var(--accent); }
+      .f-status.done { color: var(--metallic); }
+      .f-status.waiting { color: var(--text-muted); }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar">
+      <div class="nav-brand"><span class="dot"></span>SWISS</div>
+      <div class="nav-links">
+        <a class="nav-link">Downloader</a>
+        <a class="nav-link active">Converter</a>
+        <a class="nav-link">Settings</a>
+      </div>
+      <div class="nav-spacer"></div>
+      <div class="nav-meta">ffmpeg 7.1</div>
+    </nav>
+
+    <div class="content">
+      <div class="page-header">
+        <h1 class="page-title">Convert</h1>
+        <span class="page-desc">Transform media between formats</span>
+      </div>
+
+      <div class="dropzone">
+        <div class="drop-icon">↓</div>
+        <div class="drop-text">Drop files here or <strong>browse</strong></div>
+        <div class="drop-hint">mp4 · mkv · avi · mov · mp3 · wav · flac · wma</div>
+      </div>
+
+      <div class="convert-row">
+        <div class="select-group">
+          <label>Output format</label>
+          <select class="glass-select" id="outputFormat" onchange="updateOutputInfo()">
+            <optgroup label="Vídeo">
+              <option value="mp4" selected>MP4</option>
+              <option value="mkv">MKV</option>
+              <option value="avi">AVI</option>
+              <option value="webm">WebM</option>
+              <option value="mov">MOV</option>
+            </optgroup>
+            <optgroup label="Áudio">
+              <option value="mp3">MP3</option>
+              <option value="wav">WAV</option>
+              <option value="flac">FLAC</option>
+              <option value="aac">AAC</option>
+              <option value="wma">WMA</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="select-group">
+          <label>Quality</label>
+          <select class="glass-select" id="outputQuality">
+            <option>1080p</option>
+            <option>720p</option>
+            <option>480p</option>
+            <option>Original</option>
+          </select>
+        </div>
+        <div class="select-group">
+          <label>Save to</label>
+          <select class="glass-select">
+            <option>Same folder</option>
+            <option>~/Downloads</option>
+            <option>~/Videos</option>
+            <option>Custom...</option>
+          </select>
+        </div>
+        <div class="convert-spacer"></div>
+        <button class="btn-ghost">Clear</button>
+        <button class="btn">Convert All</button>
+      </div>
+
+      <script>
+        const videoOutputs = ['mp4','mkv','avi','webm','mov'];
+        function updateOutputInfo() {
+          const fmt = document.getElementById('outputFormat').value;
+          const qual = document.getElementById('outputQuality');
+          if (videoOutputs.includes(fmt)) {
+            qual.innerHTML = '<option>1080p</option><option>720p</option><option>480p</option><option>Original</option>';
+          } else {
+            qual.innerHTML = '<option>320 kbps</option><option>256 kbps</option><option>192 kbps</option><option>128 kbps</option>';
+          }
+        }
+      </script>
+
+      <div class="divider"></div>
+
+      <div class="files-bar">
+        <span class="files-label">Files</span>
+        <div class="files-right">
+          <span class="files-count">3 files · 206 MB</span>
+        </div>
+      </div>
+
+      <table class="f-table">
+        <tr class="f-row">
+          <td><div class="f-icon">mp4</div></td>
+          <td><span class="f-name">vacation-rio-2024.mp4</span></td>
+          <td><span class="f-size">142 MB</span></td>
+          <td class="f-arrow">→</td>
+          <td><span class="f-output">.mp3</span></td>
+          <td class="f-progress-cell">
+            <div class="f-bar-track"><div class="f-bar-fill done" style="width: 100%"></div></div>
+            <span class="f-stage done">Completed</span>
+          </td>
+          <td><span class="f-status done">done</span></td>
+        </tr>
+        <tr class="f-row">
+          <td><div class="f-icon">mkv</div></td>
+          <td><span class="f-name">lecture-algorithms-pt3.mkv</span></td>
+          <td><span class="f-size">56 MB</span></td>
+          <td class="f-arrow">→</td>
+          <td><span class="f-output">.mp3</span></td>
+          <td class="f-progress-cell">
+            <div class="f-bar-track"><div class="f-bar-fill" style="width: 67%"></div></div>
+            <span class="f-stage">Converting...</span>
+          </td>
+          <td><span class="f-status active">67%</span></td>
+        </tr>
+        <tr class="f-row">
+          <td><div class="f-icon">avi</div></td>
+          <td><span class="f-name">screen-recording-03-12.avi</span></td>
+          <td><span class="f-size">8 MB</span></td>
+          <td class="f-arrow">→</td>
+          <td><span class="f-output">.mp3</span></td>
+          <td class="f-progress-cell">
+            <div class="f-bar-track"><div class="f-bar-fill" style="width: 0%"></div></div>
+            <span class="f-stage queued">Queued</span>
+          </td>
+          <td><span class="f-status waiting">queued</span></td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
