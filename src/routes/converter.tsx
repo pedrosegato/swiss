@@ -28,9 +28,9 @@ function ConverterPage() {
   const setFormat = useConvertStore((s) => s.setOutputFormat);
   return (
     <>
-      <div className="flex items-baseline gap-3 mb-5">
+      <div className="flex items-baseline gap-3 mb-5 flex-wrap">
         <h1 className="text-lg font-semibold tracking-tight">Converter</h1>
-        <span className="text-xs text-muted-foreground font-light">
+        <span className="text-xs text-muted-foreground font-light hidden sm:inline">
           Converta uma mídia para um formato desejado
         </span>
       </div>
@@ -72,16 +72,11 @@ function ConverterPage() {
       </div>
 
       {itemIds.length > 0 && (
-        <table
-          className="w-full border-collapse"
-          style={{ borderSpacing: "0 3px" }}
-        >
-          <tbody>
-            {itemIds.map((id) => (
-              <FileRow key={id} id={id} />
-            ))}
-          </tbody>
-        </table>
+        <div className="flex flex-col gap-2">
+          {itemIds.map((id) => (
+            <FileRow key={id} id={id} />
+          ))}
+        </div>
       )}
     </>
   );

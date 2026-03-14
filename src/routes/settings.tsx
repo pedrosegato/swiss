@@ -103,7 +103,7 @@ function SettingsPage() {
       <Separator className="my-6" />
 
       <Section title="Binários">
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <VersionCard binary={ytdlp} />
           <VersionCard binary={ffmpeg} />
         </div>

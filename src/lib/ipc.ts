@@ -1,4 +1,5 @@
 const renderer = (window as any).ipcRenderer as {
+  platform: string;
   invoke(channel: string, ...args: unknown[]): Promise<unknown>;
   on(
     channel: string,
@@ -9,6 +10,15 @@ const renderer = (window as any).ipcRenderer as {
 };
 
 export const ipc = {
+  platform: renderer.platform,
+
+  getDownloadsPath: () =>
+    renderer.invoke("app:get-downloads-path") as Promise<string>,
+
+  minimizeWindow: () => renderer.invoke("window:minimize") as Promise<void>,
+  maximizeWindow: () => renderer.invoke("window:maximize") as Promise<void>,
+  closeWindow: () => renderer.invoke("window:close") as Promise<void>,
+
   checkBinaries: () =>
     renderer.invoke("binaries:check") as Promise<{
       ytdlp: { version: string | null; installed: boolean };

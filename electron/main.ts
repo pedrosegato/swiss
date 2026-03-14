@@ -8,6 +8,10 @@ import { registerConverterHandlers, killAllConversions } from "./ipc/converter";
 import { registerDialogHandlers } from "./ipc/dialogs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const isMac = process.platform === "darwin";
+
+app.commandLine.appendSwitch("enable-features", "CanvasOopRasterization");
+app.commandLine.appendSwitch("disable-lcd-text", "0");
 
 app.setName("Swiss");
 
@@ -39,8 +43,9 @@ function createWindow() {
     height: 700,
     minWidth: 640,
     minHeight: 480,
-    titleBarStyle: "hiddenInset",
-    trafficLightPosition: { x: 12, y: 16 },
+    ...(isMac
+      ? { titleBarStyle: "hiddenInset", trafficLightPosition: { x: 12, y: 16 } }
+      : { frame: false }),
     backgroundColor: "#121416",
     icon: path.join(process.env.VITE_PUBLIC, "icon.png"),
     webPreferences: {
@@ -75,6 +80,15 @@ ipcMain.handle("dock:set-progress", (_event, progress: number) => {
     win.setProgressBar(Math.max(-1, Math.min(1, progress)));
   }
 });
+
+ipcMain.handle("app:get-downloads-path", () => app.getPath("downloads"));
+
+ipcMain.handle("window:minimize", () => win?.minimize());
+ipcMain.handle("window:maximize", () => {
+  if (win?.isMaximized()) win.unmaximize();
+  else win?.maximize();
+});
+ipcMain.handle("window:close", () => win?.close());
 
 // Kill all child processes before quitting
 app.on("before-quit", () => {

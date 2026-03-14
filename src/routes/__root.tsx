@@ -7,6 +7,7 @@ import { ipc } from "@/lib/ipc";
 import { useBinariesStore } from "@/stores/binaries-store";
 import { useDownloadStore } from "@/stores/download-store";
 import { useConvertStore } from "@/stores/convert-store";
+import { useSettingsStore } from "@/stores/settings-store";
 import type { DownloadStage, ConvertStage } from "@/lib/types";
 
 export const Route = createRootRoute({
@@ -21,6 +22,10 @@ function RootLayout() {
   const [showInstallDialog, setShowInstallDialog] = useState(false);
 
   useEffect(() => {
+    ipc.getDownloadsPath().then((path) => {
+      useSettingsStore.getState().initDownloadPath(path);
+    });
+
     ipc.checkBinaries().then(({ ytdlp, ffmpeg }) => {
       setYtdlp({ name: "yt-dlp", ...ytdlp });
       setFfmpeg({ name: "ffmpeg", ...ffmpeg });
@@ -92,7 +97,7 @@ function RootLayout() {
   return (
     <TooltipProvider>
       <Navbar />
-      <main className="relative z-[1] p-7">
+      <main className="relative z-[1] px-4 py-5 sm:p-7">
         <Outlet />
       </main>
       <BinaryInstallDialog

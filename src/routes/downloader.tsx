@@ -117,7 +117,7 @@ function DownloaderPage() {
 
       <QueueHeader />
 
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-2.5">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-2.5">
         {itemIds.map((id) => (
           <DownloadCard key={id} id={id} />
         ))}

@@ -66,10 +66,10 @@ export function FormatSelects({
   };
 
   return (
-    <div className="flex gap-2.5 mb-7">
+    <div className="flex flex-wrap gap-2.5 mb-7">
       <FieldLabel label="Formato">
         <Select value={format} onValueChange={handleFormatChange}>
-          <SelectTrigger className="min-w-[160px] text-xs h-9">
+          <SelectTrigger className="w-[140px] text-xs h-9">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -99,7 +99,7 @@ export function FormatSelects({
             value={quality}
             onValueChange={(v: string | null) => v && onQualityChange?.(v)}
           >
-            <SelectTrigger className="min-w-[140px] text-xs h-9">
+            <SelectTrigger className="w-[130px] text-xs h-9">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -113,7 +113,7 @@ export function FormatSelects({
         </FieldLabel>
       ) : null}
 
-      <FieldLabel label="Salvar em">
+      <FieldLabel label="Salvar em" className="flex-1 min-w-[180px]">
         <div className="flex items-center h-9">
           <div className="flex-1 min-w-0 h-full flex items-center border border-r-0 rounded-l-md bg-transparent px-3 text-xs text-muted-foreground truncate">
             {savePath}

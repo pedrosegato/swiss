@@ -20,7 +20,7 @@
         arch: ["x64"],
       },
     ],
-    icon: "build/icon.png",
+    icon: "build/icon.ico",
     artifactName: "${productName}-Windows-${version}-Setup.${ext}",
   },
   nsis: {

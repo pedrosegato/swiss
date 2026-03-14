@@ -54,13 +54,27 @@ export function registerDownloaderHandlers() {
       args.push("-x", "--audio-format", options.format);
     }
 
+    if (process.platform === "win32" && options.format === "mp4") {
+      args.push("--postprocessor-args", "-c:a aac -b:a 192k");
+    }
+
+    if (process.platform === "win32") {
+      args.push("--encoding", "utf-8");
+    }
+
     if (options.cookieBrowser) {
       args.push("--cookies-from-browser", options.cookieBrowser);
     }
 
     args.push(options.url);
 
-    const proc = spawn(ytdlpPath, args);
+    const proc = spawn(ytdlpPath, args, {
+      env: {
+        ...process.env,
+        PYTHONIOENCODING: "utf-8",
+        PYTHONUTF8: "1",
+      },
+    });
     activeDownloads.set(id, proc);
 
     let metadataSent = false;

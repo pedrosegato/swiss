@@ -41,7 +41,9 @@ export function registerConverterHandlers() {
       outputPath,
     ];
 
-    const proc = spawn(ffmpegPath, args);
+    const proc = spawn(ffmpegPath, args, {
+      env: { ...process.env, PYTHONIOENCODING: "utf-8", PYTHONUTF8: "1" },
+    });
     activeConversions.set(id, proc);
 
     let stderrBuffer = "";

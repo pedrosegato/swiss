@@ -18,6 +18,10 @@ const ALLOWED_INVOKE = new Set([
   "shell:open-path",
   "dock:set-progress",
   "updater:install",
+  "app:get-downloads-path",
+  "window:minimize",
+  "window:maximize",
+  "window:close",
 ]);
 
 const ALLOWED_LISTEN = new Set([
@@ -28,6 +32,7 @@ const ALLOWED_LISTEN = new Set([
 ]);
 
 contextBridge.exposeInMainWorld("ipcRenderer", {
+  platform: process.platform,
   on(channel: string, listener: (event: unknown, ...args: unknown[]) => void) {
     if (!ALLOWED_LISTEN.has(channel)) return;
     ipcRenderer.on(channel, (event, ...args) => listener(event, ...args));

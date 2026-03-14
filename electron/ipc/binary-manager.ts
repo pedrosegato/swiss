@@ -133,14 +133,30 @@ function getDownloadUrl(name: BinaryName): string {
 }
 
 async function ensureShellPath(): Promise<void> {
-  if (process.platform === "win32") return;
+  const binDir = getLocalBinDir();
+
+  if (process.platform === "win32") {
+    try {
+      const { stdout } = await exec("powershell.exe", [
+        "-NoProfile",
+        "-Command",
+        "[Environment]::GetEnvironmentVariable('Path', 'User')",
+      ]);
+      if (!stdout.includes(binDir)) {
+        await exec("powershell.exe", [
+          "-NoProfile",
+          "-Command",
+          `$p = [Environment]::GetEnvironmentVariable('Path', 'User'); [Environment]::SetEnvironmentVariable('Path', "$p;${binDir}", 'User')`,
+        ]);
+      }
+    } catch {}
+    return;
+  }
 
   const home = process.env.HOME;
   if (!home) return;
 
-  const binDir = getLocalBinDir();
   const exportLine = `export PATH="${binDir}:$PATH"`;
-
   const rcFiles = [join(home, ".zshrc"), join(home, ".bashrc")];
 
   for (const rcFile of rcFiles) {

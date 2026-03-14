@@ -3,14 +3,22 @@ import { cn } from "@/lib/utils";
 import { navItems } from "@/lib/nav-items";
 import { PocketKnifeIcon } from "lucide-react";
 import { UpdateBanner } from "./update-banner";
+import { WindowControls } from "./window-controls";
+import { ipc } from "@/lib/ipc";
 
 export function Navbar() {
   const { location } = useRouterState();
+  const isMac = ipc.platform === "darwin";
 
   return (
-    <nav className="sticky top-0 z-50 flex items-center pl-22 pr-6 h-12 bg-background/92 backdrop-blur-xl border-b border-border [-webkit-app-region:drag]">
-      <div className="flex items-center gap-[7px] mr-[10px] [-webkit-app-region:no-drag]">
-        <PocketKnifeIcon className="w-4 h-4" />
+    <nav
+      className={cn(
+        "sticky top-0 z-50 flex items-center h-12 bg-background/92 backdrop-blur-xl border-b border-border [-webkit-app-region:drag]",
+        isMac ? "pl-22 pr-6" : "pl-4 pr-0",
+      )}
+    >
+      <div className="flex items-center gap-[7px] mr-2.5 [-webkit-app-region:no-drag]">
+        <PocketKnifeIcon className="w-4 h-4 shrink-0" />
         <span className="font-semibold text-[13px] tracking-[2px] text-foreground">
           swiss
         </span>
@@ -24,13 +32,13 @@ export function Navbar() {
               key={to}
               to={to}
               className={cn(
-                "relative flex items-center gap-1.5 text-[12.5px] px-3 py-1.5 cursor-pointer transition-colors no-underline",
+                "relative flex items-center gap-1.5 text-[12.5px] px-2.5 py-1.5 cursor-pointer transition-colors no-underline",
                 isActive
                   ? "text-primary font-semibold"
                   : "text-secondary-foreground hover:text-foreground",
               )}
             >
-              <Icon className="w-3.5 h-3.5" />
+              <Icon className="w-3.5 h-3.5 shrink-0" />
               {label}
             </Link>
           );
@@ -38,6 +46,7 @@ export function Navbar() {
       </div>
 
       <UpdateBanner />
+      <WindowControls />
     </nav>
   );
 }
