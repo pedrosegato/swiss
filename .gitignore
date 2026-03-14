@@ -26,4 +26,5 @@ dist-ssr
 # Claude Artifacts
 plans
 CLAUDE.MD
-.claude
+.claude.worktrees/
+.worktrees/
