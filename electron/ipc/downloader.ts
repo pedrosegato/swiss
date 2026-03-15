@@ -1,7 +1,8 @@
 import { ipcMain, BrowserWindow } from "electron";
 import { spawn, type ChildProcess } from "node:child_process";
 import path from "node:path";
-import { getSpawnPath, getDenoPath, getYtdlpSpawnInfo } from "./binary-manager";
+import { getSpawnPath, getDenoPath, getYtdlpSpawnInfo, ensureDeno } from "./binary-manager";
+
 import { formatDuration, buildFormatString } from "../lib/format";
 import { existsSync } from "node:fs";
 
@@ -28,6 +29,10 @@ export function registerDownloaderHandlers() {
     const ffmpegPath = await getSpawnPath("ffmpeg");
     const ffmpegDir = path.dirname(ffmpegPath);
 
+    await ensureDeno().catch(() => {});
+
+    const denoPath = getDenoPath();
+
     const SEP = "<<|>>";
     const printTpl = `%(id)s${SEP}%(title)s${SEP}%(duration)s${SEP}%(thumbnail)s${SEP}%(filesize_approx)s${SEP}%(height)s${SEP}%(resolution)s`;
 
@@ -47,6 +52,10 @@ export function registerDownloaderHandlers() {
       "--ffmpeg-location",
       ffmpegDir,
     ];
+
+    if (existsSync(denoPath)) {
+      args.push("--js-runtimes", `deno:${denoPath}`);
+    }
 
     if (isVideo) {
       args.push("--merge-output-format", options.format);
@@ -71,7 +80,7 @@ export function registerDownloaderHandlers() {
 
     args.push(options.url);
 
-    const denoDir = path.dirname(getDenoPath());
+    const denoDir = path.dirname(denoPath);
     const sep = process.platform === "win32" ? ";" : ":";
     const envPath = `${denoDir}${sep}${process.env.PATH ?? ""}`;
 

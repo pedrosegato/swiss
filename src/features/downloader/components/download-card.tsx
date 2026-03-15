@@ -44,7 +44,8 @@ export function DownloadCard({ id }: DownloadCardProps) {
 
   const handleRetry = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const savePath = useSettingsStore.getState().downloadPath;
+    const settings = useSettingsStore.getState();
+    const savePath = settings.downloadPath;
     if (!savePath) {
       toast.warning(
         "Selecione uma pasta de destino antes de tentar novamente.",
@@ -62,6 +63,7 @@ export function DownloadCard({ id }: DownloadCardProps) {
       format: item.format,
       quality: item.quality,
       savePath,
+      cookieBrowser: settings.useCookies ? settings.cookieBrowser : undefined,
     });
   };
 
