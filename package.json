@@ -1,7 +1,7 @@
 {
   "name": "swiss",
   "private": true,
-  "version": "0.7.2",
+  "version": "0.7.3",
   "description": "Desktop app for downloading videos and converting media files",
   "author": "pedro",
   "repository": {

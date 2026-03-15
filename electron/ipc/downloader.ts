@@ -53,6 +53,8 @@ export function registerDownloaderHandlers() {
       ffmpegDir,
     ];
 
+    args.push("--remote-components", "ejs:github");
+
     if (existsSync(denoPath)) {
       args.push("--js-runtimes", `deno:${denoPath}`);
     }
