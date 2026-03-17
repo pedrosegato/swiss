@@ -7,12 +7,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 import { isVideoFormat } from "@/lib/constants";
 import { FieldLabel } from "@/components/field-label";
-import { useSettingsStore } from "@/stores/settings-store";
-import { ipc } from "@/lib/ipc";
-import { FolderOpen } from "lucide-react";
+import { SavePathPicker } from "@/components/save-path-picker";
 
 interface FormatSelectsProps {
   format: string;
@@ -35,8 +32,6 @@ export function FormatSelects({
   videoQualities,
   audioQualities,
 }: FormatSelectsProps) {
-  const savePath = useSettingsStore((s) => s.downloadPath);
-  const setSavePath = useSettingsStore((s) => s.setDownloadPath);
   const isVideo = isVideoFormat(format);
   const showQuality =
     quality !== undefined &&
@@ -58,11 +53,6 @@ export function FormatSelects({
       const newQualities = nowVideo ? videoQualities : audioQualities;
       onQualityChange(newQualities[0]);
     }
-  };
-
-  const handleSelectFolder = async () => {
-    const selected = await ipc.selectFolder();
-    if (selected) setSavePath(selected);
   };
 
   return (
@@ -114,19 +104,7 @@ export function FormatSelects({
       ) : null}
 
       <FieldLabel label="Salvar em" className="flex-1 min-w-[180px]">
-        <div className="flex items-center h-9">
-          <div className="flex-1 min-w-0 h-full flex items-center border border-r-0 rounded-l-md bg-transparent px-3 text-xs text-muted-foreground truncate">
-            {savePath || "Selecione uma pasta"}
-          </div>
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-9 w-9 rounded-l-none shrink-0"
-            onClick={handleSelectFolder}
-          >
-            <FolderOpen className="w-3.5 h-3.5" />
-          </Button>
-        </div>
+        <SavePathPicker />
       </FieldLabel>
     </div>
   );

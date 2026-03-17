@@ -20,9 +20,10 @@ export const ipc = {
     renderer.invoke("binaries:check") as Promise<{
       ytdlp: { version: string | null; installed: boolean };
       ffmpeg: { version: string | null; installed: boolean };
+      ffprobe: { version: string | null; installed: boolean };
     }>,
 
-  installBinary: (name: "yt-dlp" | "ffmpeg") =>
+  installBinary: (name: "yt-dlp" | "ffmpeg" | "ffprobe") =>
     renderer.invoke("binaries:install", name) as Promise<{
       success: boolean;
       version: string | null;
@@ -31,7 +32,7 @@ export const ipc = {
       source: "system" | "local" | "none";
     }>,
 
-  updateBinary: (name: "yt-dlp" | "ffmpeg") =>
+  updateBinary: (name: "yt-dlp" | "ffmpeg" | "ffprobe") =>
     renderer.invoke("binaries:update", name) as Promise<{
       success: boolean;
       version: string | null;
@@ -40,7 +41,7 @@ export const ipc = {
       source: "system" | "local" | "none";
     }>,
 
-  uninstallBinary: (name: "yt-dlp" | "ffmpeg") =>
+  uninstallBinary: (name: "yt-dlp" | "ffmpeg" | "ffprobe") =>
     renderer.invoke("binaries:uninstall", name) as Promise<{
       success: boolean;
       version: string | null;
@@ -77,6 +78,20 @@ export const ipc = {
 
   cancelConversion: (id: string) =>
     renderer.invoke("convert:cancel", id) as Promise<void>,
+
+  startMerge: (options: {
+    id: string;
+    mainPath: string;
+    bgPath: string;
+    direction: "vertical" | "horizontal";
+    savePath: string;
+  }) => renderer.invoke("merge:start", options) as Promise<{ id: string }>,
+
+  cancelMerge: (id: string) =>
+    renderer.invoke("merge:cancel", id) as Promise<void>,
+
+  extractMergeThumbnail: (filePath: string) =>
+    renderer.invoke("merge:thumbnail", filePath) as Promise<string | null>,
 
   extractThumbnail: (filePath: string) =>
     renderer.invoke("convert:thumbnail", filePath) as Promise<string | null>,
@@ -132,6 +147,8 @@ export const ipc = {
       thumbnail: string;
       filesize: number;
       resolution: string | null;
+      playlistTitle?: string;
+      playlistCount?: number;
     }) => void,
   ) => {
     const handler = (_event: unknown, ...args: unknown[]) => {
@@ -144,6 +161,8 @@ export const ipc = {
           thumbnail: string;
           filesize: number;
           resolution: string | null;
+          playlistTitle?: string;
+          playlistCount?: number;
         },
       );
     };
@@ -154,24 +173,26 @@ export const ipc = {
   onProgress: (
     callback: (data: {
       id: string;
-      type: "download" | "convert";
+      type: "download" | "convert" | "merge";
       progress: number;
       stage: string;
       errorMessage?: string;
       outputSize?: number;
       outputPath?: string;
+      playlistDownloaded?: number;
     }) => void,
   ) => {
     const handler = (_event: unknown, ...args: unknown[]) => {
       callback(
         args[0] as {
           id: string;
-          type: "download" | "convert";
+          type: "download" | "convert" | "merge";
           progress: number;
           stage: string;
           errorMessage?: string;
           outputSize?: number;
           outputPath?: string;
+          playlistDownloaded?: number;
         },
       );
     };

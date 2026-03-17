@@ -11,11 +11,9 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useBinariesStore } from "@/stores/binaries-store";
-import { Button } from "@/components/ui/button";
 import { SettingRow } from "@/features/settings/components/setting-row";
 import { VersionCard } from "@/features/settings/components/version-card";
-import { ipc } from "@/lib/ipc";
-import { FolderOpen } from "lucide-react";
+import { SavePathPicker } from "@/components/save-path-picker";
 import { BROWSERS } from "@/lib/constants";
 import type { Browser } from "@/lib/types";
 
@@ -24,14 +22,13 @@ export const Route = createFileRoute("/settings")({
 });
 
 function SettingsPage() {
-  const downloadPath = useSettingsStore((s) => s.downloadPath);
-  const setDownloadPath = useSettingsStore((s) => s.setDownloadPath);
   const useCookies = useSettingsStore((s) => s.useCookies);
   const setUseCookies = useSettingsStore((s) => s.setUseCookies);
   const cookieBrowser = useSettingsStore((s) => s.cookieBrowser);
   const setCookieBrowser = useSettingsStore((s) => s.setCookieBrowser);
   const ytdlp = useBinariesStore((s) => s.ytdlp);
   const ffmpeg = useBinariesStore((s) => s.ffmpeg);
+  const ffprobe = useBinariesStore((s) => s.ffprobe);
 
   return (
     <>
@@ -81,21 +78,8 @@ function SettingsPage() {
           <div className="text-[11.5px] text-muted-foreground">
             Onde os arquivos baixados são salvos por padrão
           </div>
-          <div className="flex items-center h-9 mt-2">
-            <div className="flex-1 min-w-0 h-full flex items-center border border-r-0 rounded-l-md bg-transparent px-3 text-xs text-muted-foreground truncate">
-              {downloadPath || "Nenhuma pasta selecionada"}
-            </div>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-9 w-9 rounded-l-none shrink-0"
-              onClick={async () => {
-                const selected = await ipc.selectFolder();
-                if (selected) setDownloadPath(selected);
-              }}
-            >
-              <FolderOpen className="w-3.5 h-3.5" />
-            </Button>
+          <div className="mt-2">
+            <SavePathPicker />
           </div>
         </Card>
       </Section>
@@ -106,6 +90,7 @@ function SettingsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <VersionCard binary={ytdlp} />
           <VersionCard binary={ffmpeg} />
+          <VersionCard binary={ffprobe} />
         </div>
       </Section>
     </>

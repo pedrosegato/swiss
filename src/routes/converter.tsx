@@ -9,11 +9,18 @@ import {
   TooltipContent,
 } from "@/components/ui/tooltip";
 import { ConfirmDialog } from "@/components/confirm-dialog";
-import { DropZone } from "@/features/converter/components/drop-zone";
+import { FileDropZone } from "@/components/file-drop-zone";
+import { formatSize } from "@/lib/utils";
+import { ipc } from "@/lib/ipc";
 import { FormatSelects } from "@/components/format-selects";
 import { FileRow } from "@/features/converter/components/file-row";
 import { useConvertStore } from "@/stores/convert-store";
-import { CONVERT_VIDEO_FORMATS, CONVERT_AUDIO_FORMATS } from "@/lib/constants";
+import {
+  CONVERT_VIDEO_FORMATS,
+  CONVERT_AUDIO_FORMATS,
+  CONVERT_ALL_FORMATS,
+  isVideoFormat,
+} from "@/lib/constants";
 import type { ConvertFormat } from "@/lib/types";
 import { FileAudio, Trash2 } from "lucide-react";
 import {
@@ -35,8 +42,11 @@ function ConverterPage() {
   const itemCount = useConvertStore((s) => s.items.length);
   const clearItems = useConvertStore((s) => s.clearItems);
   const startAll = useConvertStore((s) => s.startAll);
+  const addItems = useConvertStore((s) => s.addItems);
+  const updateItem = useConvertStore((s) => s.updateItem);
   const format = useConvertStore((s) => s.outputFormat);
   const setFormat = useConvertStore((s) => s.setOutputFormat);
+  const quality = useConvertStore((s) => s.quality);
   const savePath = useSettingsStore((s) => s.downloadPath);
   const hasQueued = useConvertStore((s) =>
     s.items.some((i) => i.stage === "queued"),
@@ -53,6 +63,44 @@ function ConverterPage() {
     startAll();
   };
 
+  const handleFilesDropped = (
+    files: { path: string; name: string; size: number; ext: string }[],
+  ) => {
+    if (!savePath) {
+      toast.warning(
+        "Selecione uma pasta de destino antes de adicionar arquivos.",
+      );
+      return;
+    }
+    if (files.length === 0) return;
+
+    const items = files.map((f) => ({
+      id: crypto.randomUUID(),
+      inputPath: f.path,
+      inputName: f.name,
+      inputSize: formatSize(f.size),
+      inputExt: f.ext,
+      outputFormat: format,
+      quality,
+      stage: "queued" as const,
+      progress: 0,
+      savePath,
+      thumbnailLoading: isVideoFormat(f.ext.replace(".", "")),
+    }));
+    addItems(items);
+
+    for (const item of items) {
+      if (item.thumbnailLoading) {
+        ipc.extractThumbnail(item.inputPath).then((thumbnail) => {
+          updateItem(item.id, {
+            thumbnailLoading: false,
+            ...(thumbnail ? { thumbnail } : {}),
+          });
+        });
+      }
+    }
+  };
+
   return (
     <>
       <div className="flex items-baseline gap-3 mb-5 flex-wrap">
@@ -62,7 +110,12 @@ function ConverterPage() {
         </span>
       </div>
 
-      <DropZone />
+      <FileDropZone
+        extensions={CONVERT_ALL_FORMATS}
+        showFormats
+        onDrop={handleFilesDropped}
+        className="mb-5"
+      />
       <FormatSelects
         format={format}
         onFormatChange={(v) => setFormat(v as ConvertFormat)}

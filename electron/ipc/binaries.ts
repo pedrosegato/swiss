@@ -9,16 +9,17 @@ import {
 
 export function registerBinariesHandlers() {
   ipcMain.handle("binaries:check", async () => {
-    const [ytdlp, ffmpeg] = await Promise.all([
+    const [ytdlp, ffmpeg, ffprobe] = await Promise.all([
       resolveBinary("yt-dlp"),
       resolveBinary("ffmpeg"),
+      resolveBinary("ffprobe"),
     ]);
-    return { ytdlp, ffmpeg };
+    return { ytdlp, ffmpeg, ffprobe };
   });
 
   ipcMain.handle(
     "binaries:install",
-    async (event, name: "yt-dlp" | "ffmpeg") => {
+    async (event, name: "yt-dlp" | "ffmpeg" | "ffprobe") => {
       const win = BrowserWindow.fromWebContents(event.sender);
       const success = await downloadBinary(name, (percent) => {
         win?.webContents.send("binaries:install-progress", { name, percent });
@@ -43,7 +44,7 @@ export function registerBinariesHandlers() {
 
   ipcMain.handle(
     "binaries:uninstall",
-    async (_event, name: "yt-dlp" | "ffmpeg") => {
+    async (_event, name: "yt-dlp" | "ffmpeg" | "ffprobe") => {
       const success = await uninstallBinary(name);
       if (success) {
         const info = await resolveBinary(name);
@@ -61,7 +62,7 @@ export function registerBinariesHandlers() {
 
   ipcMain.handle(
     "binaries:update",
-    async (_event, name: "yt-dlp" | "ffmpeg") => {
+    async (_event, name: "yt-dlp" | "ffmpeg" | "ffprobe") => {
       const success = await updateBinary(name);
       if (success) {
         const info = await resolveBinary(name);
@@ -79,7 +80,7 @@ export function registerBinariesHandlers() {
 
   ipcMain.handle(
     "binaries:get-path",
-    async (_event, name: "yt-dlp" | "ffmpeg") => {
+    async (_event, name: "yt-dlp" | "ffmpeg" | "ffprobe") => {
       return getSpawnPath(name);
     },
   );

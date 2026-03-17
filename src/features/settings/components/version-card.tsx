@@ -14,10 +14,17 @@ interface VersionCardProps {
 export function VersionCard({ binary }: VersionCardProps) {
   const setYtdlp = useBinariesStore((s) => s.setYtdlp);
   const setFfmpeg = useBinariesStore((s) => s.setFfmpeg);
+  const setFfprobe = useBinariesStore((s) => s.setFfprobe);
+
+  const getSetter = () => {
+    if (binary.name === "yt-dlp") return setYtdlp;
+    if (binary.name === "ffprobe") return setFfprobe;
+    return setFfmpeg;
+  };
 
   const handleUpdate = async () => {
-    const name = binary.name as "yt-dlp" | "ffmpeg";
-    const setter = name === "yt-dlp" ? setYtdlp : setFfmpeg;
+    const name = binary.name as "yt-dlp" | "ffmpeg" | "ffprobe";
+    const setter = getSetter();
 
     setter({ ...binary, downloading: true });
 
@@ -33,8 +40,8 @@ export function VersionCard({ binary }: VersionCardProps) {
   };
 
   const handleUninstall = async () => {
-    const name = binary.name as "yt-dlp" | "ffmpeg";
-    const setter = name === "yt-dlp" ? setYtdlp : setFfmpeg;
+    const name = binary.name as "yt-dlp" | "ffmpeg" | "ffprobe";
+    const setter = getSetter();
 
     const result = await ipc.uninstallBinary(name);
     setter({
@@ -48,8 +55,8 @@ export function VersionCard({ binary }: VersionCardProps) {
   };
 
   const handleInstall = async () => {
-    const name = binary.name as "yt-dlp" | "ffmpeg";
-    const setter = name === "yt-dlp" ? setYtdlp : setFfmpeg;
+    const name = binary.name as "yt-dlp" | "ffmpeg" | "ffprobe";
+    const setter = getSetter();
 
     setter({ ...binary, downloading: true });
 

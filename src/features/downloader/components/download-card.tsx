@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { ipc } from "@/lib/ipc";
 import { useDownloadStore } from "@/stores/download-store";
 import { useSettingsStore } from "@/stores/settings-store";
-import { FolderOpen, RefreshCw, Square } from "lucide-react";
+import { FolderOpen, ListVideo, RefreshCw, Square } from "lucide-react";
 import { toast } from "sonner";
 
 interface DownloadCardProps {
@@ -32,6 +32,7 @@ export function DownloadCard({ id }: DownloadCardProps) {
   const isFetching = item.stage === "fetching";
   const isActive = item.stage === "downloading" || item.stage === "converting";
   const isError = item.stage === "error";
+  const isPlaylist = !!item.playlistTitle;
 
   const handleCancel = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -103,11 +104,17 @@ export function DownloadCard({ id }: DownloadCardProps) {
         className="cursor-pointer"
         onClick={() => item.url && ipc.openExternal(item.url)}
       >
-        <div className="w-full aspect-video bg-muted/20 relative overflow-hidden">
+        <div className={cn("w-full aspect-video bg-muted/20 relative overflow-hidden", isPlaylist && "mt-1.5 mx-1.5")}>
+          {isPlaylist && (
+            <>
+              <div className="absolute -top-1.5 left-1.5 right-1.5 h-2 rounded-t-md bg-muted/60 border border-b-0 border-border/40" />
+              <div className="absolute -top-0.5 left-0.5 right-0.5 h-1.5 rounded-t-sm bg-muted/40 border border-b-0 border-border/30" />
+            </>
+          )}
           {item.thumbnail ? (
             <img
               src={item.thumbnail}
-              className="w-full h-full object-cover block"
+              className={cn("w-full h-full object-cover block", isPlaylist && "rounded-sm")}
               alt=""
             />
           ) : null}
@@ -116,9 +123,15 @@ export function DownloadCard({ id }: DownloadCardProps) {
               {item.duration}
             </span>
           ) : null}
+          {isPlaylist && item.playlistCount ? (
+            <span className="absolute bottom-1.5 left-1.5 flex items-center gap-1 text-[9.5px] font-medium text-white bg-black/70 px-1.5 py-0.5 rounded-sm">
+              <ListVideo className="w-3 h-3" />
+              {item.playlistCount}
+            </span>
+          ) : null}
         </div>
         <div className="px-3 pt-2.5 text-[12.5px] font-medium leading-snug line-clamp-2">
-          {item.title}
+          {isPlaylist ? item.playlistTitle : item.title}
         </div>
       </div>
 
@@ -138,6 +151,9 @@ export function DownloadCard({ id }: DownloadCardProps) {
               )}
             >
               {DOWNLOAD_STAGE_LABELS[item.stage]}
+              {isPlaylist && isActive && item.playlistCount
+                ? ` (${item.playlistDownloaded ?? 0}/${item.playlistCount})`
+                : null}
             </span>
             <div className="flex items-center gap-0.5">
               {isActive && (

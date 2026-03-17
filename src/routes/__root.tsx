@@ -13,7 +13,8 @@ import { ipc } from "@/lib/ipc";
 import { useBinariesStore } from "@/stores/binaries-store";
 import { useDownloadStore } from "@/stores/download-store";
 import { useConvertStore } from "@/stores/convert-store";
-import type { DownloadStage, ConvertStage } from "@/lib/types";
+import { useMergeStore } from "@/stores/merge-store";
+import type { DownloadStage, ConvertStage, MergeStage } from "@/lib/types";
 
 export const Route = createRootRoute({
   component: RootLayout,
@@ -23,32 +24,36 @@ function RootLayout() {
   const { location } = useRouterState();
   const setYtdlp = useBinariesStore((s) => s.setYtdlp);
   const setFfmpeg = useBinariesStore((s) => s.setFfmpeg);
+  const setFfprobe = useBinariesStore((s) => s.setFfprobe);
   const updateDownload = useDownloadStore((s) => s.updateItem);
   const updateConvert = useConvertStore((s) => s.updateItem);
+  const updateMerge = useMergeStore((s) => s.updateItem);
   const [showInstallDialog, setShowInstallDialog] = useState(false);
 
   useEffect(() => {
-    ipc.checkBinaries().then(({ ytdlp, ffmpeg }) => {
+    ipc.checkBinaries().then(({ ytdlp, ffmpeg, ffprobe }) => {
       setYtdlp({ name: "yt-dlp", ...ytdlp });
       setFfmpeg({ name: "ffmpeg", ...ffmpeg });
+      setFfprobe({ name: "ffprobe", ...ffprobe });
 
       if (!ytdlp.installed || !ffmpeg.installed) {
         setShowInstallDialog(true);
       }
     });
-  }, [setYtdlp, setFfmpeg]);
+  }, [setYtdlp, setFfmpeg, setFfprobe]);
 
   useEffect(() => {
     const unsubscribe = ipc.onProgress(
-      ({ id, type, progress, stage, errorMessage, outputSize, outputPath }) => {
+      ({ id, type, progress, stage, errorMessage, outputSize, outputPath, playlistDownloaded }) => {
         if (type === "download") {
           updateDownload(id, {
             progress,
             stage: stage as DownloadStage,
             errorMessage,
             outputPath,
+            ...(playlistDownloaded != null ? { playlistDownloaded } : {}),
           });
-        } else {
+        } else if (type === "convert") {
           updateConvert(id, {
             progress,
             stage: stage as ConvertStage,
@@ -56,27 +61,43 @@ function RootLayout() {
             outputSize,
             outputPath,
           });
+        } else if (type === "merge") {
+          updateMerge(id, {
+            progress,
+            stage: stage as MergeStage,
+            errorMessage,
+            outputSize,
+            outputPath,
+          });
+          if (stage === "completed" && outputPath) {
+            ipc.extractMergeThumbnail(outputPath).then((thumb) => {
+              if (thumb) updateMerge(id, { thumbnail: thumb });
+            });
+          }
         }
       },
     );
     return unsubscribe;
-  }, [updateDownload, updateConvert]);
+  }, [updateDownload, updateConvert, updateMerge]);
 
   const rafRef = useRef(0);
   useEffect(() => {
     const unsub1 = useDownloadStore.subscribe(() => scheduleDockUpdate());
     const unsub2 = useConvertStore.subscribe(() => scheduleDockUpdate());
+    const unsub3 = useMergeStore.subscribe(() => scheduleDockUpdate());
 
     function scheduleDockUpdate() {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = requestAnimationFrame(() => {
         const downloads = useDownloadStore.getState().items;
         const converts = useConvertStore.getState().items;
+        const merges = useMergeStore.getState().items;
         const active = [
           ...downloads.filter(
             (i) => i.stage === "downloading" || i.stage === "converting",
           ),
           ...converts.filter((i) => i.stage === "converting"),
+          ...merges.filter((i) => i.stage === "merging"),
         ];
 
         if (active.length === 0) {
@@ -92,6 +113,7 @@ function RootLayout() {
     return () => {
       unsub1();
       unsub2();
+      unsub3();
       cancelAnimationFrame(rafRef.current);
     };
   }, []);

@@ -19,6 +19,25 @@ export type DownloadStage =
 
 export type ConvertStage = "queued" | "converting" | "completed" | "error";
 
+export type MergeDirection = "vertical" | "horizontal";
+export type MergeStage = "queued" | "merging" | "completed" | "error";
+
+export interface MergeItem {
+  id: string;
+  mainPath: string;
+  mainName: string;
+  thumbnail?: string;
+  bgPath: string;
+  bgName: string;
+  direction: MergeDirection;
+  stage: MergeStage;
+  progress: number;
+  savePath: string;
+  outputPath?: string;
+  outputSize?: number;
+  errorMessage?: string;
+}
+
 export interface DownloadItem {
   id: string;
   videoId?: string;
@@ -35,6 +54,9 @@ export interface DownloadItem {
   outputPath?: string;
   createdAt: number;
   errorMessage?: string;
+  playlistTitle?: string;
+  playlistCount?: number;
+  playlistDownloaded?: number;
 }
 
 export interface ConvertItem {

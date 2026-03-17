@@ -93,6 +93,24 @@ export const CONVERT_STAGE_LABELS: Record<string, string> = {
   error: "Erro",
 };
 
+export const MERGE_STAGE_LABELS: Record<string, string> = {
+  queued: "Na fila",
+  merging: "Mesclando...",
+  completed: "Concluído",
+  error: "Erro",
+};
+
+export const MERGE_VIDEO_EXTENSIONS = [
+  "mp4",
+  "mkv",
+  "avi",
+  "webm",
+  "mov",
+  "flv",
+  "wmv",
+  "m4v",
+];
+
 export const SORT_LABELS: Record<string, string> = {
   recent: "Mais recentes",
   oldest: "Mais antigos",

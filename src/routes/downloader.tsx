@@ -63,6 +63,12 @@ function DownloaderPage() {
         fileSize: data.filesize > 0 ? formatSize(data.filesize) : undefined,
         quality: displayQuality,
         stage: "downloading",
+        ...(data.playlistTitle
+          ? {
+              playlistTitle: data.playlistTitle,
+              playlistCount: data.playlistCount,
+            }
+          : {}),
       });
     });
     return unsubscribe;

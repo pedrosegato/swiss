@@ -34,13 +34,24 @@ const YTDLP_URLS: Record<string, string> = {
 
 const FFMPEG_URLS: Record<string, string> = {
   "darwin-arm64":
-    "https://github.com/eugeneware/ffmpeg-static/releases/latest/download/ffmpeg-darwin-arm64.gz",
+    "https://github.com/shaka-project/static-ffmpeg-binaries/releases/latest/download/ffmpeg-osx-arm64",
   "darwin-x64":
-    "https://github.com/eugeneware/ffmpeg-static/releases/latest/download/ffmpeg-darwin-x64.gz",
+    "https://github.com/shaka-project/static-ffmpeg-binaries/releases/latest/download/ffmpeg-osx-x64",
   "win32-x64":
-    "https://github.com/eugeneware/ffmpeg-static/releases/latest/download/ffmpeg-win32-x64.gz",
+    "https://github.com/shaka-project/static-ffmpeg-binaries/releases/latest/download/ffmpeg-win-x64.exe",
   "linux-x64":
-    "https://github.com/eugeneware/ffmpeg-static/releases/latest/download/ffmpeg-linux-x64.gz",
+    "https://github.com/shaka-project/static-ffmpeg-binaries/releases/latest/download/ffmpeg-linux-x64",
+};
+
+const FFPROBE_URLS: Record<string, string> = {
+  "darwin-arm64":
+    "https://github.com/shaka-project/static-ffmpeg-binaries/releases/latest/download/ffprobe-osx-arm64",
+  "darwin-x64":
+    "https://github.com/shaka-project/static-ffmpeg-binaries/releases/latest/download/ffprobe-osx-x64",
+  "win32-x64":
+    "https://github.com/shaka-project/static-ffmpeg-binaries/releases/latest/download/ffprobe-win-x64.exe",
+  "linux-x64":
+    "https://github.com/shaka-project/static-ffmpeg-binaries/releases/latest/download/ffprobe-linux-x64",
 };
 
 const DENO_URLS: Record<string, string> = {
@@ -55,7 +66,9 @@ const DENO_URLS: Record<string, string> = {
 };
 
 function getDownloadUrl(name: BinaryName): string {
-  return getPlatformVariant(name === "yt-dlp" ? YTDLP_URLS : FFMPEG_URLS);
+  if (name === "yt-dlp") return getPlatformVariant(YTDLP_URLS);
+  if (name === "ffprobe") return getPlatformVariant(FFPROBE_URLS);
+  return getPlatformVariant(FFMPEG_URLS);
 }
 
 async function downloadFile(

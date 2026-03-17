@@ -6,6 +6,7 @@ import { registerBinariesHandlers } from "./ipc/binaries";
 import { registerDownloaderHandlers, killAllDownloads } from "./ipc/downloader";
 import { registerConverterHandlers, killAllConversions } from "./ipc/converter";
 import { registerDialogHandlers } from "./ipc/dialogs";
+import { registerMergeHandlers, killAllMerges } from "./ipc/merge";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const isMac = process.platform === "darwin";
@@ -91,6 +92,7 @@ registerBinariesHandlers();
 registerDownloaderHandlers();
 registerConverterHandlers();
 registerDialogHandlers();
+registerMergeHandlers();
 
 ipcMain.handle("updater:install", () => {
   autoUpdater.quitAndInstall();
@@ -113,6 +115,7 @@ ipcMain.handle("window:close", () => win?.close());
 app.on("before-quit", () => {
   killAllDownloads();
   killAllConversions();
+  killAllMerges();
 });
 
 app.on("window-all-closed", () => {

@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as MergeRouteImport } from './routes/merge'
 import { Route as DownloaderRouteImport } from './routes/downloader'
 import { Route as ConverterRouteImport } from './routes/converter'
 import { Route as IndexRouteImport } from './routes/index'
@@ -17,6 +18,11 @@ import { Route as IndexRouteImport } from './routes/index'
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MergeRoute = MergeRouteImport.update({
+  id: '/merge',
+  path: '/merge',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DownloaderRoute = DownloaderRouteImport.update({
@@ -39,12 +45,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/converter': typeof ConverterRoute
   '/downloader': typeof DownloaderRoute
+  '/merge': typeof MergeRoute
   '/settings': typeof SettingsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/converter': typeof ConverterRoute
   '/downloader': typeof DownloaderRoute
+  '/merge': typeof MergeRoute
   '/settings': typeof SettingsRoute
 }
 export interface FileRoutesById {
@@ -52,20 +60,22 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/converter': typeof ConverterRoute
   '/downloader': typeof DownloaderRoute
+  '/merge': typeof MergeRoute
   '/settings': typeof SettingsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/converter' | '/downloader' | '/settings'
+  fullPaths: '/' | '/converter' | '/downloader' | '/merge' | '/settings'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/converter' | '/downloader' | '/settings'
-  id: '__root__' | '/' | '/converter' | '/downloader' | '/settings'
+  to: '/' | '/converter' | '/downloader' | '/merge' | '/settings'
+  id: '__root__' | '/' | '/converter' | '/downloader' | '/merge' | '/settings'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ConverterRoute: typeof ConverterRoute
   DownloaderRoute: typeof DownloaderRoute
+  MergeRoute: typeof MergeRoute
   SettingsRoute: typeof SettingsRoute
 }
 
@@ -76,6 +86,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/merge': {
+      id: '/merge'
+      path: '/merge'
+      fullPath: '/merge'
+      preLoaderRoute: typeof MergeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/downloader': {
@@ -106,6 +123,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ConverterRoute: ConverterRoute,
   DownloaderRoute: DownloaderRoute,
+  MergeRoute: MergeRoute,
   SettingsRoute: SettingsRoute,
 }
 export const routeTree = rootRouteImport
