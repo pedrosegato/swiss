@@ -29,15 +29,12 @@ export function QueueHeader() {
   const clearItems = useDownloadStore((s) => s.clearItems);
 
   return (
-    <div className="flex items-center justify-between mb-3.5">
-      <span className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
-        Fila
+    <div className="flex items-center justify-between">
+      <span className="font-mono text-[10px] text-muted-foreground tracking-wider font-medium">
+        {itemCount} {itemCount === 1 ? "item" : "itens"}{" "}
+        <Dot className="w-3 h-3 inline" /> {activeCount} ativos
       </span>
       <div className="flex items-center gap-2.5">
-        <span className="font-mono text-[10px] text-muted-foreground">
-          {itemCount} itens <Dot className="w-3 h-3 inline" /> {activeCount}{" "}
-          ativos
-        </span>
         {itemCount > 0 && (
           <Tooltip>
             <ConfirmDialog
@@ -46,7 +43,7 @@ export function QueueHeader() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                    className="text-muted-foreground hover:text-destructive"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </Button>

@@ -3,8 +3,7 @@ import { useShallow } from "zustand/shallow";
 import { createFileRoute } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "motion/react";
 import { Separator } from "@/components/ui/separator";
-import { UrlInput } from "@/features/downloader/components/url-input";
-import { FormatSelects } from "@/components/format-selects";
+import { DownloadBar } from "@/features/downloader/components/download-bar";
 import {
   VIDEO_FORMATS,
   AUDIO_FORMATS,
@@ -22,13 +21,7 @@ import { ipc } from "@/lib/ipc";
 import { formatSize } from "@/lib/utils";
 import { toast } from "sonner";
 import { Download } from "lucide-react";
-import {
-  Empty,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-  EmptyDescription,
-} from "@/components/ui/empty";
+import { EmptyQueue } from "@/components/empty-queue";
 
 export const Route = createFileRoute("/downloader")({
   component: DownloaderPage,
@@ -124,13 +117,8 @@ function DownloaderPage() {
   };
 
   return (
-    <>
-      <div className="flex items-baseline gap-3 mb-5">
-        <h1 className="text-lg font-semibold tracking-tight">Download</h1>
-      </div>
-
-      <UrlInput onFetch={handleFetch} />
-      <FormatSelects
+    <div className="flex flex-col gap-3">
+      <DownloadBar
         format={format}
         onFormatChange={(v) => setFormat(v as DownloadFormat)}
         quality={quality}
@@ -139,46 +127,24 @@ function DownloaderPage() {
         audioFormats={AUDIO_FORMATS}
         videoQualities={VIDEO_QUALITIES}
         audioQualities={AUDIO_QUALITIES}
+        onFetch={handleFetch}
       />
 
       {itemIds.length > 0 && (
         <>
-          <Separator className="mb-5" />
+          <Separator />
           <QueueHeader />
         </>
       )}
 
       {itemIds.length === 0 ? (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.1 }}
-        >
-          <Empty className="py-12 border-0">
-            <EmptyHeader>
-              <EmptyMedia>
-                <motion.div
-                  animate={{ y: [0, -4, 0] }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
-                >
-                  <Download className="w-8 h-8 text-muted-foreground" />
-                </motion.div>
-              </EmptyMedia>
-              <EmptyTitle className="text-[14px]">
-                Nenhum download na fila
-              </EmptyTitle>
-              <EmptyDescription className="text-[12px]">
-                Nenhum vídeo baixado
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        </motion.div>
+        <EmptyQueue
+          icon={Download}
+          title="Nenhum download na fila"
+          description="Nenhum vídeo baixado"
+        />
       ) : (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-2.5">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-2.5">
           <AnimatePresence mode="popLayout">
             {itemIds.map((id, i) => (
               <motion.div
@@ -200,6 +166,6 @@ function DownloaderPage() {
         open={showInstallDialog}
         onOpenChange={setShowInstallDialog}
       />
-    </>
+    </div>
   );
 }

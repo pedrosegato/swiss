@@ -113,6 +113,9 @@ export const ipc = {
   openPath: (dirPath: string) =>
     renderer.invoke("shell:open-path", dirPath) as Promise<void>,
 
+  checkPaths: (paths: { id: string; path: string }[]) =>
+    renderer.invoke("fs:check-paths", paths) as Promise<string[]>,
+
   setDockProgress: (progress: number) =>
     renderer.invoke("dock:set-progress", progress) as Promise<void>,
 
@@ -180,6 +183,7 @@ export const ipc = {
       outputSize?: number;
       outputPath?: string;
       playlistDownloaded?: number;
+      playlistFileSize?: number;
     }) => void,
   ) => {
     const handler = (_event: unknown, ...args: unknown[]) => {
@@ -193,6 +197,7 @@ export const ipc = {
           outputSize?: number;
           outputPath?: string;
           playlistDownloaded?: number;
+          playlistFileSize?: number;
         },
       );
     };

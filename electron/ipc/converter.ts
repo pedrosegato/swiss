@@ -35,7 +35,11 @@ export function registerConverterHandlers() {
       "-i",
       options.inputPath,
       "-y",
-      ...getQualityArgs(options.outputFormat, options.quality),
+      ...getQualityArgs(
+        options.outputFormat,
+        options.quality,
+        extname(options.inputPath).replace(".", "").toLowerCase(),
+      ),
       "-progress",
       "pipe:1",
       outputPath,
@@ -176,13 +180,46 @@ async function getMediaDuration(filePath: string): Promise<number> {
   }
 }
 
-function getQualityArgs(format: string, quality: string): string[] {
+function getQualityArgs(
+  format: string,
+  quality: string,
+  inputExt: string,
+): string[] {
   const videoFormats = ["mp4", "mkv", "avi", "webm", "mov"];
+
   if (videoFormats.includes(format)) {
-    if (quality === "Original") return [];
-    const height = quality.replace("p", "");
-    return ["-vf", `scale=-2:${height}`];
+    // Same format + original quality → remux (instant, no re-encode)
+    if (quality === "Original" && inputExt === format) {
+      return ["-c", "copy"];
+    }
+
+    const args: string[] = [];
+
+    // Video codec
+    if (format === "webm") {
+      args.push("-c:v", "libvpx-vp9", "-crf", "30", "-b:v", "0");
+    } else {
+      // mp4, mkv, mov, avi → h264
+      args.push("-c:v", "libx264", "-crf", "23", "-preset", "ultrafast");
+    }
+
+    // Audio codec
+    if (format === "webm") {
+      args.push("-c:a", "libopus", "-b:a", "128k");
+    } else {
+      args.push("-c:a", "aac", "-b:a", "192k");
+    }
+
+    // Scale if not original
+    if (quality !== "Original") {
+      const height = quality.replace("p", "");
+      args.push("-vf", `scale=-2:${height}`);
+    }
+
+    return args;
   }
+
+  // Audio formats
   const bitrateMatch = quality.match(/(\d+)/);
   const bitrate = bitrateMatch ? bitrateMatch[1] : "192";
   return ["-b:a", `${bitrate}k`, "-vn"];

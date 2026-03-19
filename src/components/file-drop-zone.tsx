@@ -82,28 +82,10 @@ export function FileDropZone({
     }
   }, [extensions, onDrop, onAddFiles]);
 
+  const hasFiles = files && files.length > 0;
+
   return (
     <div className={cn("min-w-0 w-full", className)}>
-      {(label || (files && files.length > 0)) && (
-        <div className="flex items-center justify-between mb-2">
-          {label && (
-            <span className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
-              {label}
-            </span>
-          )}
-          {files && files.length > 0 && onClear && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-5 px-1.5 text-[10px] text-muted-foreground hover:text-destructive"
-              onClick={onClear}
-            >
-              Limpar
-            </Button>
-          )}
-        </div>
-      )}
-
       <div
         onDrop={(e) => {
           dragCounter.current = 0;
@@ -127,26 +109,32 @@ export function FileDropZone({
         <div
           onClick={handleBrowse}
           className={cn(
-            "border-[1.5px] border-dashed rounded-md p-6 text-center transition-colors cursor-pointer",
+            "border-[1.5px] border-dashed rounded-md p-4 text-center transition-colors cursor-pointer",
+            hasFiles ? "rounded-b-none border-b-0" : "",
             isDragging
               ? "border-primary/60 bg-primary/5"
               : "border-border hover:border-border-hover",
           )}
         >
+          {label && !isDragging && (
+            <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium block mb-1.5">
+              {label}
+            </span>
+          )}
           <Download
             className={cn(
-              "mx-auto mb-2 w-5 h-5 transition-transform duration-200",
+              "mx-auto mb-1.5 w-4 h-4 transition-transform duration-200",
               isDragging
                 ? "text-primary/60 -translate-y-1"
                 : "text-muted-foreground",
             )}
           />
-          <div className="text-[12px] text-secondary-foreground">
+          <div className="text-[11px] text-secondary-foreground">
             {isDragging ? (
               <span className="text-primary/80 font-medium">Solte aqui</span>
             ) : (
               <>
-                Solte arquivos aqui ou{" "}
+                Solte arquivos ou{" "}
                 <strong className="text-primary font-medium cursor-pointer">
                   procure
                 </strong>
@@ -154,7 +142,7 @@ export function FileDropZone({
             )}
           </div>
           {showFormats && !isDragging && (
-            <div className="font-mono text-[10.5px] text-muted-foreground flex items-center flex-wrap justify-center mt-1">
+            <div className="font-mono text-[10px] text-muted-foreground flex items-center flex-wrap justify-center mt-1">
               {extensions.map((fmt, i) => (
                 <span key={fmt} className="flex items-center">
                   {i > 0 && <Dot className="w-3 h-3" />}
@@ -166,29 +154,45 @@ export function FileDropZone({
         </div>
       </div>
 
-      {files && files.length > 0 && (
-        <div className="mt-2 space-y-1 max-h-[200px] overflow-y-auto">
-          {files.map((f) => (
-            <div
-              key={f.path}
-              className="flex items-center gap-2 px-2 py-1.5 rounded bg-muted/40 group"
-            >
-              <span className="text-[11px] truncate flex-1">{f.name}</span>
-              <span className="font-mono text-[10px] text-muted-foreground shrink-0">
-                {formatSize(f.size)}
-              </span>
-              {onRemoveFile && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
-                  onClick={() => onRemoveFile(f.path)}
-                >
-                  <X className="w-3 h-3" />
-                </Button>
-              )}
+      {hasFiles && (
+        <div className="border-[1.5px] border-dashed border-t-0 border-border rounded-b-md">
+          <div className="max-h-[140px] overflow-y-auto">
+            {files.map((f) => (
+              <div
+                key={f.path}
+                className="flex items-center gap-2 px-2.5 py-1.5 group border-t border-border/40 first:border-t-0"
+              >
+                <span className="text-[10px] truncate flex-1 text-muted-foreground">
+                  {f.name}
+                </span>
+                <span className="font-mono text-[9px] text-muted-foreground/60 shrink-0">
+                  {formatSize(f.size)}
+                </span>
+                {onRemoveFile && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                    onClick={() => onRemoveFile(f.path)}
+                  >
+                    <X className="w-2.5 h-2.5" />
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+          {onClear && files.length > 1 && (
+            <div className="border-t border-border/40 px-2.5 py-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-4 px-0 text-[9px] text-muted-foreground/60 hover:text-destructive"
+                onClick={onClear}
+              >
+                Limpar todos
+              </Button>
             </div>
-          ))}
+          )}
         </div>
       )}
     </div>

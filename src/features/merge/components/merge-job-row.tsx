@@ -1,15 +1,10 @@
-import { formatSize } from "@/lib/utils";
+import { cn, formatSize } from "@/lib/utils";
 import { useMergeStore } from "@/stores/merge-store";
+import { MERGE_STAGE_LABELS } from "@/lib/constants";
 import { ipc } from "@/lib/ipc";
-import { MergeProgress } from "./merge-progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@/components/ui/tooltip";
-import { X, FolderOpen, RotateCcw } from "lucide-react";
+import { JobActions } from "@/components/job-actions";
+import { JobProgress } from "@/components/job-progress";
 
 interface MergeJobRowProps {
   id: string;
@@ -25,6 +20,7 @@ export function MergeJobRow({ id }: MergeJobRowProps) {
   const isDone = item.stage === "completed";
   const isError = item.stage === "error";
   const isMerging = item.stage === "merging";
+  const isQueued = item.stage === "queued";
 
   const handleCancel = () => {
     ipc.cancelMerge(item.id);
@@ -59,104 +55,66 @@ export function MergeJobRow({ id }: MergeJobRowProps) {
   };
 
   return (
-    <div className="bg-card border border-border rounded-lg group transition-colors hover:bg-card/80 p-3">
-      <div className="flex items-start gap-3">
-        <div className="w-[80px] shrink-0">
+    <div
+      className={cn(
+        "bg-card border border-border rounded-lg group transition-all",
+        isError ? "border-destructive/30" : "hover:border-border/80",
+      )}
+    >
+      <div className="flex items-center gap-3 px-3 py-2.5">
+        <div className="w-[52px] h-[36px] shrink-0 rounded overflow-hidden">
           {item.thumbnail ? (
             <img
               src={item.thumbnail}
               alt=""
-              className="w-full aspect-video rounded-md object-cover"
+              className="w-full h-full object-cover"
             />
           ) : isError ? (
-            <div className="w-full aspect-video rounded-md bg-black" />
+            <div className="w-full h-full bg-muted/20 rounded" />
           ) : (
-            <Skeleton className="w-full aspect-video rounded-md" />
+            <Skeleton className="w-full h-full" />
           )}
         </div>
+
         <div className="flex-1 min-w-0">
-          <span className="text-[12px] font-[450] block truncate">
+          <p className="text-[12px] font-medium leading-tight truncate">
             {item.mainName}
-          </span>
-          <span className="text-[10px] text-muted-foreground block truncate">
+          </p>
+          <p className="text-[10px] text-muted-foreground leading-tight truncate mt-0.5">
             + {item.bgName}
+          </p>
+        </div>
+
+        {isDone && item.outputSize && (
+          <span className="font-mono text-[10px] text-muted-foreground shrink-0">
+            {formatSize(item.outputSize)}
           </span>
-        </div>
-        <div className="flex items-center gap-1 shrink-0">
-          {isDone && item.outputSize && (
-            <span className="font-mono text-[10px] text-muted-foreground mr-1">
-              {formatSize(item.outputSize)}
-            </span>
-          )}
-          {isMerging && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                  onClick={handleCancel}
-                >
-                  <X className="w-3 h-3" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Cancelar</TooltipContent>
-            </Tooltip>
-          )}
-          {isError && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                  onClick={handleRetry}
-                >
-                  <RotateCcw className="w-3 h-3" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Tentar novamente</TooltipContent>
-            </Tooltip>
-          )}
-          {isDone && item.outputPath && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                  onClick={handleOpenFolder}
-                >
-                  <FolderOpen className="w-3 h-3" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Abrir pasta</TooltipContent>
-            </Tooltip>
-          )}
-          {!isMerging && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => removeItem(item.id)}
-                >
-                  <X className="w-3 h-3" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Remover</TooltipContent>
-            </Tooltip>
-          )}
-        </div>
-      </div>
-      <div className="mt-2">
-        <MergeProgress
-          stage={item.stage}
-          progress={item.progress}
-          errorMessage={item.errorMessage}
+        )}
+
+        <JobActions
+          isActive={isMerging}
+          isError={isError}
+          isDone={isDone}
+          outputPath={item.outputPath}
+          onCancel={handleCancel}
+          onRetry={handleRetry}
+          onOpenFolder={handleOpenFolder}
+          onRemove={() => removeItem(item.id)}
         />
       </div>
+
+      {!isQueued && (
+        <div className="px-3 pb-2.5">
+          <JobProgress
+            stage={item.stage}
+            progress={item.progress}
+            stageLabel={MERGE_STAGE_LABELS[item.stage]}
+            errorMessage={item.errorMessage}
+            isError={isError}
+            isDone={isDone}
+          />
+        </div>
+      )}
     </div>
   );
 }

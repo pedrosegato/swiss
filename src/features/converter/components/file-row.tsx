@@ -1,12 +1,29 @@
 import type { ConvertFormat } from "@/lib/types";
-import { formatSize } from "@/lib/utils";
+import { cn, formatSize } from "@/lib/utils";
 import { useConvertStore } from "@/stores/convert-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { ipc } from "@/lib/ipc";
-import { FileThumbnail } from "./file-thumbnail";
-import { FileFormatBadges } from "./file-format-badges";
-import { FileProgress } from "./file-progress";
-import { FileActions } from "./file-actions";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { JobActions } from "@/components/job-actions";
+import { JobProgress } from "@/components/job-progress";
+import {
+  CONVERT_VIDEO_FORMATS,
+  CONVERT_AUDIO_FORMATS,
+  CONVERT_STAGE_LABELS,
+  isVideoFormat,
+} from "@/lib/constants";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ArrowRight, Film, Music } from "lucide-react";
 
 interface FileRowProps {
   id: string;
@@ -33,7 +50,19 @@ export function FileRow({ id }: FileRowProps) {
     });
   };
 
-  const handleRetry = () => {
+  const handleRetry = async () => {
+    const savePath = useSettingsStore.getState().downloadPath;
+    if (!savePath) return;
+
+    const missing = await ipc.checkPaths([
+      { id: item.id, path: item.inputPath },
+    ]);
+    if (missing.length > 0) {
+      toast.warning("Arquivo de entrada não encontrado.");
+      removeItem(item.id);
+      return;
+    }
+
     updateItem(item.id, {
       stage: "converting",
       progress: 0,
@@ -41,8 +70,6 @@ export function FileRow({ id }: FileRowProps) {
       outputSize: undefined,
       outputPath: undefined,
     });
-    const savePath = useSettingsStore.getState().downloadPath;
-    if (!savePath) return;
     ipc.startConversion({
       id: item.id,
       inputPath: item.inputPath,
@@ -62,99 +89,120 @@ export function FileRow({ id }: FileRowProps) {
     updateItem(item.id, { outputFormat: format });
   };
 
-  const actions = (
-    <FileActions
-      isConverting={isConverting}
-      isError={isError}
-      isDone={isDone}
-      outputPath={item.outputPath}
-      onCancel={handleCancel}
-      onRetry={handleRetry}
-      onOpenFolder={handleOpenFolder}
-      onRemove={() => removeItem(item.id)}
-    />
-  );
-
-  const formatBadges = (
-    <FileFormatBadges
-      inputExt={item.inputExt}
-      outputFormat={item.outputFormat}
-      isQueued={isQueued}
-      onOutputFormatChange={handleFormatChange}
-    />
-  );
-
-  const progress = (
-    <FileProgress
-      stage={item.stage}
-      progress={item.progress}
-      errorMessage={item.errorMessage}
-    />
-  );
+  const Icon = isVideoFormat(item.inputExt.replace(".", "")) ? Film : Music;
 
   return (
-    <div className="bg-card border border-border rounded-lg group transition-colors hover:bg-card/80">
-      {/* Card (default) */}
-      <div className="p-3 lg:hidden">
-        <div className="flex gap-3">
-          <div className="w-[100px] shrink-0">
-            <FileThumbnail
-              inputExt={item.inputExt}
-              thumbnail={item.thumbnail}
-              thumbnailLoading={item.thumbnailLoading}
-              className="w-full aspect-video"
+    <div
+      className={cn(
+        "bg-card border border-border rounded-lg group transition-all",
+        isError ? "border-destructive/30" : "hover:border-border/80",
+      )}
+    >
+      <div className="flex items-center gap-3 px-3 py-2.5">
+        <div className="w-[52px] h-[36px] shrink-0 rounded overflow-hidden">
+          {item.thumbnailLoading ? (
+            <Skeleton className="w-full h-full" />
+          ) : item.thumbnail ? (
+            <img
+              src={item.thumbnail}
+              alt=""
+              className="w-full h-full object-cover"
             />
-          </div>
-          <div className="flex-1 min-w-0">
-            <span className="text-[12.5px] font-[450] overflow-hidden text-ellipsis block line-clamp-2">
-              {item.inputName}
-            </span>
+          ) : (
+            <div className="w-full h-full bg-muted/30 flex items-center justify-center">
+              <Icon className="w-3.5 h-3.5 text-muted-foreground" />
+            </div>
+          )}
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <p className="text-[12px] font-medium leading-tight truncate">
+            {item.inputName}
+          </p>
+          <div className="flex items-center gap-2 mt-0.5">
             <span className="font-mono text-[10px] text-muted-foreground">
               {item.inputSize}
             </span>
+            {isDone && item.outputSize && (
+              <>
+                <ArrowRight className="w-2.5 h-2.5 text-muted-foreground/40" />
+                <span className="font-mono text-[10px] text-muted-foreground">
+                  {formatSize(item.outputSize)}
+                </span>
+              </>
+            )}
           </div>
-          <div className="shrink-0">{actions}</div>
         </div>
-        <div className="flex items-center gap-3 mt-2.5">
-          {formatBadges}
-          {isDone && item.outputSize && (
-            <span className="font-mono text-[10px] text-muted-foreground ml-auto">
-              {formatSize(item.outputSize)}
-            </span>
+
+        <div className="flex items-center gap-1.5 shrink-0">
+          <Badge
+            variant="outline"
+            className="font-mono text-[9px] px-1.5 py-0 h-5 text-muted-foreground"
+          >
+            {item.inputExt.replace(".", "")}
+          </Badge>
+          <ArrowRight className="w-2.5 h-2.5 text-muted-foreground/40" />
+          {isQueued ? (
+            <Select
+              value={item.outputFormat}
+              onValueChange={(v) => handleFormatChange(v as ConvertFormat)}
+            >
+              <SelectTrigger className="h-5 text-[9px] font-mono w-[68px] px-1.5">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent position="popper" sideOffset={4}>
+                <SelectGroup>
+                  <SelectLabel>Vídeo</SelectLabel>
+                  {CONVERT_VIDEO_FORMATS.map((f) => (
+                    <SelectItem key={f} value={f}>
+                      {f.toUpperCase()}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+                <SelectGroup>
+                  <SelectLabel>Áudio</SelectLabel>
+                  {CONVERT_AUDIO_FORMATS.map((f) => (
+                    <SelectItem key={f} value={f}>
+                      {f.toUpperCase()}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          ) : (
+            <Badge
+              variant="outline"
+              className="font-mono text-[9px] px-1.5 py-0 h-5"
+            >
+              {item.outputFormat}
+            </Badge>
           )}
         </div>
-        <div className="mt-2">{progress}</div>
+
+        <JobActions
+          isActive={isConverting}
+          isError={isError}
+          isDone={isDone}
+          outputPath={item.outputPath}
+          onCancel={handleCancel}
+          onRetry={handleRetry}
+          onOpenFolder={handleOpenFolder}
+          onRemove={() => removeItem(item.id)}
+        />
       </div>
 
-      {/* Row (lg+) */}
-      <div className="hidden lg:flex items-center">
-        <div className="px-3 py-2.5 w-[104px] shrink-0">
-          <FileThumbnail
-            inputExt={item.inputExt}
-            thumbnail={item.thumbnail}
-            thumbnailLoading={item.thumbnailLoading}
-            className="w-[96px] h-[54px]"
+      {!isQueued && (
+        <div className="px-3 pb-2.5">
+          <JobProgress
+            stage={item.stage}
+            progress={item.progress}
+            stageLabel={CONVERT_STAGE_LABELS[item.stage]}
+            errorMessage={item.errorMessage}
+            isError={isError}
+            isDone={isDone}
           />
         </div>
-        <div className="px-3 py-2.5 flex-1 min-w-0">
-          <span className="text-[12.5px] font-[450] whitespace-nowrap overflow-hidden text-ellipsis block">
-            {item.inputName}
-          </span>
-        </div>
-        <div className="px-3 py-2.5 shrink-0">
-          <span className="font-mono text-[10.5px] text-muted-foreground whitespace-nowrap">
-            {item.inputSize}
-          </span>
-        </div>
-        <div className="px-3 py-2.5 shrink-0">{formatBadges}</div>
-        <div className="px-3 py-2.5 w-[160px] shrink-0">{progress}</div>
-        <div className="px-3 py-2.5 shrink-0">
-          <span className="font-mono text-[10.5px] text-muted-foreground whitespace-nowrap">
-            {isDone && item.outputSize ? formatSize(item.outputSize) : null}
-          </span>
-        </div>
-        <div className="px-1.5 py-2.5 shrink-0">{actions}</div>
-      </div>
+      )}
     </div>
   );
 }

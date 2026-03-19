@@ -1,10 +1,7 @@
 import { ipcMain, BrowserWindow } from "electron";
 import { spawn, type ChildProcess } from "node:child_process";
 import path from "node:path";
-import {
-  getSpawnPath,
-  getYtdlpSpawnInfo,
-} from "./binary-manager";
+import { getSpawnPath, getYtdlpSpawnInfo } from "./binary-manager";
 
 import { formatDuration, buildFormatString } from "../lib/format";
 import { existsSync } from "node:fs";
@@ -58,6 +55,7 @@ export function registerDownloaderHandlers() {
     ];
 
     args.push("--remote-components", "ejs:github");
+    args.push("--ignore-errors");
 
     if (isVideo) {
       args.push("--merge-output-format", options.format);
@@ -97,6 +95,7 @@ export function registerDownloaderHandlers() {
     let lastVideoId = "";
     let playlistTotal = 0;
     let playlistCurrentIndex = 0;
+    let playlistTotalFilesize = 0;
 
     proc.stderr.on("data", (data: Buffer) => {
       const text = data.toString();
@@ -119,6 +118,7 @@ export function registerDownloaderHandlers() {
             progress: Math.min(progress, 99),
             stage: "converting",
             playlistDownloaded: playlistCurrentIndex,
+            playlistFileSize: playlistTotalFilesize,
           });
         } else {
           safeSend(win, "progress:update", {
@@ -170,6 +170,7 @@ export function registerDownloaderHandlers() {
             if (nEntries > 0) {
               playlistTotal = nEntries;
               playlistCurrentIndex = plIndex;
+              playlistTotalFilesize += filesize;
             }
 
             if (!metadataSent) {
@@ -211,7 +212,10 @@ export function registerDownloaderHandlers() {
             progress,
             stage: "downloading",
             ...(playlistTotal > 0
-              ? { playlistDownloaded: playlistCurrentIndex - 1 }
+              ? {
+                  playlistDownloaded: playlistCurrentIndex - 1,
+                  playlistFileSize: playlistTotalFilesize,
+                }
               : {}),
           });
         }
@@ -220,15 +224,22 @@ export function registerDownloaderHandlers() {
 
     proc.on("close", (code) => {
       activeDownloads.delete(id);
-      if (code === 0) {
+
+      // With --ignore-errors, yt-dlp exits with code 1 when some videos
+      // in a playlist are unavailable, even if others downloaded fine.
+      // Treat as success if we received metadata (i.e. something downloaded).
+      const hasPartialSuccess = code !== 0 && metadataSent;
+
+      if (code === 0 || hasPartialSuccess) {
         let outputPath: string | undefined;
 
         if (playlistTotal > 0) {
-          const plTitleMatch = stderrBuffer.match(
-            /\[download\] Downloading playlist: (.+)/,
-          );
-          if (plTitleMatch) {
-            outputPath = path.join(options.savePath, plTitleMatch[1].trim());
+          // Get the actual playlist folder from the first downloaded file's path
+          const destMatches = [
+            ...stderrBuffer.matchAll(/\[download\] Destination: (.+)/g),
+          ];
+          if (destMatches.length > 0) {
+            outputPath = path.dirname(destMatches[0][1].trim());
           }
         } else {
           const mergerMatch = stderrBuffer.match(
@@ -274,7 +285,7 @@ export function registerDownloaderHandlers() {
           progress: 0,
           stage: "error",
           errorMessage: isDiskFull
-            ? "Disco cheio — libere espaço e tente novamente"
+            ? "Disco cheio, libere espaço e tente novamente"
             : errMsg,
         });
       }

@@ -4,6 +4,15 @@ import { AnimatePresence, motion } from "motion/react";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
@@ -12,7 +21,6 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { FileDropZone } from "@/components/file-drop-zone";
 import { formatSize } from "@/lib/utils";
 import { ipc } from "@/lib/ipc";
-import { FormatSelects } from "@/components/format-selects";
 import { FileRow } from "@/features/converter/components/file-row";
 import { useConvertStore } from "@/stores/convert-store";
 import {
@@ -22,14 +30,9 @@ import {
   isVideoFormat,
 } from "@/lib/constants";
 import type { ConvertFormat } from "@/lib/types";
-import { FileAudio, Trash2 } from "lucide-react";
-import {
-  Empty,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-  EmptyDescription,
-} from "@/components/ui/empty";
+import { FileAudio, Play, Trash2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { EmptyQueue } from "@/components/empty-queue";
 import { useSettingsStore } from "@/stores/settings-store";
 import { toast } from "sonner";
 
@@ -101,93 +104,94 @@ function ConverterPage() {
     }
   };
 
+  const handleFormatChange = (v: string | null) => {
+    if (!v) return;
+    setFormat(v as ConvertFormat);
+  };
+
   return (
-    <>
-      <div className="flex items-baseline gap-3 mb-5 flex-wrap">
-        <h1 className="text-lg font-semibold tracking-tight">Converter</h1>
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2.5">
+        <FileDropZone
+          extensions={CONVERT_ALL_FORMATS}
+          showFormats
+          onDrop={handleFilesDropped}
+        />
+        <Select value={format} onValueChange={handleFormatChange}>
+          <SelectTrigger className="w-[100px] text-xs h-8">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent position="popper" sideOffset={4}>
+            <SelectGroup>
+              <SelectLabel>Vídeo</SelectLabel>
+              {CONVERT_VIDEO_FORMATS.map((f) => (
+                <SelectItem key={f} value={f}>
+                  {f.toUpperCase()}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+            <SelectGroup>
+              <SelectLabel>Áudio</SelectLabel>
+              {CONVERT_AUDIO_FORMATS.map((f) => (
+                <SelectItem key={f} value={f}>
+                  {f.toUpperCase()}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
       </div>
 
-      <FileDropZone
-        extensions={CONVERT_ALL_FORMATS}
-        showFormats
-        onDrop={handleFilesDropped}
-        className="mb-5"
-      />
-      <FormatSelects
-        format={format}
-        onFormatChange={(v) => setFormat(v as ConvertFormat)}
-        videoFormats={CONVERT_VIDEO_FORMATS}
-        audioFormats={CONVERT_AUDIO_FORMATS}
-      />
-
-      {itemCount > 0 && <Separator className="mb-5" />}
-
       {itemCount > 0 && (
-        <div className="flex items-center justify-between mb-2.5">
-          <span className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
-            {itemCount} {itemCount === 1 ? "arquivo" : "arquivos"}
-          </span>
-          <div className="flex items-center gap-2">
-            <Tooltip>
-              <ConfirmDialog
-                trigger={
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
-                  </TooltipTrigger>
-                }
-                title="Limpar arquivos?"
-                description="Todos os arquivos da lista serão removidos. Conversões ativas serão canceladas."
-                confirmLabel="Limpar"
-                onConfirm={clearItems}
-              />
-              <TooltipContent>Limpar arquivos</TooltipContent>
-            </Tooltip>
-            <Button
-              className="text-xs h-7"
-              onClick={handleStartAll}
-              disabled={!hasQueued || isConverting}
-            >
-              {isConverting ? "Convertendo..." : "Converter tudo"}
-            </Button>
+        <>
+          <Separator />
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-[10px] text-muted-foreground tracking-wider font-medium">
+              {itemCount} {itemCount === 1 ? "arquivo" : "arquivos"}
+            </span>
+            <div className="flex items-center gap-1">
+              <Button
+                className={cn(
+                  "text-[11px] h-7 px-3",
+                  isConverting && "animate-pulse",
+                )}
+                onClick={handleStartAll}
+                disabled={!hasQueued && !isConverting}
+              >
+                <Play className="w-3 h-3" />
+                {isConverting ? "Convertendo..." : "Converter tudo"}
+              </Button>
+              <Tooltip>
+                <ConfirmDialog
+                  trigger={
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-muted-foreground hover:text-destructive"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                  }
+                  title="Limpar arquivos?"
+                  description="Todos os arquivos da lista serão removidos. Conversões ativas serão canceladas."
+                  confirmLabel="Limpar"
+                  onConfirm={clearItems}
+                />
+                <TooltipContent>Limpar arquivos</TooltipContent>
+              </Tooltip>
+            </div>
           </div>
-        </div>
+        </>
       )}
 
       {itemIds.length === 0 ? (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.1 }}
-        >
-          <Empty className="py-12 border-0">
-            <EmptyHeader>
-              <EmptyMedia>
-                <motion.div
-                  animate={{ y: [0, -4, 0] }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
-                >
-                  <FileAudio className="w-8 h-8 text-muted-foreground" />
-                </motion.div>
-              </EmptyMedia>
-              <EmptyTitle className="text-[14px]">
-                Nenhum arquivo adicionado
-              </EmptyTitle>
-              <EmptyDescription className="text-[12px]">
-                Arraste arquivos ou clique na área acima
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        </motion.div>
+        <EmptyQueue
+          icon={FileAudio}
+          title="Nenhum arquivo adicionado"
+          description="Arraste arquivos ou clique na área acima"
+        />
       ) : (
         <div className="flex flex-col gap-2">
           <AnimatePresence mode="popLayout">
@@ -206,6 +210,6 @@ function ConverterPage() {
           </AnimatePresence>
         </div>
       )}
-    </>
+    </div>
   );
 }

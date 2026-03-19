@@ -1,5 +1,5 @@
 import { ipcMain, dialog, shell } from "electron";
-import { stat } from "node:fs/promises";
+import { stat, access } from "node:fs/promises";
 import { homedir } from "node:os";
 import path from "node:path";
 
@@ -59,4 +59,21 @@ export function registerDialogHandlers() {
     const resolved = dirPath.replace(/^~/, homedir());
     await shell.openPath(resolved);
   });
+
+  ipcMain.handle(
+    "fs:check-paths",
+    async (_event, paths: { id: string; path: string }[]) => {
+      const missing: string[] = [];
+      await Promise.all(
+        paths.map(async ({ id, path: p }) => {
+          try {
+            await access(p);
+          } catch {
+            missing.push(id);
+          }
+        }),
+      );
+      return missing;
+    },
+  );
 }

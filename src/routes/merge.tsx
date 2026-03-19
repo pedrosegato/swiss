@@ -22,16 +22,10 @@ import { MergeJobRow } from "@/features/merge/components/merge-job-row";
 import { useMergeStore } from "@/stores/merge-store";
 import { useBinariesStore } from "@/stores/binaries-store";
 import { useSettingsStore } from "@/stores/settings-store";
-import { FieldLabel } from "@/components/field-label";
-import { SavePathPicker } from "@/components/save-path-picker";
-import { Merge, Trash2 } from "lucide-react";
-import {
-  Empty,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-  EmptyDescription,
-} from "@/components/ui/empty";
+import { cn } from "@/lib/utils";
+import { ipc } from "@/lib/ipc";
+import { FolderOpen, Merge, Play, Trash2 } from "lucide-react";
+import { EmptyQueue } from "@/components/empty-queue";
 import { toast } from "sonner";
 import type { MergeDirection } from "@/lib/types";
 
@@ -44,6 +38,7 @@ function MergePage() {
   const bgFiles = useMergeStore((s) => s.bgFiles);
   const direction = useMergeStore((s) => s.direction);
   const savePath = useSettingsStore((s) => s.downloadPath);
+  const setSavePath = useSettingsStore((s) => s.setDownloadPath);
   const ffprobeInstalled = useBinariesStore((s) => s.ffprobe.installed);
   const itemIds = useMergeStore(useShallow((s) => s.items.map((i) => i.id)));
   const itemCount = useMergeStore((s) => s.items.length);
@@ -64,12 +59,14 @@ function MergePage() {
   const canStart =
     mainFiles.length > 0 && bgFiles.length > 0 && !!savePath && !isMerging;
 
-  const pairCount = mainFiles.length;
+  const hasQueued = useMergeStore((s) =>
+    s.items.some((i) => i.stage === "queued"),
+  );
 
   const handleStartAll = () => {
     if (!ffprobeInstalled) {
       toast.error(
-        "ffprobe é necessário para mesclar vídeos. Instale-o em Configurações → Binários.",
+        "ffprobe é necessário para mesclar vídeos. Instale-o na página de Configurações, em Binários.",
       );
       return;
     }
@@ -80,13 +77,14 @@ function MergePage() {
     startAll();
   };
 
-  return (
-    <>
-      <div className="flex items-baseline gap-3 mb-5 flex-wrap">
-        <h1 className="text-lg font-semibold tracking-tight">Mesclagem</h1>
-      </div>
+  const handleSelectFolder = async () => {
+    const selected = await ipc.selectFolder();
+    if (selected) setSavePath(selected);
+  };
 
-      <div className="flex gap-4 mb-4">
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-col sm:flex-row gap-3">
         <FileDropZone
           extensions={MERGE_VIDEO_EXTENSIONS}
           label="Vídeos Principais"
@@ -105,105 +103,81 @@ function MergePage() {
         />
       </div>
 
-      {mainFiles.length > 0 && bgFiles.length > 0 && (
-        <div className="text-[11px] text-muted-foreground mb-4">
-          {pairCount} {pairCount === 1 ? "merge" : "merges"} —{" "}
-          {bgFiles.length < mainFiles.length
-            ? `backgrounds em loop (${bgFiles.length} → ${mainFiles.length})`
-            : `${bgFiles.length} backgrounds`}
-        </div>
-      )}
-
-      <div className="flex flex-wrap gap-2.5 mb-5">
-        <FieldLabel label="Direção">
-          <Select
-            value={direction}
-            onValueChange={(v) => setDirection(v as MergeDirection)}
-          >
-            <SelectTrigger className="w-[140px] h-9 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="vertical">Vertical</SelectItem>
-              <SelectItem value="horizontal">Horizontal</SelectItem>
-            </SelectContent>
-          </Select>
-        </FieldLabel>
-
-        <FieldLabel label="Salvar em" className="flex-1 min-w-[180px]">
-          <SavePathPicker />
-        </FieldLabel>
-
-        <div className="flex items-end">
-          <Button
-            className="text-xs h-9"
-            onClick={handleStartAll}
-            disabled={!canStart}
-          >
-            {isMerging ? "Mesclando..." : "Mesclar tudo"}
-          </Button>
-        </div>
+      <div className="flex items-center gap-3">
+        <Select
+          value={direction}
+          onValueChange={(v) => setDirection(v as MergeDirection)}
+        >
+          <SelectTrigger className="w-[120px] text-xs h-8">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent position="popper" sideOffset={4}>
+            <SelectItem value="vertical">Vertical</SelectItem>
+            <SelectItem value="horizontal">Horizontal</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button
+          variant="ghost"
+          onClick={handleSelectFolder}
+          className="h-auto gap-1.5 text-[10px] text-muted-foreground hover:text-foreground"
+        >
+          <FolderOpen className="w-3 h-3" />
+          <span className="font-mono truncate max-w-[400px]">
+            {savePath || "Selecione uma pasta de destino"}
+          </span>
+        </Button>
       </div>
 
-      {itemCount > 0 && <Separator className="mb-5" />}
-
       {itemCount > 0 && (
-        <div className="flex items-center justify-between mb-2.5">
-          <span className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
-            {itemCount} {itemCount === 1 ? "merge" : "merges"}
-          </span>
-          <Tooltip>
-            <ConfirmDialog
-              trigger={
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
-                </TooltipTrigger>
-              }
-              title="Limpar merges?"
-              description="Todos os merges concluídos serão removidos da lista."
-              confirmLabel="Limpar"
-              onConfirm={clearCompleted}
-            />
-            <TooltipContent>Limpar concluídos</TooltipContent>
-          </Tooltip>
-        </div>
+        <>
+          <Separator />
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-[10px] text-muted-foreground tracking-wider font-medium">
+              {itemCount} {itemCount === 1 ? "merge" : "merges"}
+            </span>
+            <div className="flex items-center gap-1">
+              <Button
+                className={cn(
+                  "text-[11px] h-7 px-3",
+                  isMerging && "animate-pulse",
+                )}
+                onClick={handleStartAll}
+                disabled={!canStart && !hasQueued}
+              >
+                <Play className="w-3 h-3" />
+                {isMerging ? "Mesclando..." : "Mesclar tudo"}
+              </Button>
+              <Tooltip>
+                <ConfirmDialog
+                  trigger={
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-muted-foreground hover:text-destructive"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                  }
+                  title="Limpar merges?"
+                  description="Todos os merges concluídos serão removidos da lista."
+                  confirmLabel="Limpar"
+                  onConfirm={clearCompleted}
+                />
+                <TooltipContent>Limpar concluídos</TooltipContent>
+              </Tooltip>
+            </div>
+          </div>
+        </>
       )}
 
       {itemIds.length === 0 && mainFiles.length === 0 ? (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.1 }}
-        >
-          <Empty className="py-12 border-0">
-            <EmptyHeader>
-              <EmptyMedia>
-                <motion.div
-                  animate={{ y: [0, -4, 0] }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
-                >
-                  <Merge className="w-8 h-8 text-muted-foreground" />
-                </motion.div>
-              </EmptyMedia>
-              <EmptyTitle className="text-[14px]">
-                Nenhum vídeo adicionado
-              </EmptyTitle>
-              <EmptyDescription className="text-[12px]">
-                Adicione vídeos nas áreas acima para começar
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        </motion.div>
+        <EmptyQueue
+          icon={Merge}
+          title="Nenhum vídeo adicionado"
+          description="Adicione vídeos nas áreas acima para começar"
+        />
       ) : (
         itemIds.length > 0 && (
           <div className="flex flex-col gap-2">
@@ -224,6 +198,6 @@ function MergePage() {
           </div>
         )
       )}
-    </>
+    </div>
   );
 }

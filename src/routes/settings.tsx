@@ -7,14 +7,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useBinariesStore } from "@/stores/binaries-store";
-import { SettingRow } from "@/features/settings/components/setting-row";
 import { VersionCard } from "@/features/settings/components/version-card";
-import { SavePathPicker } from "@/components/save-path-picker";
+import { ipc } from "@/lib/ipc";
 import { BROWSERS } from "@/lib/constants";
+import { FolderOpen } from "lucide-react";
 import type { Browser } from "@/lib/types";
 
 export const Route = createFileRoute("/settings")({
@@ -26,37 +26,60 @@ function SettingsPage() {
   const setUseCookies = useSettingsStore((s) => s.setUseCookies);
   const cookieBrowser = useSettingsStore((s) => s.cookieBrowser);
   const setCookieBrowser = useSettingsStore((s) => s.setCookieBrowser);
+  const savePath = useSettingsStore((s) => s.downloadPath);
+  const setSavePath = useSettingsStore((s) => s.setDownloadPath);
   const ytdlp = useBinariesStore((s) => s.ytdlp);
   const ffmpeg = useBinariesStore((s) => s.ffmpeg);
   const ffprobe = useBinariesStore((s) => s.ffprobe);
 
+  const handleSelectFolder = async () => {
+    const selected = await ipc.selectFolder();
+    if (selected) setSavePath(selected);
+  };
+
   return (
-    <>
-      <div className="flex items-baseline gap-3 mb-7">
-        <h1 className="text-lg font-semibold tracking-tight">Configurações</h1>
-      </div>
+    <div className="flex flex-col gap-5">
+      <Section title="Downloads">
+        <SettingRow
+          label="Pasta padrão"
+          description="Onde os arquivos são salvos por padrão"
+        >
+          <Button
+            variant="ghost"
+            onClick={handleSelectFolder}
+            className="h-auto gap-1.5 text-[10px] text-muted-foreground hover:text-foreground"
+          >
+            <FolderOpen className="w-3 h-3" />
+            <span className="font-mono truncate max-w-[280px]">
+              {savePath || "Selecione uma pasta"}
+            </span>
+          </Button>
+        </SettingRow>
+      </Section>
+
+      <Separator />
 
       <Section title="Autenticação">
         <SettingRow
           label="Usar cookies do navegador"
-          description="Autentica o yt-dlp com cookies do seu navegador para acessar conteúdo restrito ou privado"
+          description="Autentica com cookies do navegador para conteúdo restrito"
         >
           <Switch checked={useCookies} onCheckedChange={setUseCookies} />
         </SettingRow>
 
-        {useCookies ? (
+        {useCookies && (
           <SettingRow
             label="Navegador"
-            description="Escolha de qual navegador extrair os cookies"
+            description="De qual navegador extrair os cookies"
           >
             <Select
               value={cookieBrowser}
               onValueChange={(v) => v && setCookieBrowser(v as Browser)}
             >
-              <SelectTrigger className="w-[120px] text-xs h-9">
+              <SelectTrigger className="w-[110px] text-xs h-8">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent position="popper" sideOffset={4}>
                 {BROWSERS.map((b) => (
                   <SelectItem key={b} value={b}>
                     {b.charAt(0).toUpperCase() + b.slice(1)}
@@ -65,35 +88,19 @@ function SettingsPage() {
               </SelectContent>
             </Select>
           </SettingRow>
-        ) : null}
+        )}
       </Section>
 
-      <Separator className="my-6" />
-
-      <Section title="Downloads">
-        <Card className="px-4 py-4 mb-2">
-          <div className="text-[13px] font-medium mb-0.5">
-            Pasta padrão de download
-          </div>
-          <div className="text-[11.5px] text-muted-foreground">
-            Onde os arquivos baixados são salvos por padrão
-          </div>
-          <div className="mt-2">
-            <SavePathPicker />
-          </div>
-        </Card>
-      </Section>
-
-      <Separator className="my-6" />
+      <Separator />
 
       <Section title="Binários">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           <VersionCard binary={ytdlp} />
           <VersionCard binary={ffmpeg} />
           <VersionCard binary={ffprobe} />
         </div>
       </Section>
-    </>
+    </div>
   );
 }
 
@@ -105,11 +112,33 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div className="mb-2">
-      <div className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium mb-3">
+    <div className="flex flex-col gap-2.5">
+      <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
         {title}
-      </div>
+      </span>
       {children}
+    </div>
+  );
+}
+
+function SettingRow({
+  label,
+  description,
+  children,
+}: {
+  label: string;
+  description: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 py-1.5">
+      <div className="flex-1 min-w-0">
+        <div className="text-[12px] font-medium">{label}</div>
+        <div className="text-[10px] text-muted-foreground leading-snug">
+          {description}
+        </div>
+      </div>
+      <div className="shrink-0">{children}</div>
     </div>
   );
 }

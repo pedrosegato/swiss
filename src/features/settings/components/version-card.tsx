@@ -1,5 +1,4 @@
 import type { BinaryInfo } from "@/lib/types";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ipc } from "@/lib/ipc";
@@ -25,9 +24,7 @@ export function VersionCard({ binary }: VersionCardProps) {
   const handleUpdate = async () => {
     const name = binary.name as "yt-dlp" | "ffmpeg" | "ffprobe";
     const setter = getSetter();
-
     setter({ ...binary, downloading: true });
-
     const result = await ipc.updateBinary(name);
     setter({
       name: binary.name,
@@ -42,7 +39,6 @@ export function VersionCard({ binary }: VersionCardProps) {
   const handleUninstall = async () => {
     const name = binary.name as "yt-dlp" | "ffmpeg" | "ffprobe";
     const setter = getSetter();
-
     const result = await ipc.uninstallBinary(name);
     setter({
       name: binary.name,
@@ -57,9 +53,7 @@ export function VersionCard({ binary }: VersionCardProps) {
   const handleInstall = async () => {
     const name = binary.name as "yt-dlp" | "ffmpeg" | "ffprobe";
     const setter = getSetter();
-
     setter({ ...binary, downloading: true });
-
     const result = await ipc.installBinary(name);
     setter({
       name: binary.name,
@@ -72,14 +66,9 @@ export function VersionCard({ binary }: VersionCardProps) {
   };
 
   return (
-    <Card className="px-3.5 py-3">
-      <div className="font-mono text-xs font-medium mb-1">{binary.name}</div>
-      <div className="font-mono text-[10.5px] text-muted-foreground mb-1.5">
-        {binary.downloading
-          ? "Baixando..."
-          : (binary.version ?? "Não encontrado")}
-      </div>
+    <div className="bg-card border border-border rounded-lg px-3 py-2.5 flex flex-col gap-2">
       <div className="flex items-center justify-between">
+        <span className="font-mono text-[11px] font-medium">{binary.name}</span>
         <div className="flex items-center gap-1.5">
           <div
             className={cn(
@@ -88,10 +77,10 @@ export function VersionCard({ binary }: VersionCardProps) {
                 ? "bg-yellow-500 animate-pulse"
                 : binary.installed
                   ? "bg-success"
-                  : "bg-primary",
+                  : "bg-destructive",
             )}
           />
-          <span className="text-[10px] text-muted-foreground">
+          <span className="text-[9px] text-muted-foreground">
             {binary.downloading
               ? "Baixando"
               : binary.installed
@@ -99,23 +88,32 @@ export function VersionCard({ binary }: VersionCardProps) {
                 : "Ausente"}
           </span>
         </div>
-        {!binary.installed && !binary.downloading ? (
+      </div>
+
+      <span className="font-mono text-[9px] text-muted-foreground/60 truncate">
+        {binary.downloading
+          ? "Baixando..."
+          : (binary.version ?? "—")}
+      </span>
+
+      <div className="flex items-center gap-1.5">
+        {!binary.installed && !binary.downloading && (
           <Button
             variant="outline"
             size="sm"
-            className="h-6 text-[10px] px-2"
+            className="h-6 text-[10px] px-2 flex-1"
             onClick={handleInstall}
           >
             <Download className="w-3 h-3" />
             Instalar
           </Button>
-        ) : null}
-        {binary.installed && !binary.downloading ? (
-          <div className="flex items-center gap-1.5">
+        )}
+        {binary.installed && !binary.downloading && (
+          <>
             <Button
               variant="outline"
               size="sm"
-              className="h-6 text-[10px] px-2"
+              className="h-6 text-[10px] px-2 flex-1"
               onClick={handleUpdate}
             >
               <RefreshCw className="w-3 h-3" />
@@ -126,10 +124,9 @@ export function VersionCard({ binary }: VersionCardProps) {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-6 text-[10px] px-2 text-destructive hover:text-destructive"
+                  className="h-6 text-[10px] px-1.5 text-muted-foreground hover:text-destructive"
                 >
                   <Trash2 className="w-3 h-3" />
-                  Remover
                 </Button>
               }
               title={`Remover ${binary.name}?`}
@@ -137,9 +134,9 @@ export function VersionCard({ binary }: VersionCardProps) {
               confirmLabel="Remover"
               onConfirm={handleUninstall}
             />
-          </div>
-        ) : null}
+          </>
+        )}
       </div>
-    </Card>
+    </div>
   );
 }

@@ -38,7 +38,7 @@
   --destructive: oklch(0.6 0.2 25); /* red for errors */
   --destructive-foreground: oklch(0.98 0 0);
 
-  --success: oklch(0.6 0.17 145); /* green for completed */
+  --success: oklch(0.696 0.17 162.48); /* emerald-500 */
   --success-foreground: oklch(0.98 0 0);
 
   --border: oklch(0.27 0.005 250); /* #2a2d32 */

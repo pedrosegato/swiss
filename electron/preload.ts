@@ -21,6 +21,7 @@ const ALLOWED_INVOKE = new Set([
   "shell:open-path",
   "dock:set-progress",
   "updater:install",
+  "fs:check-paths",
   "app:get-downloads-path",
   "window:minimize",
   "window:maximize",

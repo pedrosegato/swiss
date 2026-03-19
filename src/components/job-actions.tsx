@@ -1,13 +1,13 @@
-import { FolderOpen, RefreshCw, Square, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
+import { FolderOpen, RefreshCw, Square, X } from "lucide-react";
 
-interface FileActionsProps {
-  isConverting: boolean;
+interface JobActionsProps {
+  isActive: boolean;
   isError: boolean;
   isDone: boolean;
   outputPath?: string;
@@ -17,8 +17,8 @@ interface FileActionsProps {
   onRemove: () => void;
 }
 
-export function FileActions({
-  isConverting,
+export function JobActions({
+  isActive,
   isError,
   isDone,
   outputPath,
@@ -26,16 +26,16 @@ export function FileActions({
   onRetry,
   onOpenFolder,
   onRemove,
-}: FileActionsProps) {
+}: JobActionsProps) {
   return (
-    <div className="flex items-center gap-0.5">
-      {isConverting && (
+    <div className="flex items-center gap-0.5 shrink-0">
+      {isActive && (
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 text-muted-foreground hover:text-destructive"
+              className="h-5 w-5 text-muted-foreground hover:text-destructive"
               onClick={onCancel}
             >
               <Square className="w-2.5 h-2.5 fill-current" />
@@ -50,7 +50,7 @@ export function FileActions({
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 text-muted-foreground hover:text-foreground"
+              className="h-5 w-5 text-muted-foreground hover:text-foreground"
               onClick={onRetry}
             >
               <RefreshCw className="w-3 h-3" />
@@ -65,7 +65,7 @@ export function FileActions({
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 text-muted-foreground hover:text-foreground"
+              className="h-5 w-5 text-muted-foreground hover:text-foreground"
               onClick={onOpenFolder}
             >
               <FolderOpen className="w-3 h-3" />
@@ -74,19 +74,21 @@ export function FileActions({
           <TooltipContent>Abrir pasta</TooltipContent>
         </Tooltip>
       )}
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 text-muted-foreground/40 hover:text-destructive lg:opacity-0 lg:group-hover:opacity-100 transition-opacity"
-            onClick={onRemove}
-          >
-            <X className="w-3 h-3" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>Remover</TooltipContent>
-      </Tooltip>
+      {!isActive && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-5 w-5 text-muted-foreground/30 hover:text-destructive transition-colors"
+              onClick={onRemove}
+            >
+              <X className="w-3 h-3" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Remover</TooltipContent>
+        </Tooltip>
+      )}
     </div>
   );
 }

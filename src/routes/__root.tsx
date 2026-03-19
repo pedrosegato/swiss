@@ -10,6 +10,7 @@ import { BinaryInstallDialog } from "@/components/binary-install-dialog";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { ipc } from "@/lib/ipc";
+import { formatSize } from "@/lib/utils";
 import { useBinariesStore } from "@/stores/binaries-store";
 import { useDownloadStore } from "@/stores/download-store";
 import { useConvertStore } from "@/stores/convert-store";
@@ -54,6 +55,7 @@ function RootLayout() {
         outputSize,
         outputPath,
         playlistDownloaded,
+        playlistFileSize,
       }) => {
         if (type === "download") {
           updateDownload(id, {
@@ -62,6 +64,7 @@ function RootLayout() {
             errorMessage,
             outputPath,
             ...(playlistDownloaded != null ? { playlistDownloaded } : {}),
+            ...(playlistFileSize ? { fileSize: formatSize(playlistFileSize) } : {}),
           });
         } else if (type === "convert") {
           updateConvert(id, {
@@ -126,6 +129,44 @@ function RootLayout() {
       unsub3();
       cancelAnimationFrame(rafRef.current);
     };
+  }, []);
+
+  // Remove completed items whose output file/folder was deleted or moved
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const downloads = useDownloadStore.getState().items;
+      const converts = useConvertStore.getState().items;
+      const merges = useMergeStore.getState().items;
+
+      const paths: { id: string; path: string }[] = [];
+      for (const i of downloads) {
+        if (i.stage === "completed" && i.outputPath) paths.push({ id: i.id, path: i.outputPath });
+      }
+      for (const i of converts) {
+        if (i.stage === "completed" && i.outputPath) paths.push({ id: i.id, path: i.outputPath });
+      }
+      for (const i of merges) {
+        if (i.stage === "completed" && i.outputPath) paths.push({ id: i.id, path: i.outputPath });
+      }
+
+      if (paths.length === 0) return;
+
+      const missing = await ipc.checkPaths(paths);
+      if (missing.length === 0) return;
+
+      const missingSet = new Set(missing);
+      const removeDownload = useDownloadStore.getState().removeItem;
+      const removeConvert = useConvertStore.getState().removeItem;
+      const removeMerge = useMergeStore.getState().removeItem;
+
+      for (const id of missingSet) {
+        removeDownload(id);
+        removeConvert(id);
+        removeMerge(id);
+      }
+    }, 10_000);
+
+    return () => clearInterval(interval);
   }, []);
 
   return (
