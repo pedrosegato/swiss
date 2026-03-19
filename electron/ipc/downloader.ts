@@ -3,9 +3,7 @@ import { spawn, type ChildProcess } from "node:child_process";
 import path from "node:path";
 import {
   getSpawnPath,
-  getDenoPath,
   getYtdlpSpawnInfo,
-  ensureDeno,
 } from "./binary-manager";
 
 import { formatDuration, buildFormatString } from "../lib/format";
@@ -34,10 +32,6 @@ export function registerDownloaderHandlers() {
     const ffmpegPath = await getSpawnPath("ffmpeg");
     const ffmpegDir = path.dirname(ffmpegPath);
 
-    await ensureDeno().catch(() => {});
-
-    const denoPath = getDenoPath();
-
     const SEP = "<<|>>";
     const printTpl = `%(id)s${SEP}%(title)s${SEP}%(duration)s${SEP}%(thumbnail)s${SEP}%(filesize_approx)s${SEP}%(height)s${SEP}%(resolution)s${SEP}%(playlist_title)s${SEP}%(n_entries)s${SEP}%(playlist_index)s`;
 
@@ -65,10 +59,6 @@ export function registerDownloaderHandlers() {
 
     args.push("--remote-components", "ejs:github");
 
-    if (existsSync(denoPath)) {
-      args.push("--js-runtimes", `deno:${denoPath}`);
-    }
-
     if (isVideo) {
       args.push("--merge-output-format", options.format);
     } else {
@@ -92,14 +82,9 @@ export function registerDownloaderHandlers() {
 
     args.push(options.url);
 
-    const denoDir = path.dirname(denoPath);
-    const sep = process.platform === "win32" ? ";" : ":";
-    const envPath = `${denoDir}${sep}${process.env.PATH ?? ""}`;
-
     const proc = spawn(ytdlpInfo.command, [...ytdlpInfo.prefixArgs, ...args], {
       env: {
         ...process.env,
-        PATH: envPath,
         PYTHONIOENCODING: "utf-8",
         PYTHONUTF8: "1",
       },

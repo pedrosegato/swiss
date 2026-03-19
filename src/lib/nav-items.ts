@@ -1,4 +1,4 @@
-import { DownloadCloud, RefreshCw, Merge, Settings } from "lucide-react";
+import { DownloadCloud, RefreshCw, Merge } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 export interface NavItem {
@@ -7,9 +7,30 @@ export interface NavItem {
   icon: LucideIcon;
 }
 
-export const navItems: NavItem[] = [
-  { to: "/downloader", label: "Download", icon: DownloadCloud },
-  { to: "/converter", label: "Converter", icon: RefreshCw },
-  { to: "/merge", label: "Mesclagem", icon: Merge },
-  { to: "/settings", label: "Configurações", icon: Settings },
+export interface NavGroup {
+  label: string;
+  items: NavItem[];
+}
+
+export const navGroups: NavGroup[] = [
+  {
+    label: "Vídeos",
+    items: [
+      {
+        to: "/downloader",
+        label: "Download",
+        icon: DownloadCloud,
+      },
+      {
+        to: "/converter",
+        label: "Converter",
+        icon: RefreshCw,
+      },
+      {
+        to: "/merge",
+        label: "Mesclagem",
+        icon: Merge,
+      },
+    ],
+  },
 ];

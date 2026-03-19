@@ -15,6 +15,7 @@ import { useDownloadStore } from "@/stores/download-store";
 import { useConvertStore } from "@/stores/convert-store";
 import { useMergeStore } from "@/stores/merge-store";
 import type { DownloadStage, ConvertStage, MergeStage } from "@/lib/types";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export const Route = createRootRoute({
   component: RootLayout,
@@ -44,7 +45,16 @@ function RootLayout() {
 
   useEffect(() => {
     const unsubscribe = ipc.onProgress(
-      ({ id, type, progress, stage, errorMessage, outputSize, outputPath, playlistDownloaded }) => {
+      ({
+        id,
+        type,
+        progress,
+        stage,
+        errorMessage,
+        outputSize,
+        outputPath,
+        playlistDownloaded,
+      }) => {
         if (type === "download") {
           updateDownload(id, {
             progress,
@@ -121,15 +131,18 @@ function RootLayout() {
   return (
     <TooltipProvider>
       <Navbar />
-      <motion.main
-        key={location.pathname}
-        className="relative z-[1] px-4 py-5 sm:p-7"
-        initial={{ opacity: 0, y: 4 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.15, ease: "easeOut" }}
-      >
-        <Outlet />
-      </motion.main>
+      <ScrollArea className="h-[calc(100vh-3rem)]">
+        <motion.main
+          key={location.pathname}
+          className="relative z-[1] px-4 py-5 sm:p-7"
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.15, ease: "easeOut" }}
+        >
+          <Outlet />
+        </motion.main>
+      </ScrollArea>
+
       <BinaryInstallDialog
         open={showInstallDialog}
         onOpenChange={setShowInstallDialog}

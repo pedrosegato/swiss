@@ -8,11 +8,9 @@ export {
   clearPathCache,
   getSpawnPath,
   getYtdlpSpawnInfo,
-  getDenoPath,
 } from "../lib/binary-resolver";
 export {
   downloadBinary,
   updateBinary,
   uninstallBinary,
-  ensureDeno,
 } from "../lib/binary-installer";

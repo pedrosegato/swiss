@@ -15,7 +15,6 @@ import {
 import {
   clearPathCache,
   getSpawnPath,
-  getDenoPath,
   type BinaryName,
 } from "./binary-resolver";
 
@@ -54,16 +53,6 @@ const FFPROBE_URLS: Record<string, string> = {
     "https://github.com/shaka-project/static-ffmpeg-binaries/releases/latest/download/ffprobe-linux-x64",
 };
 
-const DENO_URLS: Record<string, string> = {
-  "darwin-arm64":
-    "https://github.com/denoland/deno/releases/latest/download/deno-aarch64-apple-darwin.zip",
-  "darwin-x64":
-    "https://github.com/denoland/deno/releases/latest/download/deno-x86_64-apple-darwin.zip",
-  "win32-x64":
-    "https://github.com/denoland/deno/releases/latest/download/deno-x86_64-pc-windows-msvc.zip",
-  "linux-x64":
-    "https://github.com/denoland/deno/releases/latest/download/deno-x86_64-unknown-linux-gnu.zip",
-};
 
 function getDownloadUrl(name: BinaryName): string {
   if (name === "yt-dlp") return getPlatformVariant(YTDLP_URLS);
@@ -128,10 +117,11 @@ async function tryPipInstall(): Promise<boolean> {
       "pip",
       "install",
       "--user",
+      "--upgrade",
       "--break-system-packages",
       "yt-dlp",
     ],
-    [python, "-m", "pip", "install", "--user", "yt-dlp"],
+    [python, "-m", "pip", "install", "--user", "--upgrade", "yt-dlp"],
   ];
 
   let installed = false;
@@ -168,36 +158,6 @@ async function tryPipInstall(): Promise<boolean> {
   return true;
 }
 
-export async function ensureDeno(): Promise<void> {
-  const denoPath = getDenoPath();
-  if (existsSync(denoPath)) return;
-
-  const dir = getLocalBinDir();
-  await mkdir(dir, { recursive: true });
-
-  const url = getPlatformVariant(DENO_URLS);
-  const zipPath = join(dir, "deno-download.zip");
-
-  const response = await fetch(url, { redirect: "follow" });
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  const nodeStream = Readable.fromWeb(response.body as any);
-  await pipeline(nodeStream, createWriteStream(zipPath));
-
-  if (process.platform === "win32") {
-    await exec("powershell.exe", [
-      "-NoProfile",
-      "-Command",
-      `Expand-Archive -Force -Path "${zipPath}" -DestinationPath "${dir}"`,
-    ]);
-  } else {
-    await exec("unzip", ["-o", zipPath, "-d", dir]);
-    chmodSync(denoPath, 0o755);
-  }
-
-  try {
-    await unlink(zipPath);
-  } catch {}
-}
 
 export async function downloadBinary(
   name: BinaryName,
@@ -213,12 +173,6 @@ export async function downloadBinary(
     const dir = getLocalBinDir();
     await mkdir(dir, { recursive: true });
     await downloadFile(getDownloadUrl(name), getLocalBinPath(name), onProgress);
-
-    if (name === "yt-dlp") {
-      await ensureDeno().catch((err) =>
-        console.error("Failed to install Deno:", err),
-      );
-    }
 
     return true;
   } catch (err) {

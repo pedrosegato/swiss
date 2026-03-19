@@ -58,7 +58,7 @@ export function UrlInput({ onFetch }: UrlInputProps) {
         <Input
           ref={inputRef}
           className={`flex-1 font-mono text-xs h-9 ${error ? "border-destructive" : ""}`}
-          placeholder="Cole uma URL aqui..."
+          placeholder="Insira uma URL..."
           value={url}
           onChange={(e) => {
             setUrl(e.target.value);

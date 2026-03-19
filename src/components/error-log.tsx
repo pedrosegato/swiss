@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Bug } from "lucide-react";
+import { toast } from "sonner";
 
 interface ErrorLogProps {
   message?: string;
@@ -12,18 +13,12 @@ export function ErrorLog({
   onStopPropagation = false,
 }: ErrorLogProps) {
   const [showLog, setShowLog] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
-
-  useEffect(() => () => clearTimeout(timerRef.current), []);
 
   const handleCopy = (e: React.MouseEvent) => {
     if (onStopPropagation) e.stopPropagation();
     if (!message) return;
     navigator.clipboard.writeText(message);
-    setCopied(true);
-    clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => setCopied(false), 1500);
+    toast.success("Log copiado!");
   };
 
   return (
@@ -46,7 +41,7 @@ export function ErrorLog({
           title="Clique para copiar"
           onClick={handleCopy}
         >
-          {copied ? "Copiado!" : message}
+          {message}
         </pre>
       ) : null}
     </div>

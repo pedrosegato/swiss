@@ -84,9 +84,6 @@ function MergePage() {
     <>
       <div className="flex items-baseline gap-3 mb-5 flex-wrap">
         <h1 className="text-lg font-semibold tracking-tight">Mesclagem</h1>
-        <span className="text-xs text-muted-foreground font-light hidden sm:inline">
-          Combine vídeos lado a lado ou empilhados
-        </span>
       </div>
 
       <div className="flex gap-4 mb-4">

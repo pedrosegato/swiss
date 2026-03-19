@@ -172,7 +172,7 @@ function DownloaderPage() {
                 Nenhum download na fila
               </EmptyTitle>
               <EmptyDescription className="text-[12px]">
-                Cole uma URL acima para começar
+                Nenhum vídeo baixado
               </EmptyDescription>
             </EmptyHeader>
           </Empty>

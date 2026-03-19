@@ -105,9 +105,6 @@ function ConverterPage() {
     <>
       <div className="flex items-baseline gap-3 mb-5 flex-wrap">
         <h1 className="text-lg font-semibold tracking-tight">Converter</h1>
-        <span className="text-xs text-muted-foreground font-light hidden sm:inline">
-          Converta uma mídia para um formato desejado
-        </span>
       </div>
 
       <FileDropZone

@@ -178,6 +178,3 @@ export async function getYtdlpSpawnInfo(): Promise<SpawnInfo> {
   return ytdlpSpawnCache;
 }
 
-export function getDenoPath(): string {
-  return getLocalBinPath("deno");
-}
