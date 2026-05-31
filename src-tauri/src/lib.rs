@@ -1,4 +1,5 @@
 pub mod binary;
+pub mod commands;
 pub mod error;
 pub mod format;
 pub mod platform;
@@ -23,6 +24,13 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
+        .invoke_handler(tauri::generate_handler![
+            commands::binaries::binaries_check,
+            commands::binaries::binaries_install,
+            commands::binaries::binaries_uninstall,
+            commands::binaries::binaries_update,
+            commands::binaries::binaries_get_path,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
