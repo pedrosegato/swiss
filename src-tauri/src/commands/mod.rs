@@ -1,8 +1,8 @@
 pub mod binaries;
-pub mod download;
 pub mod convert;
-pub mod merge;
 pub mod dialog;
+pub mod download;
+pub mod merge;
 pub mod shell;
-pub mod window;
 pub mod updater;
+pub mod window;

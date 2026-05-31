@@ -1,6 +1,6 @@
 use crate::error::{AppError, AppResult};
-use tauri::{AppHandle, Manager};
 use tauri::window::{ProgressBarState, ProgressBarStatus};
+use tauri::{AppHandle, Manager};
 
 fn main_window(app: &AppHandle) -> AppResult<tauri::WebviewWindow> {
     app.get_webview_window("main")
@@ -21,11 +21,9 @@ pub async fn window_maximize(app: AppHandle) -> AppResult<()> {
         .is_maximized()
         .map_err(|e| AppError::Other(e.to_string()))?
     {
-        win.unmaximize()
-            .map_err(|e| AppError::Other(e.to_string()))
+        win.unmaximize().map_err(|e| AppError::Other(e.to_string()))
     } else {
-        win.maximize()
-            .map_err(|e| AppError::Other(e.to_string()))
+        win.maximize().map_err(|e| AppError::Other(e.to_string()))
     }
 }
 
@@ -39,7 +37,7 @@ pub async fn window_close(app: AppHandle) -> AppResult<()> {
 #[tauri::command]
 pub async fn dock_set_progress(app: AppHandle, progress: f64) -> AppResult<()> {
     let win = main_window(&app)?;
-    let clamped = progress.max(-1.0).min(1.0);
+    let clamped = progress.clamp(-1.0, 1.0);
     let status = if clamped < 0.0 {
         ProgressBarStatus::None
     } else {

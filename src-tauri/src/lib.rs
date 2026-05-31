@@ -5,9 +5,14 @@ pub mod format;
 pub mod platform;
 pub mod process_registry;
 pub mod progress;
+pub mod setup;
+
+use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    crate::setup::augment_path();
+
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
@@ -16,6 +21,14 @@ pub fn run() {
         .init();
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
+            if let Some(win) = app.get_webview_window("main") {
+                if win.is_minimized().unwrap_or(false) {
+                    let _ = win.unminimize();
+                }
+                let _ = win.set_focus();
+            }
+        }))
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())

@@ -1,7 +1,7 @@
 use crate::binary::{
-    BinaryName, BinarySource, BinaryStatus,
-    installer::{download_binary, update_binary, uninstall_binary},
+    installer::{download_binary, uninstall_binary, update_binary},
     resolver::resolve_binary,
+    BinaryName, BinarySource, BinaryStatus,
 };
 use crate::error::AppResult;
 use crate::progress::BinaryInstallProgress;
@@ -24,7 +24,11 @@ pub async fn binaries_check() -> AppResult<CheckResult> {
         resolve_binary(BinaryName::Ffmpeg),
         resolve_binary(BinaryName::Ffprobe),
     );
-    Ok(CheckResult { ytdlp, ffmpeg, ffprobe })
+    Ok(CheckResult {
+        ytdlp,
+        ffmpeg,
+        ffprobe,
+    })
 }
 
 #[derive(Serialize)]
@@ -36,7 +40,7 @@ pub struct InstallResult {
 }
 
 fn name_from(name: &str) -> AppResult<BinaryName> {
-    BinaryName::from_str(name).map_err(|e| crate::error::AppError::Other(e))
+    BinaryName::from_str(name).map_err(crate::error::AppError::Other)
 }
 
 #[tauri::command]
@@ -47,15 +51,22 @@ pub async fn binaries_install(
     let n = name_from(&name)?;
     let name_clone = name.clone();
     let success = download_binary(n, move |percent| {
-        let _ = on_event.send(BinaryInstallProgress { name: name_clone.clone(), percent });
-    }).await;
+        let _ = on_event.send(BinaryInstallProgress {
+            name: name_clone.clone(),
+            percent,
+        });
+    })
+    .await;
 
     if success {
         if cfg!(windows) {
             tokio::time::sleep(std::time::Duration::from_millis(1500)).await;
         }
         let status = resolve_binary(n).await;
-        Ok(InstallResult { success: true, status })
+        Ok(InstallResult {
+            success: true,
+            status,
+        })
     } else {
         Ok(InstallResult {
             success: false,
