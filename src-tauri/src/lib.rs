@@ -34,6 +34,9 @@ pub fn run() {
             commands::dialog::dialog_select_files,
             commands::dialog::fs_check_paths,
             commands::dialog::app_get_downloads_path,
+            commands::shell::shell_open_external,
+            commands::shell::shell_show_item_in_folder,
+            commands::shell::shell_open_path,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
