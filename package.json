@@ -14,7 +14,10 @@
     "build": "tsc && vite build && electron-builder",
     "build:ci": "tsc && vite build && electron-builder --publish always",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
   },
   "dependencies": {
     "@fontsource-variable/dm-sans": "^5.2.8",
@@ -22,6 +25,15 @@
     "@fontsource/ibm-plex-mono": "^5.2.7",
     "@tanstack/react-query": "^5.90.21",
     "@tanstack/react-router": "^1.166.8",
+    "@tauri-apps/api": "^2.11.0",
+    "@tauri-apps/plugin-dialog": "^2.7.1",
+    "@tauri-apps/plugin-fs": "^2.5.1",
+    "@tauri-apps/plugin-notification": "^2.3.3",
+    "@tauri-apps/plugin-opener": "^2.5.4",
+    "@tauri-apps/plugin-os": "^2.3.2",
+    "@tauri-apps/plugin-process": "^2.3.1",
+    "@tauri-apps/plugin-shell": "^2.3.5",
+    "@tauri-apps/plugin-updater": "^2.10.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "electron-updater": "^6.8.3",
@@ -39,6 +51,7 @@
   "devDependencies": {
     "@tailwindcss/vite": "^4.2.1",
     "@tanstack/router-plugin": "^1.166.8",
+    "@tauri-apps/cli": "^2.11.2",
     "@types/react": "^18.2.64",
     "@types/react-dom": "^18.2.21",
     "@typescript-eslint/eslint-plugin": "^7.1.1",
