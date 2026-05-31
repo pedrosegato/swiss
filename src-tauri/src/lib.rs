@@ -1,3 +1,9 @@
+pub mod error;
+pub mod format;
+pub mod platform;
+pub mod process_registry;
+pub mod progress;
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tracing_subscriber::fmt()
