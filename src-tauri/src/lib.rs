@@ -30,6 +30,10 @@ pub fn run() {
             commands::binaries::binaries_uninstall,
             commands::binaries::binaries_update,
             commands::binaries::binaries_get_path,
+            commands::dialog::dialog_select_folder,
+            commands::dialog::dialog_select_files,
+            commands::dialog::fs_check_paths,
+            commands::dialog::app_get_downloads_path,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
