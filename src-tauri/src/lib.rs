@@ -1,8 +1,8 @@
-mod error;
-pub mod platform;
+pub mod error;
 pub mod format;
-pub mod progress;
+pub mod platform;
 pub mod process_registry;
+pub mod progress;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {

@@ -29,12 +29,22 @@ pub fn build_format_string(format: &str, quality: &str) -> String {
     }
 
     let is_mp4 = format == "mp4";
-    let codec_filter = if is_mp4 { "[vcodec~='^(h264|avc)']" } else { "" };
-    let audio_codec_filter = if is_mp4 { "[acodec~='^(aac|mp4a)']" } else { "" };
+    let codec_filter = if is_mp4 {
+        "[vcodec~='^(h264|avc)']"
+    } else {
+        ""
+    };
+    let audio_codec_filter = if is_mp4 {
+        "[acodec~='^(aac|mp4a)']"
+    } else {
+        ""
+    };
 
     if quality == "Máxima" {
         return if is_mp4 {
-            format!("bestvideo{codec_filter}+bestaudio{audio_codec_filter}/bestvideo+bestaudio/best")
+            format!(
+                "bestvideo{codec_filter}+bestaudio{audio_codec_filter}/bestvideo+bestaudio/best"
+            )
         } else {
             "bestvideo+bestaudio/best".into()
         };
@@ -42,7 +52,9 @@ pub fn build_format_string(format: &str, quality: &str) -> String {
 
     let Some(h) = quality_to_height(quality) else {
         return if is_mp4 {
-            format!("bestvideo{codec_filter}+bestaudio{audio_codec_filter}/bestvideo+bestaudio/best")
+            format!(
+                "bestvideo{codec_filter}+bestaudio{audio_codec_filter}/bestvideo+bestaudio/best"
+            )
         } else {
             "bestvideo+bestaudio/best".into()
         };
@@ -90,7 +102,10 @@ mod tests {
     #[test]
     fn build_format_webm_1080p() {
         let s = build_format_string("webm", "1080p");
-        assert_eq!(s, "bestvideo[height<=1080]+bestaudio/best[height<=1080]/bestvideo+bestaudio/best");
+        assert_eq!(
+            s,
+            "bestvideo[height<=1080]+bestaudio/best[height<=1080]/bestvideo+bestaudio/best"
+        );
     }
 
     #[test]

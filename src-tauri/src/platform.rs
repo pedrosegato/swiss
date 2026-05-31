@@ -2,7 +2,11 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 pub fn binary_suffix(os: &str) -> &'static str {
-    if os == "windows" { ".exe" } else { "" }
+    if os == "windows" {
+        ".exe"
+    } else {
+        ""
+    }
 }
 
 pub fn get_local_bin_dir() -> PathBuf {
@@ -27,11 +31,7 @@ pub fn get_local_bin_path(name: &str) -> PathBuf {
     p
 }
 
-pub fn platform_variant<'a>(
-    variants: &HashMap<&str, &'a str>,
-    os: &str,
-    arch: &str,
-) -> &'a str {
+pub fn platform_variant<'a>(variants: &HashMap<&str, &'a str>, os: &str, arch: &str) -> &'a str {
     let key = match (os, arch) {
         ("macos" | "darwin", "aarch64") => "darwin-arm64",
         ("macos" | "darwin", "x86_64") => "darwin-x64",
@@ -39,15 +39,20 @@ pub fn platform_variant<'a>(
         ("linux", "x86_64") => "linux-x64",
         _ => "linux-x64",
     };
-    variants.get(key).copied().unwrap_or_else(|| {
-        variants.get("linux-x64").copied().unwrap_or("")
-    })
+    variants
+        .get(key)
+        .copied()
+        .unwrap_or_else(|| variants.get("linux-x64").copied().unwrap_or(""))
 }
 
 pub fn current_os() -> &'static str {
-    if cfg!(target_os = "macos") { "macos" }
-    else if cfg!(target_os = "windows") { "windows" }
-    else { "linux" }
+    if cfg!(target_os = "macos") {
+        "macos"
+    } else if cfg!(target_os = "windows") {
+        "windows"
+    } else {
+        "linux"
+    }
 }
 
 pub fn current_arch() -> &'static str {
@@ -63,7 +68,13 @@ const PYTHON_CANDIDATES: &[&str] = &[
 pub async fn find_python() -> String {
     use tokio::process::Command;
     for py in PYTHON_CANDIDATES {
-        if Command::new(py).arg("--version").output().await.map(|o| o.status.success()).unwrap_or(false) {
+        if Command::new(py)
+            .arg("--version")
+            .output()
+            .await
+            .map(|o| o.status.success())
+            .unwrap_or(false)
+        {
             return (*py).to_string();
         }
     }
@@ -72,8 +83,14 @@ pub async fn find_python() -> String {
 
 pub async fn get_pip_user_bin_dir(python: &str) -> Option<PathBuf> {
     use tokio::process::Command;
-    let out = Command::new(python).args(["-m", "site", "--user-base"]).output().await.ok()?;
-    if !out.status.success() { return None; }
+    let out = Command::new(python)
+        .args(["-m", "site", "--user-base"])
+        .output()
+        .await
+        .ok()?;
+    if !out.status.success() {
+        return None;
+    }
     let base = String::from_utf8(out.stdout).ok()?.trim().to_string();
     Some(PathBuf::from(base).join("bin"))
 }
@@ -99,13 +116,7 @@ mod tests {
             platform_variant(&m, "darwin", "aarch64"),
             "darwin-arm64-url"
         );
-        assert_eq!(
-            platform_variant(&m, "linux", "x86_64"),
-            "linux-x64-url"
-        );
-        assert_eq!(
-            platform_variant(&m, "freebsd", "x86_64"),
-            "linux-x64-url"
-        );
+        assert_eq!(platform_variant(&m, "linux", "x86_64"), "linux-x64-url");
+        assert_eq!(platform_variant(&m, "freebsd", "x86_64"), "linux-x64-url");
     }
 }
