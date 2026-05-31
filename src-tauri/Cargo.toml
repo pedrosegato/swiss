@@ -1,6 +1,6 @@
 [package]
 name = "swiss"
-version = "0.7.4"
+version = "0.7.5"
 description = "Desktop app for downloading videos and converting media files"
 authors = ["pedro"]
 edition = "2021"
