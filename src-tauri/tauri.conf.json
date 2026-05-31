@@ -1,0 +1,54 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Swiss",
+  "version": "0.7.4",
+  "identifier": "com.swiss.app",
+  "build": {
+    "beforeDevCommand": "pnpm vite",
+    "beforeBuildCommand": "pnpm vite build",
+    "devUrl": "http://localhost:5173",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "macOSPrivateApi": true,
+    "windows": [
+      {
+        "label": "main",
+        "title": "Swiss",
+        "width": 960,
+        "height": 700,
+        "minWidth": 640,
+        "minHeight": 480,
+        "backgroundColor": "#121416",
+        "decorations": false,
+        "titleBarStyle": "Overlay",
+        "trafficLightPosition": { "x": 12, "y": 16 },
+        "hiddenTitle": true,
+        "fullscreen": false,
+        "resizable": true
+      }
+    ],
+    "security": { "csp": null, "capabilities": ["default"] }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["dmg", "nsis", "appimage"],
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
+    "category": "Utility",
+    "copyright": "© 2026 pedro",
+    "shortDescription": "Video downloader and media converter",
+    "longDescription": "Desktop app for downloading videos and converting media files",
+    "macOS": { "minimumSystemVersion": "11.0" },
+    "windows": { "nsis": { "displayLanguageSelector": false, "installerIcon": "icons/icon.ico", "installMode": "perMachine" } },
+    "linux": { "appimage": { "bundleMediaFramework": false } },
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "active": true,
+      "pubkey": "REPLACE_WITH_BASE64_PUBKEY_IN_TASK_5_1",
+      "endpoints": ["https://github.com/pedrosegato/swiss/releases/latest/download/latest.json"],
+      "windows": { "installMode": "passive" }
+    }
+  }
+}
