@@ -20,9 +20,9 @@
         "minWidth": 640,
         "minHeight": 480,
         "backgroundColor": "#121416",
-        "decorations": false,
+        "decorations": true,
         "titleBarStyle": "Overlay",
-        "trafficLightPosition": { "x": 12, "y": 16 },
+        "trafficLightPosition": { "x": 16, "y": 26 },
         "hiddenTitle": true,
         "fullscreen": false,
         "resizable": true

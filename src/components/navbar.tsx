@@ -21,6 +21,7 @@ export function Navbar() {
 
   return (
     <nav
+      data-tauri-drag-region
       className={cn(
         "sticky top-0 z-50 flex items-center h-12 bg-background/92 backdrop-blur-xl border-b border-border [-webkit-app-region:drag]",
         isMac ? "pl-22 pr-6" : "pl-4 pr-0",

@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { useSettingsStore } from "@/stores/settings-store";
 import { isVideoFormat } from "@/lib/constants";
 import { ipc } from "@/lib/ipc";
+import { readText } from "@tauri-apps/plugin-clipboard-manager";
 import { validateUrl } from "@/lib/url-validation";
 import { Download, FolderOpen } from "lucide-react";
 
@@ -81,11 +82,9 @@ export function DownloadBar({
 
   useEffect(() => {
     const handleGlobalKey = (e: KeyboardEvent) => {
-      if (document.activeElement === inputRef.current) return;
-
       if ((e.metaKey || e.ctrlKey) && e.key === "v") {
         e.preventDefault();
-        navigator.clipboard.readText().then((text) => {
+        readText().then((text) => {
           const trimmed = text.trim();
           if (!trimmed) return;
           setUrl(trimmed);
@@ -94,6 +93,8 @@ export function DownloadBar({
         });
         return;
       }
+
+      if (document.activeElement === inputRef.current) return;
 
       if (e.key === "Enter") {
         submit();
