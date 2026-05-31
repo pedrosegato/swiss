@@ -1,6 +1,7 @@
 mod error;
 pub mod platform;
 pub mod format;
+pub mod progress;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
