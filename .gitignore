@@ -4,8 +4,11 @@ node_modules/
 # Build output
 dist/
 dist-ssr/
-dist-electron/
 release/
+src-tauri/target/
+src-tauri/gen/
+*.pem
+*.key
 
 # Logs
 logs/
@@ -41,3 +44,4 @@ Thumbs.db
 .worktrees/
 plans/
 showcase/
+CLAUDE.md
