@@ -124,7 +124,7 @@ async fn run_ffmpeg(
     id: &str,
     duration: f64,
     on_event: &Channel<ProgressEvent>,
-) -> (i32, String) {
+) -> (i32, String, bool) {
     let mut cmd = Command::new(ffmpeg);
     cmd.args(args)
         .env("PYTHONIOENCODING", "utf-8")
@@ -134,11 +134,11 @@ async fn run_ffmpeg(
         .kill_on_drop(true);
     let mut child = match cmd.spawn() {
         Ok(c) => c,
-        Err(e) => return (-1, e.to_string()),
+        Err(e) => return (-1, e.to_string(), false),
     };
     let stdout = child.stdout.take().unwrap();
     let stderr = child.stderr.take().unwrap();
-    MERGES.insert(id.to_string(), child);
+    let cancel_rx = MERGES.register(id.to_string());
 
     let id_so = id.to_string();
     let on_event_so = on_event.clone();
@@ -188,14 +188,22 @@ async fn run_ffmpeg(
         buf
     });
 
-    let mut child = match MERGES.take(id) {
-        Some(c) => c,
-        None => return (-1, String::new()),
+    let (status, cancelled) = tokio::select! {
+        s = child.wait() => (s, false),
+        _ = cancel_rx => {
+            let _ = child.start_kill();
+            let s = child.wait().await;
+            (s, true)
+        }
     };
-    let status = child.wait().await;
+    MERGES.remove(id);
     let _ = stdout_handle.await;
     let buf = stderr_handle.await.unwrap_or_default();
-    (status.ok().and_then(|s| s.code()).unwrap_or(-1), buf)
+    (
+        status.ok().and_then(|s| s.code()).unwrap_or(-1),
+        buf,
+        cancelled,
+    )
 }
 
 #[tauri::command]
@@ -289,13 +297,26 @@ pub async fn merge_start(
         let mut args = build_args(&enc);
         let mut result = run_ffmpeg(&ffmpeg, &args, &id, main_info.duration, &on_event).await;
 
-        if result.0 != 0 && enc.get(1).map(|s| s.as_str()) != Some("libx264") {
+        if result.0 != 0 && !result.2 && enc.get(1).map(|s| s.as_str()) != Some("libx264") {
             let sw: Vec<String> = vec!["-c:v", "libx264", "-preset", "ultrafast", "-crf", "18"]
                 .into_iter()
                 .map(String::from)
                 .collect();
             args = build_args(&sw);
             result = run_ffmpeg(&ffmpeg, &args, &id, main_info.duration, &on_event).await;
+        }
+
+        if result.2 {
+            let _ = on_event.send(ProgressEvent {
+                id: id.clone(),
+                kind: MediaKind::Merge,
+                progress: 0,
+                stage: Stage::Error,
+                error_message: Some("Cancelado".into()),
+                output_size: None,
+                output_path: None,
+            });
+            return;
         }
 
         if result.0 == 0 {
@@ -361,7 +382,7 @@ pub async fn merge_start(
 
 #[tauri::command]
 pub async fn merge_cancel(id: String) -> AppResult<()> {
-    MERGES.kill(&id).await;
+    MERGES.cancel(&id);
     Ok(())
 }
 

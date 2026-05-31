@@ -160,7 +160,7 @@ pub async fn download_start(
     let mut child = cmd.spawn()?;
     let stdout = child.stdout.take().unwrap();
     let stderr = child.stderr.take().unwrap();
-    DOWNLOADS.insert(id.clone(), child);
+    let cancel_rx = DOWNLOADS.register(id.clone());
 
     let state = Arc::new(Mutex::new(PlaylistState::default()));
 
@@ -287,8 +287,9 @@ pub async fn download_start(
                     (s.total, s.index, s.filesize)
                 };
                 let progress = if total > 0 {
-                    (((index - 1) as f64 + video_progress / 100.0) / total as f64 * 100.0).round()
-                        as i32
+                    ((index.saturating_sub(1) as f64 + video_progress / 100.0) / total as f64
+                        * 100.0)
+                        .round() as i32
                 } else {
                     video_progress.round() as i32
                 };
@@ -300,7 +301,7 @@ pub async fn download_start(
                     error_message: None,
                     output_path: None,
                     playlist_downloaded: if total > 0 {
-                        Some((index - 1) as u32)
+                        Some(index.saturating_sub(1) as u32)
                     } else {
                         None
                     },
@@ -315,16 +316,35 @@ pub async fn download_start(
     let on_event_close = on_event.clone();
     let state_close = state.clone();
     tokio::spawn(async move {
-        let mut child = match DOWNLOADS.take(&id_for_close) {
-            Some(c) => c,
-            None => return,
+        let (status, cancelled) = tokio::select! {
+            s = child.wait() => (s, false),
+            _ = cancel_rx => {
+                let _ = child.start_kill();
+                let s = child.wait().await;
+                (s, true)
+            }
         };
-        let status = child.wait().await;
+        DOWNLOADS.remove(&id_for_close);
         let stderr_buf = stderr_handle.await.unwrap_or_default();
         let (metadata_sent, last_title, last_video_id) =
             stdout_handle
                 .await
                 .unwrap_or((false, String::new(), String::new()));
+
+        if cancelled {
+            let _ = on_event_close.send(DownloadEvent::Progress {
+                id: id_for_close,
+                kind: MediaKind::Download,
+                progress: 0,
+                stage: Stage::Error,
+                error_message: Some("Cancelado".into()),
+                output_path: None,
+                playlist_downloaded: None,
+                playlist_file_size: None,
+            });
+            return;
+        }
+
         let playlist_total = state_close.lock().unwrap().total;
         let code = status.ok().and_then(|s| s.code()).unwrap_or(-1);
         let partial = code != 0 && metadata_sent;
@@ -398,7 +418,7 @@ pub async fn download_start(
 
 #[tauri::command]
 pub async fn download_cancel(id: String) -> AppResult<()> {
-    DOWNLOADS.kill(&id).await;
+    DOWNLOADS.cancel(&id);
     Ok(())
 }
 

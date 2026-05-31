@@ -160,9 +160,8 @@ pub async fn convert_start(
     let mut child = cmd.spawn()?;
     let stdout = child.stdout.take().unwrap();
     let stderr = child.stderr.take().unwrap();
-    CONVERSIONS.insert(id.clone(), child);
+    let cancel_rx = CONVERSIONS.register(id.clone());
 
-    let id_stderr = id.clone();
     let stderr_handle = tokio::spawn(async move {
         let mut buf = String::new();
         let mut reader = BufReader::new(stderr);
@@ -179,7 +178,6 @@ pub async fn convert_start(
                 buf = buf[s..].into();
             }
         }
-        let _ = id_stderr;
         buf
     });
 
@@ -216,13 +214,31 @@ pub async fn convert_start(
     let out_path_close = output_path.clone();
     let app_close = app.clone();
     tokio::spawn(async move {
-        let mut child = match CONVERSIONS.take(&id_close) {
-            Some(c) => c,
-            None => return,
+        let (status, cancelled) = tokio::select! {
+            s = child.wait() => (s, false),
+            _ = cancel_rx => {
+                let _ = child.start_kill();
+                let s = child.wait().await;
+                (s, true)
+            }
         };
-        let status = child.wait().await;
+        CONVERSIONS.remove(&id_close);
         let stderr_buf = stderr_handle.await.unwrap_or_default();
         let _ = stdout_handle.await;
+
+        if cancelled {
+            let _ = on_event.send(ProgressEvent {
+                id: id_close,
+                kind: MediaKind::Convert,
+                progress: 0,
+                stage: Stage::Error,
+                error_message: Some("Cancelado".into()),
+                output_size: None,
+                output_path: None,
+            });
+            return;
+        }
+
         let code = status.ok().and_then(|s| s.code()).unwrap_or(-1);
 
         if code == 0 {
@@ -277,7 +293,7 @@ pub async fn convert_start(
 
 #[tauri::command]
 pub async fn convert_cancel(id: String) -> AppResult<()> {
-    CONVERSIONS.kill(&id).await;
+    CONVERSIONS.cancel(&id);
     Ok(())
 }
 
