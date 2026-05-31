@@ -1,5 +1,5 @@
 import { invoke, Channel } from "@tauri-apps/api/core";
-import { listen, type UnlistenFn } from "@tauri-apps/api/event";
+import { listen } from "@tauri-apps/api/event";
 import { type as osType } from "@tauri-apps/plugin-os";
 
 let cachedPlatform = "linux";
@@ -33,13 +33,9 @@ export const ipc = {
     }>("binaries_check"),
 
   installBinary: (name: "yt-dlp" | "ffmpeg" | "ffprobe") => {
-    return new Promise<InstallResult>((resolve, reject) => {
-      const onEvent = new Channel<{ name: string; percent: number }>();
-      onEvent.onmessage = (msg) => {
-        window.dispatchEvent(new CustomEvent("binaries:install-progress", { detail: msg }));
-      };
-      invoke<InstallResult>("binaries_install", { name, onEvent }).then(resolve, reject);
-    });
+    const onEvent = new Channel<{ name: string; percent: number }>();
+    onEvent.onmessage = (msg) => window.dispatchEvent(new CustomEvent("binaries:install-progress", { detail: msg }));
+    return invoke<InstallResult>("binaries_install", { name, onEvent });
   },
 
   updateBinary: (name: "yt-dlp" | "ffmpeg" | "ffprobe") =>
@@ -61,7 +57,7 @@ export const ipc = {
         window.dispatchEvent(new CustomEvent("progress:update", { detail: msg.data }));
       }
     };
-    return invoke<{ id: string }>("download_start", { options, onEvent });
+    return invoke<void>("download_start", { options, onEvent });
   },
 
   cancelDownload: (id: string) => invoke<void>("download_cancel", { id }),
@@ -73,7 +69,7 @@ export const ipc = {
     const onEvent = new Channel<any>();
     onEvent.onmessage = (msg) =>
       window.dispatchEvent(new CustomEvent("progress:update", { detail: msg }));
-    return invoke<{ id: string }>("convert_start", { options, onEvent });
+    return invoke<void>("convert_start", { options, onEvent });
   },
 
   cancelConversion: (id: string) => invoke<void>("convert_cancel", { id }),
@@ -85,7 +81,7 @@ export const ipc = {
     const onEvent = new Channel<any>();
     onEvent.onmessage = (msg) =>
       window.dispatchEvent(new CustomEvent("progress:update", { detail: msg }));
-    return invoke<{ id: string }>("merge_start", { options, onEvent });
+    return invoke<void>("merge_start", { options, onEvent });
   },
 
   cancelMerge: (id: string) => invoke<void>("merge_cancel", { id }),
@@ -126,8 +122,7 @@ export const ipc = {
       percent?: number;
     }) => void,
   ): (() => void) => {
-    let unlisten: UnlistenFn | null = null;
-    listen<{ status: string; version?: string; percent?: number; message?: string }>(
+    const promise = listen<{ status: string; version?: string; percent?: number; message?: string }>(
       "updater:status",
       (event) => {
         const p = event.payload;
@@ -135,9 +130,9 @@ export const ipc = {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           callback({ status: p.status as any, version: p.version, percent: p.percent });
         }
-      }
-    ).then((u) => { unlisten = u; });
-    return () => { if (unlisten) unlisten(); };
+      },
+    );
+    return () => { promise.then((u) => u()); };
   },
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

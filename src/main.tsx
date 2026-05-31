@@ -33,4 +33,4 @@ async function bootstrap() {
   );
 }
 
-bootstrap();
+bootstrap().catch((e) => { console.error(e); });
