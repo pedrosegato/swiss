@@ -37,6 +37,10 @@ pub fn run() {
             commands::shell::shell_open_external,
             commands::shell::shell_show_item_in_folder,
             commands::shell::shell_open_path,
+            commands::window::window_minimize,
+            commands::window::window_maximize,
+            commands::window::window_close,
+            commands::window::dock_set_progress,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
