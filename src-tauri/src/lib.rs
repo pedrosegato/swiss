@@ -1,12 +1,18 @@
 pub mod binary;
+pub mod commands;
 pub mod error;
 pub mod format;
 pub mod platform;
 pub mod process_registry;
 pub mod progress;
+pub mod setup;
+
+use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    crate::setup::augment_path();
+
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
@@ -15,6 +21,14 @@ pub fn run() {
         .init();
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
+            if let Some(win) = app.get_webview_window("main") {
+                if win.is_minimized().unwrap_or(false) {
+                    let _ = win.unminimize();
+                }
+                let _ = win.set_focus();
+            }
+        }))
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
@@ -23,6 +37,24 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
+        .invoke_handler(tauri::generate_handler![
+            commands::binaries::binaries_check,
+            commands::binaries::binaries_install,
+            commands::binaries::binaries_uninstall,
+            commands::binaries::binaries_update,
+            commands::binaries::binaries_get_path,
+            commands::dialog::dialog_select_folder,
+            commands::dialog::dialog_select_files,
+            commands::dialog::fs_check_paths,
+            commands::dialog::app_get_downloads_path,
+            commands::shell::shell_open_external,
+            commands::shell::shell_show_item_in_folder,
+            commands::shell::shell_open_path,
+            commands::window::window_minimize,
+            commands::window::window_maximize,
+            commands::window::window_close,
+            commands::window::dock_set_progress,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
