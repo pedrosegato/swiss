@@ -88,6 +88,34 @@ fn download_url(name: BinaryName) -> String {
 }
 
 pub async fn download_file<F: Fn(u32)>(url: &str, dest: &Path, on_progress: F) -> AppResult<()> {
+    let tmp = dest.with_extension("partial");
+    let result = download_file_inner(url, &tmp, &on_progress).await;
+    if result.is_err() {
+        let _ = fs::remove_file(&tmp).await;
+        return result;
+    }
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let mut perms = std::fs::metadata(&tmp)?.permissions();
+        perms.set_mode(0o755);
+        std::fs::set_permissions(&tmp, perms)?;
+    }
+
+    if cfg!(target_os = "macos") {
+        let _ = Command::new("xattr")
+            .args(["-d", "com.apple.quarantine"])
+            .arg(&tmp)
+            .output()
+            .await;
+    }
+
+    fs::rename(&tmp, dest).await?;
+    Ok(())
+}
+
+async fn download_file_inner<F: Fn(u32)>(url: &str, tmp: &Path, on_progress: &F) -> AppResult<()> {
     let resp = reqwest::Client::new()
         .get(url)
         .send()
@@ -97,38 +125,28 @@ pub async fn download_file<F: Fn(u32)>(url: &str, dest: &Path, on_progress: F) -
     let mut downloaded: u64 = 0;
     let mut stream = resp.bytes_stream();
 
-    let mut file = fs::File::create(dest).await?;
+    let mut file = fs::File::create(tmp).await?;
+    if total == 0 {
+        on_progress(0);
+    }
     while let Some(chunk) = stream.next().await {
         let bytes = chunk?;
         downloaded += bytes.len() as u64;
         file.write_all(&bytes).await?;
-        if let Some(pct) = (downloaded * 100).checked_div(total) {
-            on_progress(pct as u32);
+        if total > 0 {
+            if let Some(pct) = (downloaded * 100).checked_div(total) {
+                on_progress(pct as u32);
+            }
         }
     }
     file.flush().await?;
-    drop(file);
-
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        let mut perms = std::fs::metadata(dest)?.permissions();
-        perms.set_mode(0o755);
-        std::fs::set_permissions(dest, perms)?;
-    }
-
-    if cfg!(target_os = "macos") {
-        let _ = Command::new("xattr")
-            .args(["-d", "com.apple.quarantine"])
-            .arg(dest)
-            .output()
-            .await;
-    }
-
     Ok(())
 }
 
 async fn try_pip_install() -> bool {
+    use std::time::Duration;
+    use tokio::time::timeout;
+
     let python = find_python().await;
     let strategies = [
         vec![
@@ -147,17 +165,35 @@ async fn try_pip_install() -> bool {
         if installed {
             break;
         }
-        if Command::new(&python)
-            .args(&args)
-            .output()
-            .await
-            .map(|o| o.status.success())
-            .unwrap_or(false)
-        {
+        let success = timeout(
+            Duration::from_secs(120),
+            Command::new(&python).args(&args).output(),
+        )
+        .await
+        .ok()
+        .and_then(|r| r.ok())
+        .map(|o| o.status.success())
+        .unwrap_or(false);
+        if success {
             installed = true;
         }
     }
     if !installed {
+        return false;
+    }
+
+    let ver_ok = timeout(
+        Duration::from_secs(5),
+        Command::new(&python)
+            .args(["-m", "yt_dlp", "--version"])
+            .output(),
+    )
+    .await
+    .ok()
+    .and_then(|r| r.ok())
+    .map(|o| o.status.success())
+    .unwrap_or(false);
+    if !ver_ok {
         return false;
     }
 
@@ -216,15 +252,17 @@ pub async fn update_binary(name: BinaryName) -> bool {
 pub async fn uninstall_binary(name: BinaryName) -> bool {
     clear_path_cache(Some(name));
     let mut removed = false;
-    if name == BinaryName::YtDlp
-        && Command::new("pip3")
-            .args(["uninstall", "-y", "yt-dlp"])
+    if name == BinaryName::YtDlp {
+        let python = find_python().await;
+        if Command::new(&python)
+            .args(["-m", "pip", "uninstall", "-y", "yt-dlp"])
             .output()
             .await
             .map(|o| o.status.success())
             .unwrap_or(false)
-    {
-        removed = true;
+        {
+            removed = true;
+        }
     }
     let local_bin_dir = get_local_bin_dir();
     let local_path = get_local_bin_path(name.as_str());
@@ -232,7 +270,7 @@ pub async fn uninstall_binary(name: BinaryName) -> bool {
     if let Ok(out) = Command::new(cmd).arg(name.as_str()).output().await {
         if let Some(line) = String::from_utf8_lossy(&out.stdout).lines().next() {
             let resolved = line.trim();
-            if resolved.starts_with(local_bin_dir.to_string_lossy().as_ref())
+            if std::path::Path::new(resolved).starts_with(&local_bin_dir)
                 && fs::remove_file(resolved).await.is_ok()
             {
                 removed = true;

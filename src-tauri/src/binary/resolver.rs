@@ -10,18 +10,18 @@ static PATH_CACHE: Lazy<Mutex<HashMap<BinaryName, String>>> = Lazy::new(Default:
 static YTDLP_SPAWN_CACHE: Lazy<Mutex<Option<SpawnInfo>>> = Lazy::new(Default::default);
 
 pub fn clear_path_cache(name: Option<BinaryName>) {
-    let mut g = PATH_CACHE.lock().unwrap();
-    match name {
+    let clear_ytdlp = match name {
         Some(n) => {
-            g.remove(&n);
-            if n == BinaryName::YtDlp {
-                *YTDLP_SPAWN_CACHE.lock().unwrap() = None;
-            }
+            PATH_CACHE.lock().unwrap().remove(&n);
+            n == BinaryName::YtDlp
         }
         None => {
-            g.clear();
-            *YTDLP_SPAWN_CACHE.lock().unwrap() = None;
+            PATH_CACHE.lock().unwrap().clear();
+            true
         }
+    };
+    if clear_ytdlp {
+        *YTDLP_SPAWN_CACHE.lock().unwrap() = None;
     }
 }
 
