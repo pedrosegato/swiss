@@ -54,7 +54,22 @@ pub fn run() {
             commands::window::window_maximize,
             commands::window::window_close,
             commands::window::dock_set_progress,
+            commands::download::download_start,
+            commands::download::download_cancel,
+            commands::convert::convert_start,
+            commands::convert::convert_cancel,
+            commands::convert::convert_thumbnail,
+            commands::merge::merge_start,
+            commands::merge::merge_cancel,
+            commands::merge::merge_thumbnail,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|_app, event| {
+            if let tauri::RunEvent::ExitRequested { .. } = event {
+                crate::process_registry::DOWNLOADS.cancel_all();
+                crate::process_registry::CONVERSIONS.cancel_all();
+                crate::process_registry::MERGES.cancel_all();
+            }
+        });
 }

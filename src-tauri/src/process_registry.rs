@@ -1,11 +1,11 @@
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
 use std::sync::Mutex;
-use tokio::process::Child;
+use tokio::sync::oneshot;
 
 #[derive(Default)]
 pub struct ProcessRegistry {
-    inner: Mutex<HashMap<String, Child>>,
+    inner: Mutex<HashMap<String, oneshot::Sender<()>>>,
 }
 
 pub static DOWNLOADS: Lazy<ProcessRegistry> = Lazy::new(ProcessRegistry::default);
@@ -13,29 +13,29 @@ pub static CONVERSIONS: Lazy<ProcessRegistry> = Lazy::new(ProcessRegistry::defau
 pub static MERGES: Lazy<ProcessRegistry> = Lazy::new(ProcessRegistry::default);
 
 impl ProcessRegistry {
-    pub fn insert(&self, id: String, child: Child) {
+    pub fn register(&self, id: String) -> oneshot::Receiver<()> {
+        let (tx, rx) = oneshot::channel();
         let mut g = self.inner.lock().unwrap();
-        g.insert(id, child);
+        g.insert(id, tx);
+        rx
     }
 
-    pub fn take(&self, id: &str) -> Option<Child> {
+    pub fn cancel(&self, id: &str) {
         let mut g = self.inner.lock().unwrap();
-        g.remove(id)
-    }
-
-    pub async fn kill(&self, id: &str) {
-        if let Some(mut child) = self.take(id) {
-            let _ = child.kill().await;
+        if let Some(tx) = g.remove(id) {
+            let _ = tx.send(());
         }
     }
 
-    pub async fn kill_all(&self) {
-        let ids: Vec<String> = {
-            let g = self.inner.lock().unwrap();
-            g.keys().cloned().collect()
-        };
-        for id in ids {
-            self.kill(&id).await;
+    pub fn cancel_all(&self) {
+        let mut g = self.inner.lock().unwrap();
+        for (_, tx) in g.drain() {
+            let _ = tx.send(());
         }
+    }
+
+    pub fn remove(&self, id: &str) {
+        let mut g = self.inner.lock().unwrap();
+        g.remove(id);
     }
 }
