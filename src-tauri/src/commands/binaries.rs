@@ -1,7 +1,7 @@
 use crate::binary::{
     installer::{download_binary, uninstall_binary, update_binary},
     resolver::resolve_binary,
-    BinaryName, BinarySource, BinaryStatus,
+    BinaryName, BinaryStatus,
 };
 use crate::error::AppResult;
 use crate::progress::BinaryInstallProgress;
@@ -50,8 +50,9 @@ pub async fn binaries_install(
 ) -> AppResult<InstallResult> {
     let n = name_from(&name)?;
     let name_clone = name.clone();
+    let on_event_clone = on_event.clone();
     let success = download_binary(n, move |percent| {
-        let _ = on_event.send(BinaryInstallProgress {
+        let _ = on_event_clone.send(BinaryInstallProgress {
             name: name_clone.clone(),
             percent,
         });
@@ -59,6 +60,10 @@ pub async fn binaries_install(
     .await;
 
     if success {
+        let _ = on_event.send(BinaryInstallProgress {
+            name: name.clone(),
+            percent: 100,
+        });
         if cfg!(windows) {
             tokio::time::sleep(std::time::Duration::from_millis(1500)).await;
         }
@@ -68,14 +73,10 @@ pub async fn binaries_install(
             status,
         })
     } else {
+        let status = resolve_binary(n).await;
         Ok(InstallResult {
             success: false,
-            status: BinaryStatus {
-                installed: false,
-                version: None,
-                path: String::new(),
-                source: BinarySource::None,
-            },
+            status,
         })
     }
 }
@@ -84,16 +85,7 @@ pub async fn binaries_install(
 pub async fn binaries_uninstall(name: String) -> AppResult<InstallResult> {
     let n = name_from(&name)?;
     let success = uninstall_binary(n).await;
-    let status = if success {
-        resolve_binary(n).await
-    } else {
-        BinaryStatus {
-            installed: false,
-            version: None,
-            path: String::new(),
-            source: BinarySource::None,
-        }
-    };
+    let status = resolve_binary(n).await;
     Ok(InstallResult { success, status })
 }
 
@@ -101,16 +93,7 @@ pub async fn binaries_uninstall(name: String) -> AppResult<InstallResult> {
 pub async fn binaries_update(name: String) -> AppResult<InstallResult> {
     let n = name_from(&name)?;
     let success = update_binary(n).await;
-    let status = if success {
-        resolve_binary(n).await
-    } else {
-        BinaryStatus {
-            installed: false,
-            version: None,
-            path: String::new(),
-            source: BinarySource::None,
-        }
-    };
+    let status = resolve_binary(n).await;
     Ok(InstallResult { success, status })
 }
 

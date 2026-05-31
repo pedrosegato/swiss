@@ -48,7 +48,10 @@ pub async fn dialog_select_files(
             FilePath::Path(p) => p,
             FilePath::Url(_) => continue,
         };
-        let meta = fs::metadata(&path_buf).await?;
+        let meta = match fs::metadata(&path_buf).await {
+            Ok(m) => m,
+            Err(_) => continue,
+        };
         out.push(SelectedFile {
             path: path_buf.to_string_lossy().to_string(),
             name: path_buf
@@ -75,8 +78,10 @@ pub struct PathEntry {
 pub async fn fs_check_paths(paths: Vec<PathEntry>) -> AppResult<Vec<String>> {
     let mut missing = Vec::new();
     for p in paths {
-        if tokio::fs::metadata(&p.path).await.is_err() {
-            missing.push(p.id);
+        match tokio::fs::metadata(&p.path).await {
+            Ok(_) => {}
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => missing.push(p.id),
+            Err(_) => {}
         }
     }
     Ok(missing)
