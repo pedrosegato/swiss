@@ -46,7 +46,7 @@
   "plugins": {
     "updater": {
       "active": true,
-      "pubkey": "REPLACE_WITH_BASE64_PUBKEY_IN_TASK_5_1",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDVFNzEzOTY0MjY4M0U4MDIKUldRQzZJTW1aRGx4WHBLNXQ0Wm9RMVJEK0w3Uk5uT2FkcEMwZnNpckRJNnBxeUdUU0x1V1BuZlQK",
       "endpoints": ["https://github.com/pedrosegato/swiss/releases/latest/download/latest.json"],
       "windows": { "installMode": "passive" }
     }

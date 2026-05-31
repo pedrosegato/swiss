@@ -7,6 +7,7 @@ pub mod process_registry;
 pub mod progress;
 pub mod setup;
 
+use std::time::Duration;
 use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -37,6 +38,20 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
+        .setup(|app| {
+            #[cfg(desktop)]
+            {
+                let handle = app.handle().clone();
+                tauri::async_runtime::spawn(async move {
+                    crate::commands::updater::run_auto_update(handle.clone()).await;
+                    loop {
+                        tokio::time::sleep(Duration::from_secs(30 * 60)).await;
+                        crate::commands::updater::run_auto_update(handle.clone()).await;
+                    }
+                });
+            }
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             commands::binaries::binaries_check,
             commands::binaries::binaries_install,
@@ -62,6 +77,7 @@ pub fn run() {
             commands::merge::merge_start,
             commands::merge::merge_cancel,
             commands::merge::merge_thumbnail,
+            commands::updater::updater_install,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
