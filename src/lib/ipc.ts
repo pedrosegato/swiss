@@ -1,6 +1,7 @@
 import { invoke, Channel } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { type as osType } from "@tauri-apps/plugin-os";
+import type { ProgressMessage, MetadataMessage } from "@/lib/types";
 
 let cachedPlatform = "linux";
 
@@ -17,7 +18,35 @@ type InstallResult = {
   source: "system" | "local" | "none";
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+interface ConvertOptions {
+  id: string;
+  inputPath: string;
+  outputFormat: string;
+  quality: string;
+  savePath: string;
+}
+
+interface MergeOptions {
+  id: string;
+  mainPath: string;
+  bgPath: string;
+  direction: "vertical" | "horizontal";
+  savePath: string;
+}
+
+function makeCanceller(command: string) {
+  return (id: string) => invoke<void>(command, { id });
+}
+
+function makeProgressStarter<TOptions>(command: string) {
+  return (options: TOptions) => {
+    const onEvent = new Channel<ProgressMessage>();
+    onEvent.onmessage = (msg) =>
+      window.dispatchEvent(new CustomEvent("progress:update", { detail: msg }));
+    return invoke<void>(command, { options, onEvent });
+  };
+}
+
 export const ipc = {
   get platform() { return cachedPlatform; },
 
@@ -44,12 +73,13 @@ export const ipc = {
   uninstallBinary: (name: "yt-dlp" | "ffmpeg" | "ffprobe") =>
     invoke<InstallResult>("binaries_uninstall", { name }),
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   startDownload: (options: {
     id: string; url: string; format: string; quality: string; savePath: string; cookieBrowser?: string;
   }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const onEvent = new Channel<any>();
+    const onEvent = new Channel<
+      | { event: "metadata"; data: MetadataMessage }
+      | { event: "progress"; data: ProgressMessage }
+    >();
     onEvent.onmessage = (msg) => {
       if (msg.event === "metadata") {
         window.dispatchEvent(new CustomEvent("download:metadata", { detail: msg.data }));
@@ -60,31 +90,15 @@ export const ipc = {
     return invoke<void>("download_start", { options, onEvent });
   },
 
-  cancelDownload: (id: string) => invoke<void>("download_cancel", { id }),
+  cancelDownload: makeCanceller("download_cancel"),
 
-  startConversion: (options: {
-    id: string; inputPath: string; outputFormat: string; quality: string; savePath: string;
-  }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const onEvent = new Channel<any>();
-    onEvent.onmessage = (msg) =>
-      window.dispatchEvent(new CustomEvent("progress:update", { detail: msg }));
-    return invoke<void>("convert_start", { options, onEvent });
-  },
+  startConversion: makeProgressStarter<ConvertOptions>("convert_start"),
 
-  cancelConversion: (id: string) => invoke<void>("convert_cancel", { id }),
+  cancelConversion: makeCanceller("convert_cancel"),
 
-  startMerge: (options: {
-    id: string; mainPath: string; bgPath: string; direction: "vertical" | "horizontal"; savePath: string;
-  }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const onEvent = new Channel<any>();
-    onEvent.onmessage = (msg) =>
-      window.dispatchEvent(new CustomEvent("progress:update", { detail: msg }));
-    return invoke<void>("merge_start", { options, onEvent });
-  },
+  startMerge: makeProgressStarter<MergeOptions>("merge_start"),
 
-  cancelMerge: (id: string) => invoke<void>("merge_cancel", { id }),
+  cancelMerge: makeCanceller("merge_cancel"),
 
   extractMergeThumbnail: (filePath: string) =>
     invoke<string | null>("merge_thumbnail", { filePath }),
@@ -127,23 +141,20 @@ export const ipc = {
       (event) => {
         const p = event.payload;
         if (p.status === "available" || p.status === "downloading" || p.status === "ready") {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          callback({ status: p.status as any, version: p.version, percent: p.percent });
+          callback({ status: p.status, version: p.version, percent: p.percent });
         }
       },
     );
     return () => { promise.then((u) => u()); };
   },
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onMetadata: (callback: (data: any) => void): (() => void) => {
+  onMetadata: (callback: (data: MetadataMessage) => void): (() => void) => {
     const handler = (e: Event) => callback((e as CustomEvent).detail);
     window.addEventListener("download:metadata", handler);
     return () => window.removeEventListener("download:metadata", handler);
   },
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onProgress: (callback: (data: any) => void): (() => void) => {
+  onProgress: (callback: (data: ProgressMessage) => void): (() => void) => {
     const handler = (e: Event) => callback((e as CustomEvent).detail);
     window.addEventListener("progress:update", handler);
     return () => window.removeEventListener("progress:update", handler);

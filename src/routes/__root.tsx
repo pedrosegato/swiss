@@ -15,7 +15,6 @@ import { useBinariesStore } from "@/stores/binaries-store";
 import { useDownloadStore } from "@/stores/download-store";
 import { useConvertStore } from "@/stores/convert-store";
 import { useMergeStore } from "@/stores/merge-store";
-import type { DownloadStage, ConvertStage, MergeStage } from "@/lib/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 const TERMINAL_STAGES = new Set(["completed", "error"]);
@@ -58,64 +57,62 @@ function RootLayout() {
   }, [setYtdlp, setFfmpeg, setFfprobe]);
 
   useEffect(() => {
-    const unsubscribe = ipc.onProgress(
-      ({
-        id,
-        type,
-        progress,
-        stage,
-        errorMessage,
-        outputSize,
-        outputPath,
-        playlistDownloaded,
-        playlistFileSize,
-      }) => {
-        if (type === "download") {
-          const current = useDownloadStore
-            .getState()
-            .items.find((i) => i.id === id);
-          if (!shouldApplyProgress(current, stage)) return;
-          updateDownload(id, {
-            progress,
-            stage: stage as DownloadStage,
-            errorMessage,
-            outputPath,
-            ...(playlistDownloaded != null ? { playlistDownloaded } : {}),
-            ...(playlistFileSize ? { fileSize: formatSize(playlistFileSize) } : {}),
-            ...(playlistFileSize ? { fileSizeBytes: playlistFileSize } : {}),
+    const unsubscribe = ipc.onProgress((msg) => {
+      if (msg.type === "download") {
+        const current = useDownloadStore
+          .getState()
+          .items.find((i) => i.id === msg.id);
+        if (!shouldApplyProgress(current, msg.stage)) return;
+        updateDownload(msg.id, {
+          progress: msg.progress,
+          stage: msg.stage,
+          errorMessage: msg.errorMessage ?? undefined,
+          outputPath: msg.outputPath ?? undefined,
+          ...(msg.playlistDownloaded != null
+            ? { playlistDownloaded: msg.playlistDownloaded }
+            : {}),
+          ...(msg.playlistFileSize
+            ? { fileSize: formatSize(msg.playlistFileSize) }
+            : {}),
+          ...(msg.playlistFileSize
+            ? { fileSizeBytes: msg.playlistFileSize }
+            : {}),
+        });
+      } else if (msg.type === "convert") {
+        const current = useConvertStore
+          .getState()
+          .items.find((i) => i.id === msg.id);
+        if (!shouldApplyProgress(current, msg.stage)) return;
+        updateConvert(msg.id, {
+          progress: msg.progress,
+          stage: msg.stage,
+          errorMessage: msg.errorMessage ?? undefined,
+          outputSize: msg.outputSize ?? undefined,
+          outputPath: msg.outputPath ?? undefined,
+        });
+      } else if (msg.type === "merge") {
+        const current = useMergeStore
+          .getState()
+          .items.find((i) => i.id === msg.id);
+        if (!shouldApplyProgress(current, msg.stage)) return;
+        updateMerge(msg.id, {
+          progress: msg.progress,
+          stage: msg.stage,
+          errorMessage: msg.errorMessage ?? undefined,
+          outputSize: msg.outputSize ?? undefined,
+          outputPath: msg.outputPath ?? undefined,
+        });
+        if (msg.stage === "completed" && msg.outputPath) {
+          const outputPath = msg.outputPath;
+          const id = msg.id;
+          ipc.extractMergeThumbnail(outputPath).then((thumb) => {
+            if (thumb) updateMerge(id, { thumbnail: thumb });
           });
-        } else if (type === "convert") {
-          const current = useConvertStore
-            .getState()
-            .items.find((i) => i.id === id);
-          if (!shouldApplyProgress(current, stage)) return;
-          updateConvert(id, {
-            progress,
-            stage: stage as ConvertStage,
-            errorMessage,
-            outputSize,
-            outputPath,
-          });
-        } else if (type === "merge") {
-          const current = useMergeStore
-            .getState()
-            .items.find((i) => i.id === id);
-          if (!shouldApplyProgress(current, stage)) return;
-          updateMerge(id, {
-            progress,
-            stage: stage as MergeStage,
-            errorMessage,
-            outputSize,
-            outputPath,
-          });
-          if (stage === "completed" && outputPath) {
-            ipc.extractMergeThumbnail(outputPath).then((thumb) => {
-              if (thumb) updateMerge(id, { thumbnail: thumb });
-            });
-          }
         }
-      },
-    );
+      } else {
+        console.warn("Unrouted progress message", msg);
+      }
+    });
     return unsubscribe;
   }, [updateDownload, updateConvert, updateMerge]);
 
@@ -138,7 +135,7 @@ function RootLayout() {
         ...(data.playlistTitle
           ? {
               playlistTitle: data.playlistTitle,
-              playlistCount: data.playlistCount,
+              playlistCount: data.playlistCount ?? undefined,
             }
           : {}),
       });

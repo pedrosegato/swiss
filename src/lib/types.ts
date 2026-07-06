@@ -22,6 +22,43 @@ export type ConvertStage = "queued" | "converting" | "completed" | "error";
 export type MergeDirection = "vertical" | "horizontal";
 export type MergeStage = "queued" | "merging" | "completed" | "error";
 
+export interface MetadataMessage {
+  id: string;
+  videoId: string;
+  title: string;
+  duration: string;
+  thumbnail: string;
+  filesize: number;
+  resolution?: string | null;
+  playlistTitle?: string | null;
+  playlistCount?: number | null;
+}
+
+interface ProgressBase {
+  id: string;
+  progress: number;
+  errorMessage?: string | null;
+  outputPath?: string | null;
+}
+
+export type ProgressMessage =
+  | (ProgressBase & {
+      type: "download";
+      stage: DownloadStage;
+      playlistDownloaded?: number | null;
+      playlistFileSize?: number | null;
+    })
+  | (ProgressBase & {
+      type: "convert";
+      stage: ConvertStage;
+      outputSize?: number | null;
+    })
+  | (ProgressBase & {
+      type: "merge";
+      stage: MergeStage;
+      outputSize?: number | null;
+    });
+
 export interface MergeItem {
   id: string;
   mainPath: string;
