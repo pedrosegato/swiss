@@ -1,9 +1,9 @@
 use crate::binary::{resolver::get_spawn_path, BinaryName};
+use crate::commands::process::{drain_stderr, spawn_piped, DISK_FULL_RE, OUT_TIME_RE};
 use crate::error::AppResult;
 use crate::process_registry::MERGES;
 use crate::progress::{MediaKind, ProgressEvent, Stage};
 use once_cell::sync::Lazy;
-use regex::Regex;
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -33,9 +33,6 @@ pub struct MergeOptions {
 }
 
 static MERGE_QUEUE: Lazy<Arc<AsyncMutex<()>>> = Lazy::new(|| Arc::new(AsyncMutex::new(())));
-static OUT_TIME_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"out_time_us=(\d+)").unwrap());
-static DISK_FULL_RE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"(?i)no space left|disk full|não há espaço").unwrap());
 
 fn cancelled_event(id: &str) -> ProgressEvent {
     ProgressEvent {
@@ -147,14 +144,7 @@ async fn run_ffmpeg(
     on_event: &Channel<ProgressEvent>,
     mut cancel: watch::Receiver<bool>,
 ) -> (i32, String, bool) {
-    let mut cmd = Command::new(ffmpeg);
-    cmd.args(args)
-        .env("PYTHONIOENCODING", "utf-8")
-        .env("PYTHONUTF8", "1")
-        .stdout(std::process::Stdio::piped())
-        .stderr(std::process::Stdio::piped())
-        .kill_on_drop(true);
-    let mut child = match cmd.spawn() {
+    let mut child = match spawn_piped(ffmpeg, args) {
         Ok(c) => c,
         Err(e) => return (-1, e.to_string(), false),
     };
@@ -191,22 +181,7 @@ async fn run_ffmpeg(
         }
     });
 
-    let stderr_handle = tokio::spawn(async move {
-        let mut buf = String::new();
-        let mut reader = BufReader::new(stderr);
-        let mut line = String::new();
-        loop {
-            line.clear();
-            match reader.read_line(&mut line).await {
-                Ok(0) => break,
-                Ok(_) => {}
-                Err(_) => continue,
-            }
-            buf.push_str(&line);
-            crate::commands::download::truncate_tail(&mut buf, 65536);
-        }
-        buf
-    });
+    let stderr_handle = drain_stderr(stderr);
 
     let (status, cancelled) = tokio::select! {
         s = child.wait() => (s, false),

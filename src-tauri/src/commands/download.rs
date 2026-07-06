@@ -2,6 +2,7 @@ use crate::binary::{
     resolver::{get_spawn_path, get_ytdlp_spawn_info},
     BinaryName,
 };
+use crate::commands::process::{spawn_piped, truncate_tail, DISK_FULL_RE};
 use crate::error::AppResult;
 use crate::format::{build_format_string, format_duration};
 use crate::process_registry::DOWNLOADS;
@@ -13,7 +14,6 @@ use std::path::Path;
 use std::sync::{Arc, Mutex};
 use tauri::ipc::Channel;
 use tokio::io::{AsyncBufReadExt, BufReader};
-use tokio::process::Command;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -42,18 +42,6 @@ static DEST_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"\[download\] Destination
 static CONVERT_STAGE_RE: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r"\[Merger\]|\[ExtractAudio\]|\[FFmpegVideoConvertor\]|\[FixupM3u8\]").unwrap()
 });
-static DISK_FULL_RE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"(?i)no space left|disk full|não há espaço").unwrap());
-
-pub(crate) fn truncate_tail(buf: &mut String, max: usize) {
-    if buf.len() > max {
-        let mut cut = buf.len() - max;
-        while cut < buf.len() && !buf.is_char_boundary(cut) {
-            cut += 1;
-        }
-        buf.drain(..cut);
-    }
-}
 
 pub fn is_playlist_url(url: &str) -> bool {
     PLAYLIST_RE.is_match(url)
@@ -159,15 +147,7 @@ pub async fn download_start(
     let mut all_args: Vec<String> = ytdlp.prefix_args.clone();
     all_args.extend(args);
 
-    let mut cmd = Command::new(&ytdlp.command);
-    cmd.args(&all_args)
-        .env("PYTHONIOENCODING", "utf-8")
-        .env("PYTHONUTF8", "1")
-        .stdout(std::process::Stdio::piped())
-        .stderr(std::process::Stdio::piped())
-        .kill_on_drop(true);
-
-    let mut child = cmd.spawn()?;
+    let mut child = spawn_piped(&ytdlp.command, &all_args)?;
     let stdout = child.stdout.take().unwrap();
     let stderr = child.stderr.take().unwrap();
     let cancel_rx = match DOWNLOADS.register(id.clone()) {
@@ -473,17 +453,6 @@ mod tests {
         assert!(is_playlist_url("https://youtube.com/watch?v=x&list=PLabc"));
         assert!(is_playlist_url("https://soundcloud.com/user/sets/foo"));
         assert!(!is_playlist_url("https://youtube.com/watch?v=x"));
-    }
-
-    #[test]
-    fn truncate_tail_never_splits_multibyte() {
-        let mut s = String::new();
-        while s.len() < 70000 {
-            s.push('ç');
-        }
-        truncate_tail(&mut s, 65536);
-        assert!(s.len() <= 70000);
-        assert!(std::str::from_utf8(s.as_bytes()).is_ok());
     }
 
     #[test]

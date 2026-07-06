@@ -3,6 +3,7 @@ pub mod convert;
 pub mod dialog;
 pub mod download;
 pub mod merge;
+pub mod process;
 pub mod shell;
 pub mod updater;
 pub mod window;
