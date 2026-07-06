@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { createDebouncedStorage } from "@/lib/debounced-storage";
 import { ipc } from "@/lib/ipc";
+import { createItemsSlice } from "@/stores/create-items-slice";
 import type { DownloadItem, DownloadFormat, SortOption } from "@/lib/types";
 
 interface DownloadState {
@@ -22,18 +23,11 @@ interface DownloadState {
 export const useDownloadStore = create<DownloadState>()(
   persist(
     (set) => ({
-      items: [],
+      ...createItemsSlice<DownloadItem>(set),
       sortBy: "recent",
       selectedFormat: "mp4",
       selectedQuality: "Máxima",
 
-      addItem: (item) => set((s) => ({ items: [...s.items, item] })),
-      updateItem: (id, updates) =>
-        set((s) => ({
-          items: s.items.map((i) => (i.id === id ? { ...i, ...updates } : i)),
-        })),
-      removeItem: (id) =>
-        set((s) => ({ items: s.items.filter((i) => i.id !== id) })),
       clearItems: () => {
         const { items } = useDownloadStore.getState();
         for (const i of items) {
