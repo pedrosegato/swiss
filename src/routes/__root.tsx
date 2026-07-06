@@ -18,6 +18,19 @@ import { useMergeStore } from "@/stores/merge-store";
 import type { DownloadStage, ConvertStage, MergeStage } from "@/lib/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
+const TERMINAL_STAGES = new Set(["completed", "error"]);
+
+function shouldApplyProgress(
+  current: { stage: string } | undefined,
+  incomingStage: string,
+): boolean {
+  if (!current) return true;
+  if (current.stage === "error" && !TERMINAL_STAGES.has(incomingStage)) {
+    return false;
+  }
+  return true;
+}
+
 export const Route = createRootRoute({
   component: RootLayout,
 });
@@ -58,6 +71,10 @@ function RootLayout() {
         playlistFileSize,
       }) => {
         if (type === "download") {
+          const current = useDownloadStore
+            .getState()
+            .items.find((i) => i.id === id);
+          if (!shouldApplyProgress(current, stage)) return;
           updateDownload(id, {
             progress,
             stage: stage as DownloadStage,
@@ -68,6 +85,10 @@ function RootLayout() {
             ...(playlistFileSize ? { fileSizeBytes: playlistFileSize } : {}),
           });
         } else if (type === "convert") {
+          const current = useConvertStore
+            .getState()
+            .items.find((i) => i.id === id);
+          if (!shouldApplyProgress(current, stage)) return;
           updateConvert(id, {
             progress,
             stage: stage as ConvertStage,
@@ -76,6 +97,10 @@ function RootLayout() {
             outputPath,
           });
         } else if (type === "merge") {
+          const current = useMergeStore
+            .getState()
+            .items.find((i) => i.id === id);
+          if (!shouldApplyProgress(current, stage)) return;
           updateMerge(id, {
             progress,
             stage: stage as MergeStage,
