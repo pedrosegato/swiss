@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { createDebouncedStorage } from "@/lib/debounced-storage";
+import { ipc } from "@/lib/ipc";
 import type { DownloadItem, DownloadFormat, SortOption } from "@/lib/types";
 
 interface DownloadState {
@@ -33,7 +34,15 @@ export const useDownloadStore = create<DownloadState>()(
         })),
       removeItem: (id) =>
         set((s) => ({ items: s.items.filter((i) => i.id !== id) })),
-      clearItems: () => set({ items: [] }),
+      clearItems: () => {
+        const { items } = useDownloadStore.getState();
+        for (const i of items) {
+          if (i.stage !== "completed" && i.stage !== "error") {
+            ipc.cancelDownload(i.id);
+          }
+        }
+        set({ items: [] });
+      },
       setSortBy: (sort) => set({ sortBy: sort }),
       setSelectedFormat: (fmt) => set({ selectedFormat: fmt }),
       setSelectedQuality: (q) => set({ selectedQuality: q }),

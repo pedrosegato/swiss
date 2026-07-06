@@ -31,7 +31,15 @@ export const useConvertStore = create<ConvertState>((set) => ({
     })),
   removeItem: (id) =>
     set((s) => ({ items: s.items.filter((i) => i.id !== id) })),
-  clearItems: () => set({ items: [] }),
+  clearItems: () => {
+    const { items } = useConvertStore.getState();
+    for (const i of items) {
+      if (i.stage !== "completed" && i.stage !== "error") {
+        ipc.cancelConversion(i.id);
+      }
+    }
+    set({ items: [] });
+  },
   setOutputFormat: (fmt) => set({ outputFormat: fmt }),
   setQuality: (q) => set({ quality: q }),
   startAll: () => {
