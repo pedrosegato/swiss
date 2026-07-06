@@ -160,7 +160,21 @@ pub async fn convert_start(
     let mut child = cmd.spawn()?;
     let stdout = child.stdout.take().unwrap();
     let stderr = child.stderr.take().unwrap();
-    let cancel_rx = CONVERSIONS.register(id.clone());
+    let cancel_rx = match CONVERSIONS.register(id.clone()) {
+        Some(rx) => rx,
+        None => {
+            let _ = on_event.send(ProgressEvent {
+                id: id.clone(),
+                kind: MediaKind::Convert,
+                progress: 0,
+                stage: Stage::Error,
+                error_message: Some("Job já em andamento".into()),
+                output_size: None,
+                output_path: None,
+            });
+            return Ok(());
+        }
+    };
 
     let stderr_handle = tokio::spawn(async move {
         let mut buf = String::new();

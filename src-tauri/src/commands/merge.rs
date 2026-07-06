@@ -138,7 +138,10 @@ async fn run_ffmpeg(
     };
     let stdout = child.stdout.take().unwrap();
     let stderr = child.stderr.take().unwrap();
-    let cancel_rx = MERGES.register(id.to_string());
+    let cancel_rx = match MERGES.register(id.to_string()) {
+        Some(rx) => rx,
+        None => return (-1, "Job já em andamento".to_string(), false),
+    };
 
     let id_so = id.to_string();
     let on_event_so = on_event.clone();

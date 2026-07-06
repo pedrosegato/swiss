@@ -13,11 +13,14 @@ pub static CONVERSIONS: Lazy<ProcessRegistry> = Lazy::new(ProcessRegistry::defau
 pub static MERGES: Lazy<ProcessRegistry> = Lazy::new(ProcessRegistry::default);
 
 impl ProcessRegistry {
-    pub fn register(&self, id: String) -> oneshot::Receiver<()> {
-        let (tx, rx) = oneshot::channel();
+    pub fn register(&self, id: String) -> Option<oneshot::Receiver<()>> {
         let mut g = self.inner.lock().unwrap();
+        if g.contains_key(&id) {
+            return None;
+        }
+        let (tx, rx) = oneshot::channel();
         g.insert(id, tx);
-        rx
+        Some(rx)
     }
 
     pub fn cancel(&self, id: &str) {
@@ -37,5 +40,23 @@ impl ProcessRegistry {
     pub fn remove(&self, id: &str) {
         let mut g = self.inner.lock().unwrap();
         g.remove(id);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn duplicate_register_returns_none_and_keeps_first_alive() {
+        let reg = ProcessRegistry::default();
+        let mut first = reg.register("a".into()).expect("first registers");
+        assert!(reg.register("a".into()).is_none());
+        assert!(matches!(
+            first.try_recv(),
+            Err(oneshot::error::TryRecvError::Empty)
+        ));
+        reg.cancel("a");
+        assert!(first.try_recv().is_ok());
     }
 }

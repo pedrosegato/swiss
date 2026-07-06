@@ -170,7 +170,22 @@ pub async fn download_start(
     let mut child = cmd.spawn()?;
     let stdout = child.stdout.take().unwrap();
     let stderr = child.stderr.take().unwrap();
-    let cancel_rx = DOWNLOADS.register(id.clone());
+    let cancel_rx = match DOWNLOADS.register(id.clone()) {
+        Some(rx) => rx,
+        None => {
+            let _ = on_event.send(DownloadEvent::Progress {
+                id: id.clone(),
+                kind: MediaKind::Download,
+                progress: 0,
+                stage: Stage::Error,
+                error_message: Some("Job já em andamento".into()),
+                output_path: None,
+                playlist_downloaded: None,
+                playlist_file_size: None,
+            });
+            return Ok(());
+        }
+    };
 
     let state = Arc::new(Mutex::new(PlaylistState::default()));
 
