@@ -12,6 +12,7 @@ use tauri::AppHandle;
 use tauri_plugin_notification::NotificationExt;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
+use tokio::sync::watch;
 use tokio::sync::Mutex as AsyncMutex;
 
 #[derive(Deserialize, Copy, Clone)]
@@ -35,6 +36,26 @@ static MERGE_QUEUE: Lazy<Arc<AsyncMutex<()>>> = Lazy::new(|| Arc::new(AsyncMutex
 static OUT_TIME_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"out_time_us=(\d+)").unwrap());
 static DISK_FULL_RE: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(?i)no space left|disk full|não há espaço").unwrap());
+
+fn cancelled_event(id: &str) -> ProgressEvent {
+    ProgressEvent {
+        id: id.to_string(),
+        kind: MediaKind::Merge,
+        progress: 0,
+        stage: Stage::Error,
+        error_message: Some("Cancelado".into()),
+        output_size: None,
+        output_path: None,
+    }
+}
+
+struct MergeGuard(String);
+
+impl Drop for MergeGuard {
+    fn drop(&mut self) {
+        MERGES.remove(&self.0);
+    }
+}
 
 pub fn build_filter_complex(direction: MergeDirection) -> String {
     match direction {
@@ -124,6 +145,7 @@ async fn run_ffmpeg(
     id: &str,
     duration: f64,
     on_event: &Channel<ProgressEvent>,
+    mut cancel: watch::Receiver<bool>,
 ) -> (i32, String, bool) {
     let mut cmd = Command::new(ffmpeg);
     cmd.args(args)
@@ -138,10 +160,6 @@ async fn run_ffmpeg(
     };
     let stdout = child.stdout.take().unwrap();
     let stderr = child.stderr.take().unwrap();
-    let cancel_rx = match MERGES.register(id.to_string()) {
-        Some(rx) => rx,
-        None => return (-1, "Job já em andamento".to_string(), false),
-    };
 
     let id_so = id.to_string();
     let on_event_so = on_event.clone();
@@ -192,13 +210,14 @@ async fn run_ffmpeg(
 
     let (status, cancelled) = tokio::select! {
         s = child.wait() => (s, false),
-        _ = cancel_rx => {
+        _ = async {
+            let _ = cancel.wait_for(|&c| c).await;
+        } => {
             let _ = child.start_kill();
             let s = child.wait().await;
             (s, true)
         }
     };
-    MERGES.remove(id);
     let _ = stdout_handle.await;
     let buf = stderr_handle.await.unwrap_or_default();
     (
@@ -219,7 +238,34 @@ pub async fn merge_start(
     let app_clone = app.clone();
 
     tokio::spawn(async move {
+        let cancel_rx = match MERGES.register(id.clone()) {
+            Some(rx) => rx,
+            None => {
+                let _ = on_event.send(ProgressEvent {
+                    id: id.clone(),
+                    kind: MediaKind::Merge,
+                    progress: 0,
+                    stage: Stage::Error,
+                    error_message: Some("Job já em andamento".into()),
+                    output_size: None,
+                    output_path: None,
+                });
+                return;
+            }
+        };
+        let _guard = MergeGuard(id.clone());
+        let (cancel_tx, cancel_watch) = watch::channel(false);
+        tokio::spawn(async move {
+            if cancel_rx.await.is_ok() {
+                let _ = cancel_tx.send(true);
+            }
+        });
+
         let _permit = queue.lock().await;
+        if *cancel_watch.borrow() {
+            let _ = on_event.send(cancelled_event(&id));
+            return;
+        }
 
         let main_info = match probe(&options.main_path).await {
             Ok(i) => i,
@@ -236,6 +282,10 @@ pub async fn merge_start(
                 return;
             }
         };
+        if *cancel_watch.borrow() {
+            let _ = on_event.send(cancelled_event(&id));
+            return;
+        }
         let bg_info = match probe(&options.bg_path).await {
             Ok(i) => i,
             Err(e) => {
@@ -251,6 +301,10 @@ pub async fn merge_start(
                 return;
             }
         };
+        if *cancel_watch.borrow() {
+            let _ = on_event.send(cancelled_event(&id));
+            return;
+        }
         if main_info.width == 0 || bg_info.width == 0 {
             let _ = on_event.send(ProgressEvent {
                 id: id.clone(),
@@ -297,7 +351,15 @@ pub async fn merge_start(
 
         let enc = encoder_args();
         let mut args = build_args(&enc);
-        let mut result = run_ffmpeg(&ffmpeg, &args, &id, main_info.duration, &on_event).await;
+        let mut result = run_ffmpeg(
+            &ffmpeg,
+            &args,
+            &id,
+            main_info.duration,
+            &on_event,
+            cancel_watch.clone(),
+        )
+        .await;
 
         if result.0 != 0 && !result.2 && enc.get(1).map(|s| s.as_str()) != Some("libx264") {
             let sw: Vec<String> = vec!["-c:v", "libx264", "-preset", "ultrafast", "-crf", "18"]
@@ -305,19 +367,19 @@ pub async fn merge_start(
                 .map(String::from)
                 .collect();
             args = build_args(&sw);
-            result = run_ffmpeg(&ffmpeg, &args, &id, main_info.duration, &on_event).await;
+            result = run_ffmpeg(
+                &ffmpeg,
+                &args,
+                &id,
+                main_info.duration,
+                &on_event,
+                cancel_watch.clone(),
+            )
+            .await;
         }
 
         if result.2 {
-            let _ = on_event.send(ProgressEvent {
-                id: id.clone(),
-                kind: MediaKind::Merge,
-                progress: 0,
-                stage: Stage::Error,
-                error_message: Some("Cancelado".into()),
-                output_size: None,
-                output_path: None,
-            });
+            let _ = on_event.send(cancelled_event(&id));
             return;
         }
 
@@ -409,5 +471,14 @@ mod tests {
         let s = build_filter_complex(MergeDirection::Horizontal);
         assert!(s.contains("hstack=inputs=2"));
         assert!(s.contains("scale=540:1080"));
+    }
+
+    #[test]
+    fn cancelled_event_reports_cancellation() {
+        let json = serde_json::to_string(&cancelled_event("job-1")).unwrap();
+        assert!(json.contains(r#""id":"job-1""#));
+        assert!(json.contains(r#""type":"merge""#));
+        assert!(json.contains(r#""stage":"error""#));
+        assert!(json.contains(r#""errorMessage":"Cancelado""#));
     }
 }
