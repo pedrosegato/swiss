@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
+import { createDebouncedStorage } from "@/lib/debounced-storage";
 import type { DownloadItem, DownloadFormat, SortOption } from "@/lib/types";
 
 interface DownloadState {
@@ -40,6 +41,7 @@ export const useDownloadStore = create<DownloadState>()(
     {
       name: "swiss-downloads",
       version: 1,
+      storage: createJSONStorage(() => createDebouncedStorage(750)),
       partialize: (state) => {
         const MAX_PERSISTED = 200;
         const THIRTY_DAYS = 30 * 24 * 3600 * 1000;
