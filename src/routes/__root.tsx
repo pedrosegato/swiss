@@ -65,6 +65,7 @@ function RootLayout() {
             outputPath,
             ...(playlistDownloaded != null ? { playlistDownloaded } : {}),
             ...(playlistFileSize ? { fileSize: formatSize(playlistFileSize) } : {}),
+            ...(playlistFileSize ? { fileSizeBytes: playlistFileSize } : {}),
           });
         } else if (type === "convert") {
           updateConvert(id, {

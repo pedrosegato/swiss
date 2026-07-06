@@ -28,7 +28,24 @@ export const Route = createFileRoute("/downloader")({
 });
 
 function DownloaderPage() {
-  const itemIds = useDownloadStore(useShallow((s) => s.items.map((i) => i.id)));
+  const itemIds = useDownloadStore(
+    useShallow((s) => {
+      const sorted = [...s.items].sort((a, b) => {
+        switch (s.sortBy) {
+          case "oldest":
+            return a.createdAt - b.createdAt;
+          case "largest":
+            return (b.fileSizeBytes ?? 0) - (a.fileSizeBytes ?? 0);
+          case "smallest":
+            return (a.fileSizeBytes ?? 0) - (b.fileSizeBytes ?? 0);
+          case "recent":
+          default:
+            return b.createdAt - a.createdAt;
+        }
+      });
+      return sorted.map((i) => i.id);
+    }),
+  );
   const addItem = useDownloadStore((s) => s.addItem);
   const updateItem = useDownloadStore((s) => s.updateItem);
   const format = useDownloadStore((s) => s.selectedFormat);
@@ -54,6 +71,7 @@ function DownloaderPage() {
         duration: data.duration,
         thumbnail: data.thumbnail,
         fileSize: data.filesize > 0 ? formatSize(data.filesize) : undefined,
+        fileSizeBytes: data.filesize > 0 ? data.filesize : undefined,
         quality: displayQuality,
         stage: "downloading",
         ...(data.playlistTitle

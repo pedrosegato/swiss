@@ -50,6 +50,7 @@ export interface DownloadItem {
   stage: DownloadStage;
   progress: number;
   fileSize?: string;
+  fileSizeBytes?: number;
   savePath: string;
   outputPath?: string;
   createdAt: number;
