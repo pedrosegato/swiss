@@ -2,20 +2,18 @@ import { useState, useRef, useEffect } from "react";
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useSettingsStore } from "@/stores/settings-store";
+import { SavePathButton } from "@/components/save-path-button";
+import { FormatSelect } from "@/components/format-select";
 import { isVideoFormat } from "@/lib/constants";
-import { ipc } from "@/lib/ipc";
 import { readText } from "@tauri-apps/plugin-clipboard-manager";
 import { validateUrl } from "@/lib/url-validation";
-import { Download, FolderOpen } from "lucide-react";
+import { Download } from "lucide-react";
 
 interface DownloadBarProps {
   format: string;
@@ -43,8 +41,6 @@ export function DownloadBar({
   const [url, setUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const savePath = useSettingsStore((s) => s.downloadPath);
-  const setSavePath = useSettingsStore((s) => s.setDownloadPath);
 
   const isVideo = isVideoFormat(format);
   const qualities = isVideo ? videoQualities : audioQualities;
@@ -75,11 +71,6 @@ export function DownloadBar({
     setUrl("");
   };
 
-  const handleSelectFolder = async () => {
-    const selected = await ipc.selectFolder();
-    if (selected) setSavePath(selected);
-  };
-
   useEffect(() => {
     const handleGlobalKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "v") {
@@ -107,29 +98,15 @@ export function DownloadBar({
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-center">
-        <Select value={format} onValueChange={handleFormatChange}>
-          <SelectTrigger className="w-[88px] text-xs h-9 shrink-0 rounded-r-none border-r-0 focus:z-10">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent position="popper" sideOffset={4}>
-            <SelectGroup>
-              <SelectLabel>Vídeo</SelectLabel>
-              {videoFormats.map((f) => (
-                <SelectItem key={f} value={f}>
-                  {f.toUpperCase()}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-            <SelectGroup>
-              <SelectLabel>Áudio</SelectLabel>
-              {audioFormats.map((f) => (
-                <SelectItem key={f} value={f}>
-                  {f.toUpperCase()}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
+        <FormatSelect
+          value={format}
+          onValueChange={handleFormatChange}
+          groups={[
+            { label: "Vídeo", options: videoFormats },
+            { label: "Áudio", options: audioFormats },
+          ]}
+          triggerClassName="w-[88px] text-xs h-9 shrink-0 rounded-r-none border-r-0 focus:z-10"
+        />
 
         <Select
           value={quality}
@@ -169,16 +146,7 @@ export function DownloadBar({
       </div>
 
       <div className="flex items-center justify-between">
-        <Button
-          variant="ghost"
-          onClick={handleSelectFolder}
-          className="h-auto gap-1.5 text-[10px] text-muted-foreground hover:text-foreground"
-        >
-          <FolderOpen className="w-3 h-3" />
-          <span className="font-mono truncate max-w-[400px]">
-            {savePath || "Selecione uma pasta de destino"}
-          </span>
-        </Button>
+        <SavePathButton />
         {error && <p className="text-[10px] text-destructive">{error}</p>}
       </div>
     </div>

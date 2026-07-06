@@ -1,28 +1,15 @@
 import { DOWNLOAD_STAGE_LABELS } from "@/lib/constants";
 import { Card } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@/components/ui/tooltip";
-import { ErrorLog } from "@/components/error-log";
+import { JobActions } from "@/components/job-actions";
+import { JobProgress } from "@/components/job-progress";
 import { cn } from "@/lib/utils";
 import { motion } from "motion/react";
 import { ipc } from "@/lib/ipc";
 import { useDownloadStore } from "@/stores/download-store";
 import { useSettingsStore } from "@/stores/settings-store";
-import {
-  Dot,
-  FolderOpen,
-  ListVideo,
-  Minus,
-  RefreshCw,
-  Square,
-} from "lucide-react";
+import { Dot, ListVideo, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 interface DownloadCardProps {
@@ -42,8 +29,7 @@ export function DownloadCard({ id }: DownloadCardProps) {
   const isError = item.stage === "error";
   const isPlaylist = !!item.playlistTitle;
 
-  const handleCancel = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleCancel = () => {
     ipc.cancelDownload(item.id);
     updateItem(item.id, {
       stage: "error",
@@ -51,8 +37,7 @@ export function DownloadCard({ id }: DownloadCardProps) {
     });
   };
 
-  const handleRetry = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleRetry = () => {
     const settings = useSettingsStore.getState();
     const savePath = settings.downloadPath;
     if (!savePath) {
@@ -76,8 +61,7 @@ export function DownloadCard({ id }: DownloadCardProps) {
     });
   };
 
-  const handleOpenFolder = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleOpenFolder = () => {
     if (item.outputPath) {
       isPlaylist
         ? ipc.openPath(item.outputPath)
@@ -168,57 +152,22 @@ export function DownloadCard({ id }: DownloadCardProps) {
         </p>
 
         <div className="mt-auto space-y-2">
-          {isError ? (
-            <ErrorLog message={item.errorMessage} onStopPropagation />
-          ) : (
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <span
-                  className={cn(
-                    "text-[10.5px]",
-                    isError
-                      ? "text-destructive"
-                      : isDone
-                        ? "text-muted-foreground"
-                        : isQueued
-                          ? "text-muted-foreground/60"
-                          : "text-secondary-foreground",
-                  )}
-                >
-                  {DOWNLOAD_STAGE_LABELS[item.stage]}
-                  {isPlaylist && isActive && item.playlistCount
-                    ? ` (${item.playlistDownloaded ?? 0} de ${item.playlistCount})`
-                    : null}
-                </span>
-                <span
-                  className={cn(
-                    "font-mono text-[10.5px] font-medium tabular-nums",
-                    isDone
-                      ? "text-muted-foreground"
-                      : isQueued
-                        ? "text-muted-foreground/60"
-                        : "text-primary",
-                  )}
-                >
-                  {isDone ? (
-                    "100%"
-                  ) : isQueued ? (
-                    <Minus className="w-3 h-3" />
-                  ) : (
-                    `${item.progress}%`
-                  )}
-                </span>
-              </div>
-              <Progress
-                value={item.progress}
-                className={cn(
-                  "h-[3px]",
-                  isDone &&
-                    "[&_[data-slot=progress-indicator]]:bg-success",
-                )}
-              />
-            </div>
-          )}
+          <JobProgress
+            stage={item.stage}
+            progress={item.progress}
+            stageLabel={DOWNLOAD_STAGE_LABELS[item.stage]}
+            suffix={
+              isPlaylist && isActive && item.playlistCount
+                ? ` (${item.playlistDownloaded ?? 0} de ${item.playlistCount})`
+                : null
+            }
+            errorMessage={item.errorMessage}
+            isError={isError}
+            isDone={isDone}
+            isQueued={isQueued}
+            onStopPropagation
+            variant="card"
+          />
           <div className="flex items-center justify-between pt-0.5">
             <span className="font-mono text-[10px] text-muted-foreground flex items-center gap-1.5">
               <span>{item.quality}</span>
@@ -229,53 +178,17 @@ export function DownloadCard({ id }: DownloadCardProps) {
                 </>
               )}
             </span>
-            <div className="flex items-center gap-0.5">
-              {isActive && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-5 w-5 text-muted-foreground hover:text-destructive"
-                      onClick={handleCancel}
-                    >
-                      <Square className="w-2.5 h-2.5 fill-current" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Cancelar</TooltipContent>
-                </Tooltip>
-              )}
-              {isError && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-5 w-5 text-muted-foreground hover:text-foreground"
-                      onClick={handleRetry}
-                    >
-                      <RefreshCw className="w-3 h-3" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Tentar novamente</TooltipContent>
-                </Tooltip>
-              )}
-              {isDone && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-5 w-5 text-muted-foreground hover:text-foreground"
-                      onClick={handleOpenFolder}
-                    >
-                      <FolderOpen className="w-3 h-3" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Abrir pasta</TooltipContent>
-                </Tooltip>
-              )}
-            </div>
+            <JobActions
+              isActive={isActive}
+              isError={isError}
+              isDone={isDone}
+              onCancel={handleCancel}
+              onRetry={handleRetry}
+              onOpenFolder={handleOpenFolder}
+              showRemove={false}
+              openFolderWhenDone
+              stopPropagation
+            />
           </div>
         </div>
       </div>

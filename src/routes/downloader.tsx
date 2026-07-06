@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useShallow } from "zustand/shallow";
 import { createFileRoute } from "@tanstack/react-router";
-import { AnimatePresence, motion } from "motion/react";
 import { Separator } from "@/components/ui/separator";
+import { JobQueue } from "@/components/job-queue";
 import { DownloadBar } from "@/features/downloader/components/download-bar";
 import {
   VIDEO_FORMATS,
@@ -135,22 +135,13 @@ function DownloaderPage() {
           description="Nenhum vídeo baixado"
         />
       ) : (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-2.5">
-          <AnimatePresence mode="popLayout">
-            {itemIds.map((id, i) => (
-              <motion.div
-                key={id}
-                layout
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.2, delay: i < 12 ? i * 0.03 : 0 }}
-              >
-                <DownloadCard id={id} />
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
+        <JobQueue
+          ids={itemIds}
+          renderRow={(id) => <DownloadCard id={id} />}
+          containerClassName="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-2.5"
+          variant="scale"
+          staggerCap={12}
+        />
       )}
 
       <BinaryInstallDialog
