@@ -94,6 +94,33 @@ function RootLayout() {
     return unsubscribe;
   }, [updateDownload, updateConvert, updateMerge]);
 
+  useEffect(() => {
+    const unsubscribe = ipc.onMetadata((data) => {
+      const update = useDownloadStore.getState().updateItem;
+      const existing = useDownloadStore
+        .getState()
+        .items.find((i) => i.id === data.id);
+      const displayQuality = data.resolution ?? existing?.quality;
+      update(data.id, {
+        videoId: data.videoId,
+        title: data.title,
+        duration: data.duration,
+        thumbnail: data.thumbnail,
+        fileSize: data.filesize > 0 ? formatSize(data.filesize) : undefined,
+        fileSizeBytes: data.filesize > 0 ? data.filesize : undefined,
+        ...(displayQuality ? { quality: displayQuality } : {}),
+        stage: "downloading",
+        ...(data.playlistTitle
+          ? {
+              playlistTitle: data.playlistTitle,
+              playlistCount: data.playlistCount,
+            }
+          : {}),
+      });
+    });
+    return unsubscribe;
+  }, []);
+
   const rafRef = useRef(0);
   useEffect(() => {
     const unsub1 = useDownloadStore.subscribe(() => scheduleDockUpdate());

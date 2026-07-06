@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useShallow } from "zustand/shallow";
 import { createFileRoute } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "motion/react";
@@ -18,7 +18,6 @@ import { useDownloadStore } from "@/stores/download-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useBinariesStore } from "@/stores/binaries-store";
 import { ipc } from "@/lib/ipc";
-import { formatSize } from "@/lib/utils";
 import { toast } from "sonner";
 import { Download } from "lucide-react";
 import { EmptyQueue } from "@/components/empty-queue";
@@ -58,32 +57,6 @@ function DownloaderPage() {
   const ytdlpInstalled = useBinariesStore((s) => s.ytdlp.installed);
   const ffmpegInstalled = useBinariesStore((s) => s.ffmpeg.installed);
   const [showInstallDialog, setShowInstallDialog] = useState(false);
-
-  const qualityRef = useRef(quality);
-  qualityRef.current = quality;
-
-  useEffect(() => {
-    const unsubscribe = ipc.onMetadata((data) => {
-      const displayQuality = data.resolution ?? qualityRef.current;
-      updateItem(data.id, {
-        videoId: data.videoId,
-        title: data.title,
-        duration: data.duration,
-        thumbnail: data.thumbnail,
-        fileSize: data.filesize > 0 ? formatSize(data.filesize) : undefined,
-        fileSizeBytes: data.filesize > 0 ? data.filesize : undefined,
-        quality: displayQuality,
-        stage: "downloading",
-        ...(data.playlistTitle
-          ? {
-              playlistTitle: data.playlistTitle,
-              playlistCount: data.playlistCount,
-            }
-          : {}),
-      });
-    });
-    return unsubscribe;
-  }, [updateItem]);
 
   const handleFetch = async (url: string) => {
     if (!ytdlpInstalled || !ffmpegInstalled) {
