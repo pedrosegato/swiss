@@ -41,7 +41,7 @@ async fn try_version(bin: &str, flag: &str) -> Option<String> {
     )
 }
 
-async fn which_binary(name: &str) -> Option<String> {
+pub(crate) async fn which_binary(name: &str) -> Option<String> {
     let cmd = if cfg!(windows) { "where" } else { "which" };
     let out = Command::new(cmd).arg(name).output().await.ok()?;
     if !out.status.success() {
@@ -49,6 +49,62 @@ async fn which_binary(name: &str) -> Option<String> {
     }
     let s = String::from_utf8_lossy(&out.stdout);
     s.lines().next().map(|l| l.trim().to_string())
+}
+
+pub(crate) struct PipInstallOpts {
+    pub upgrade: bool,
+    pub timeout: Option<std::time::Duration>,
+    pub windows_enabled: bool,
+}
+
+pub(crate) fn install_strategies(opts: &PipInstallOpts) -> Vec<Vec<String>> {
+    let build = |break_system_packages: bool| {
+        let mut args = vec![
+            "-m".to_string(),
+            "pip".to_string(),
+            "install".to_string(),
+            "--user".to_string(),
+        ];
+        if opts.upgrade {
+            args.push("--upgrade".to_string());
+        }
+        if break_system_packages {
+            args.push("--break-system-packages".to_string());
+        }
+        args.push("yt-dlp".to_string());
+        args
+    };
+    vec![build(true), build(false)]
+}
+
+pub(crate) async fn python_has_ytdlp(python: &str, timeout: Option<std::time::Duration>) -> bool {
+    let run = Command::new(python)
+        .args(["-m", "yt_dlp", "--version"])
+        .output();
+    let output = match timeout {
+        Some(d) => tokio::time::timeout(d, run).await.ok().and_then(|r| r.ok()),
+        None => run.await.ok(),
+    };
+    output.map(|o| o.status.success()).unwrap_or(false)
+}
+
+pub(crate) async fn pip_install_ytdlp(python: &str, opts: &PipInstallOpts) -> bool {
+    if cfg!(windows) && !opts.windows_enabled {
+        return false;
+    }
+    for args in install_strategies(opts) {
+        let run = Command::new(python).args(&args).output();
+        let installed = match opts.timeout {
+            Some(d) => tokio::time::timeout(d, run).await.ok().and_then(|r| r.ok()),
+            None => run.await.ok(),
+        }
+        .map(|o| o.status.success())
+        .unwrap_or(false);
+        if installed && python_has_ytdlp(python, opts.timeout).await {
+            return true;
+        }
+    }
+    false
 }
 
 pub async fn resolve_binary(name: BinaryName) -> BinaryStatus {
@@ -118,61 +174,21 @@ pub async fn get_spawn_path(name: BinaryName) -> String {
     status.path
 }
 
-async fn can_use_pip_module() -> Option<String> {
+async fn resolve_pip_python() -> Option<String> {
     if cfg!(windows) {
         return None;
     }
     let python = find_python().await;
-    let out = Command::new(&python)
-        .args(["-m", "yt_dlp", "--version"])
-        .output()
-        .await
-        .ok()?;
-    if out.status.success() {
-        Some(python)
-    } else {
-        None
+    if python_has_ytdlp(&python, None).await {
+        return Some(python);
     }
-}
-
-async fn try_install_pip_module() -> Option<String> {
-    if cfg!(windows) {
-        return None;
-    }
-    let python = find_python().await;
-    Command::new(&python)
-        .args(["-m", "pip", "--version"])
-        .output()
-        .await
-        .ok()?;
-
-    let strategies = [
-        vec![
-            "-m",
-            "pip",
-            "install",
-            "--user",
-            "--break-system-packages",
-            "yt-dlp",
-        ],
-        vec!["-m", "pip", "install", "--user", "yt-dlp"],
-    ];
-    for args in strategies {
-        if Command::new(&python)
-            .args(&args)
-            .output()
-            .await
-            .map(|o| o.status.success())
-            .unwrap_or(false)
-            && Command::new(&python)
-                .args(["-m", "yt_dlp", "--version"])
-                .output()
-                .await
-                .map(|o| o.status.success())
-                .unwrap_or(false)
-        {
-            return Some(python);
-        }
+    let opts = PipInstallOpts {
+        upgrade: false,
+        timeout: None,
+        windows_enabled: false,
+    };
+    if pip_install_ytdlp(&python, &opts).await {
+        return Some(python);
     }
     None
 }
@@ -182,10 +198,7 @@ pub async fn get_ytdlp_spawn_info() -> SpawnInfo {
         return c;
     }
 
-    let python = match can_use_pip_module().await {
-        Some(p) => Some(p),
-        None => try_install_pip_module().await,
-    };
+    let python = resolve_pip_python().await;
 
     let info = if let Some(python) = python {
         SpawnInfo {
@@ -200,4 +213,45 @@ pub async fn get_ytdlp_spawn_info() -> SpawnInfo {
     };
     *YTDLP_SPAWN_CACHE.lock().unwrap() = Some(info.clone());
     info
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn opts(upgrade: bool) -> PipInstallOpts {
+        PipInstallOpts {
+            upgrade,
+            timeout: None,
+            windows_enabled: false,
+        }
+    }
+
+    #[test]
+    fn install_strategies_adds_upgrade_only_when_requested() {
+        let upgraded = install_strategies(&opts(true));
+        assert!(upgraded
+            .iter()
+            .all(|s| s.contains(&"--upgrade".to_string())));
+
+        let plain = install_strategies(&opts(false));
+        assert!(plain
+            .iter()
+            .all(|s| !s.contains(&"--upgrade".to_string())));
+    }
+
+    #[test]
+    fn install_strategies_covers_break_system_and_plain() {
+        let strategies = install_strategies(&opts(false));
+        assert_eq!(strategies.len(), 2);
+        assert!(strategies
+            .iter()
+            .any(|s| s.contains(&"--break-system-packages".to_string())));
+        assert!(strategies
+            .iter()
+            .any(|s| !s.contains(&"--break-system-packages".to_string())));
+        assert!(strategies
+            .iter()
+            .all(|s| s.last() == Some(&"yt-dlp".to_string())));
+    }
 }

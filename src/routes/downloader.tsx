@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useShallow } from "zustand/shallow";
 import { createFileRoute } from "@tanstack/react-router";
-import { AnimatePresence, motion } from "motion/react";
 import { Separator } from "@/components/ui/separator";
+import { JobQueue } from "@/components/job-queue";
 import { DownloadBar } from "@/features/downloader/components/download-bar";
 import {
   VIDEO_FORMATS,
@@ -18,7 +18,6 @@ import { useDownloadStore } from "@/stores/download-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useBinariesStore } from "@/stores/binaries-store";
 import { ipc } from "@/lib/ipc";
-import { formatSize } from "@/lib/utils";
 import { toast } from "sonner";
 import { Download } from "lucide-react";
 import { EmptyQueue } from "@/components/empty-queue";
@@ -28,7 +27,24 @@ export const Route = createFileRoute("/downloader")({
 });
 
 function DownloaderPage() {
-  const itemIds = useDownloadStore(useShallow((s) => s.items.map((i) => i.id)));
+  const itemIds = useDownloadStore(
+    useShallow((s) => {
+      const sorted = [...s.items].sort((a, b) => {
+        switch (s.sortBy) {
+          case "oldest":
+            return a.createdAt - b.createdAt;
+          case "largest":
+            return (b.fileSizeBytes ?? 0) - (a.fileSizeBytes ?? 0);
+          case "smallest":
+            return (a.fileSizeBytes ?? 0) - (b.fileSizeBytes ?? 0);
+          case "recent":
+          default:
+            return b.createdAt - a.createdAt;
+        }
+      });
+      return sorted.map((i) => i.id);
+    }),
+  );
   const addItem = useDownloadStore((s) => s.addItem);
   const updateItem = useDownloadStore((s) => s.updateItem);
   const format = useDownloadStore((s) => s.selectedFormat);
@@ -41,31 +57,6 @@ function DownloaderPage() {
   const ytdlpInstalled = useBinariesStore((s) => s.ytdlp.installed);
   const ffmpegInstalled = useBinariesStore((s) => s.ffmpeg.installed);
   const [showInstallDialog, setShowInstallDialog] = useState(false);
-
-  const qualityRef = useRef(quality);
-  qualityRef.current = quality;
-
-  useEffect(() => {
-    const unsubscribe = ipc.onMetadata((data) => {
-      const displayQuality = data.resolution ?? qualityRef.current;
-      updateItem(data.id, {
-        videoId: data.videoId,
-        title: data.title,
-        duration: data.duration,
-        thumbnail: data.thumbnail,
-        fileSize: data.filesize > 0 ? formatSize(data.filesize) : undefined,
-        quality: displayQuality,
-        stage: "downloading",
-        ...(data.playlistTitle
-          ? {
-              playlistTitle: data.playlistTitle,
-              playlistCount: data.playlistCount,
-            }
-          : {}),
-      });
-    });
-    return unsubscribe;
-  }, [updateItem]);
 
   const handleFetch = async (url: string) => {
     if (!ytdlpInstalled || !ffmpegInstalled) {
@@ -144,22 +135,13 @@ function DownloaderPage() {
           description="Nenhum vídeo baixado"
         />
       ) : (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-2.5">
-          <AnimatePresence mode="popLayout">
-            {itemIds.map((id, i) => (
-              <motion.div
-                key={id}
-                layout
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.2, delay: i < 12 ? i * 0.03 : 0 }}
-              >
-                <DownloadCard id={id} />
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
+        <JobQueue
+          ids={itemIds}
+          renderRow={(id) => <DownloadCard id={id} />}
+          containerClassName="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-2.5"
+          variant="scale"
+          staggerCap={12}
+        />
       )}
 
       <BinaryInstallDialog

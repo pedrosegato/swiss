@@ -1,5 +1,5 @@
 use super::{
-    resolver::{clear_path_cache, get_spawn_path},
+    resolver::{clear_path_cache, get_spawn_path, pip_install_ytdlp, which_binary, PipInstallOpts},
     BinaryName,
 };
 use crate::error::AppResult;
@@ -8,11 +8,14 @@ use crate::platform::{
     get_pip_user_bin_dir, platform_variant,
 };
 use futures_util::StreamExt;
+use once_cell::sync::Lazy;
 use std::collections::HashMap;
 use std::path::Path;
 use tokio::fs;
 use tokio::io::AsyncWriteExt;
 use tokio::process::Command;
+
+static HTTP: Lazy<reqwest::Client> = Lazy::new(reqwest::Client::new);
 
 fn ytdlp_urls() -> HashMap<&'static str, &'static str> {
     HashMap::from([
@@ -98,9 +101,9 @@ pub async fn download_file<F: Fn(u32)>(url: &str, dest: &Path, on_progress: F) -
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
-        let mut perms = std::fs::metadata(&tmp)?.permissions();
+        let mut perms = fs::metadata(&tmp).await?.permissions();
         perms.set_mode(0o755);
-        std::fs::set_permissions(&tmp, perms)?;
+        fs::set_permissions(&tmp, perms).await?;
     }
 
     if cfg!(target_os = "macos") {
@@ -116,7 +119,7 @@ pub async fn download_file<F: Fn(u32)>(url: &str, dest: &Path, on_progress: F) -
 }
 
 async fn download_file_inner<F: Fn(u32)>(url: &str, tmp: &Path, on_progress: &F) -> AppResult<()> {
-    let resp = reqwest::Client::new()
+    let resp = HTTP
         .get(url)
         .send()
         .await?
@@ -145,55 +148,14 @@ async fn download_file_inner<F: Fn(u32)>(url: &str, tmp: &Path, on_progress: &F)
 
 async fn try_pip_install() -> bool {
     use std::time::Duration;
-    use tokio::time::timeout;
 
     let python = find_python().await;
-    let strategies = [
-        vec![
-            "-m",
-            "pip",
-            "install",
-            "--user",
-            "--upgrade",
-            "--break-system-packages",
-            "yt-dlp",
-        ],
-        vec!["-m", "pip", "install", "--user", "--upgrade", "yt-dlp"],
-    ];
-    let mut installed = false;
-    for args in strategies {
-        if installed {
-            break;
-        }
-        let success = timeout(
-            Duration::from_secs(120),
-            Command::new(&python).args(&args).output(),
-        )
-        .await
-        .ok()
-        .and_then(|r| r.ok())
-        .map(|o| o.status.success())
-        .unwrap_or(false);
-        if success {
-            installed = true;
-        }
-    }
-    if !installed {
-        return false;
-    }
-
-    let ver_ok = timeout(
-        Duration::from_secs(5),
-        Command::new(&python)
-            .args(["-m", "yt_dlp", "--version"])
-            .output(),
-    )
-    .await
-    .ok()
-    .and_then(|r| r.ok())
-    .map(|o| o.status.success())
-    .unwrap_or(false);
-    if !ver_ok {
+    let opts = PipInstallOpts {
+        upgrade: true,
+        timeout: Some(Duration::from_secs(120)),
+        windows_enabled: true,
+    };
+    if !pip_install_ytdlp(&python, &opts).await {
         return false;
     }
 
@@ -201,7 +163,7 @@ async fn try_pip_install() -> bool {
         let pip_ytdlp = pip_bin_dir.join("yt-dlp");
         let local_bin = get_local_bin_dir();
         let local_ytdlp = local_bin.join("yt-dlp");
-        if pip_ytdlp.exists() && pip_bin_dir != local_bin {
+        if fs::try_exists(&pip_ytdlp).await.unwrap_or(false) && pip_bin_dir != local_bin {
             let _ = fs::create_dir_all(&local_bin).await;
             let _ = fs::remove_file(&local_ytdlp).await;
             #[cfg(unix)]
@@ -266,15 +228,11 @@ pub async fn uninstall_binary(name: BinaryName) -> bool {
     }
     let local_bin_dir = get_local_bin_dir();
     let local_path = get_local_bin_path(name.as_str());
-    let cmd = if cfg!(windows) { "where" } else { "which" };
-    if let Ok(out) = Command::new(cmd).arg(name.as_str()).output().await {
-        if let Some(line) = String::from_utf8_lossy(&out.stdout).lines().next() {
-            let resolved = line.trim();
-            if std::path::Path::new(resolved).starts_with(&local_bin_dir)
-                && fs::remove_file(resolved).await.is_ok()
-            {
-                removed = true;
-            }
+    if let Some(resolved) = which_binary(name.as_str()).await {
+        if Path::new(&resolved).starts_with(&local_bin_dir)
+            && fs::remove_file(&resolved).await.is_ok()
+        {
+            removed = true;
         }
     }
     if fs::remove_file(&local_path).await.is_ok() {

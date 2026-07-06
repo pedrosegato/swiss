@@ -8,13 +8,11 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
+import { SavePathButton } from "@/components/save-path-button";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useBinariesStore } from "@/stores/binaries-store";
 import { VersionCard } from "@/features/settings/components/version-card";
-import { ipc } from "@/lib/ipc";
 import { BROWSERS } from "@/lib/constants";
-import { FolderOpen } from "lucide-react";
 import type { Browser } from "@/lib/types";
 
 export const Route = createFileRoute("/settings")({
@@ -26,16 +24,9 @@ function SettingsPage() {
   const setUseCookies = useSettingsStore((s) => s.setUseCookies);
   const cookieBrowser = useSettingsStore((s) => s.cookieBrowser);
   const setCookieBrowser = useSettingsStore((s) => s.setCookieBrowser);
-  const savePath = useSettingsStore((s) => s.downloadPath);
-  const setSavePath = useSettingsStore((s) => s.setDownloadPath);
   const ytdlp = useBinariesStore((s) => s.ytdlp);
   const ffmpeg = useBinariesStore((s) => s.ffmpeg);
   const ffprobe = useBinariesStore((s) => s.ffprobe);
-
-  const handleSelectFolder = async () => {
-    const selected = await ipc.selectFolder();
-    if (selected) setSavePath(selected);
-  };
 
   return (
     <div className="flex flex-col gap-5">
@@ -44,16 +35,10 @@ function SettingsPage() {
           label="Pasta padrão"
           description="Onde os arquivos são salvos por padrão"
         >
-          <Button
-            variant="ghost"
-            onClick={handleSelectFolder}
-            className="h-auto gap-1.5 text-[10px] text-muted-foreground hover:text-foreground"
-          >
-            <FolderOpen className="w-3 h-3" />
-            <span className="font-mono truncate max-w-[280px]">
-              {savePath || "Selecione uma pasta"}
-            </span>
-          </Button>
+          <SavePathButton
+            maxWidthClassName="max-w-[280px]"
+            placeholder="Selecione uma pasta"
+          />
         </SettingRow>
       </Section>
 

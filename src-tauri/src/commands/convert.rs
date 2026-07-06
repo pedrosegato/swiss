@@ -1,10 +1,9 @@
 use crate::binary::{resolver::get_spawn_path, BinaryName};
+use crate::commands::process::{drain_stderr, spawn_piped, BITRATE_RE, DISK_FULL_RE, OUT_TIME_RE};
 use crate::error::AppResult;
 use crate::process_registry::CONVERSIONS;
 use crate::progress::{MediaKind, ProgressEvent, Stage};
 use base64::{engine::general_purpose::STANDARD, Engine};
-use once_cell::sync::Lazy;
-use regex::Regex;
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
 use tauri::ipc::Channel;
@@ -22,10 +21,6 @@ pub struct ConvertOptions {
     pub quality: String,
     pub save_path: String,
 }
-
-static OUT_TIME_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"out_time_us=(\d+)").unwrap());
-static DISK_FULL_RE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"(?i)no space left|disk full|não há espaço").unwrap());
 
 pub fn quality_args(format: &str, quality: &str, input_ext: &str) -> Vec<String> {
     let video_formats = ["mp4", "mkv", "avi", "webm", "mov"];
@@ -67,8 +62,7 @@ pub fn quality_args(format: &str, quality: &str, input_ext: &str) -> Vec<String>
         }
         return args;
     }
-    let bitrate = Regex::new(r"(\d+)")
-        .unwrap()
+    let bitrate = BITRATE_RE
         .captures(quality)
         .map(|c| c[1].to_string())
         .unwrap_or_else(|| "192".into());
@@ -150,36 +144,26 @@ pub async fn convert_start(
     args.extend(["-progress".into(), "pipe:1".into()]);
     args.push(output_path.to_string_lossy().to_string());
 
-    let mut cmd = Command::new(&ffmpeg);
-    cmd.args(&args)
-        .env("PYTHONIOENCODING", "utf-8")
-        .env("PYTHONUTF8", "1")
-        .stdout(std::process::Stdio::piped())
-        .stderr(std::process::Stdio::piped())
-        .kill_on_drop(true);
-    let mut child = cmd.spawn()?;
+    let mut child = spawn_piped(&ffmpeg, &args)?;
     let stdout = child.stdout.take().unwrap();
     let stderr = child.stderr.take().unwrap();
-    let cancel_rx = CONVERSIONS.register(id.clone());
-
-    let stderr_handle = tokio::spawn(async move {
-        let mut buf = String::new();
-        let mut reader = BufReader::new(stderr);
-        let mut line = String::new();
-        loop {
-            line.clear();
-            let n = reader.read_line(&mut line).await.unwrap_or(0);
-            if n == 0 {
-                break;
-            }
-            buf.push_str(&line);
-            if buf.len() > 65536 {
-                let s = buf.len() - 65536;
-                buf = buf[s..].into();
-            }
+    let cancel_rx = match CONVERSIONS.register(id.clone()) {
+        Some(rx) => rx,
+        None => {
+            let _ = on_event.send(ProgressEvent {
+                id: id.clone(),
+                kind: MediaKind::Convert,
+                progress: 0,
+                stage: Stage::Error,
+                error_message: Some("Job já em andamento".into()),
+                output_size: None,
+                output_path: None,
+            });
+            return Ok(());
         }
-        buf
-    });
+    };
+
+    let stderr_handle = drain_stderr(stderr);
 
     let id_stdout = id.clone();
     let on_event_stdout = on_event.clone();
@@ -188,9 +172,10 @@ pub async fn convert_start(
         let mut line = String::new();
         loop {
             line.clear();
-            let n = reader.read_line(&mut line).await.unwrap_or(0);
-            if n == 0 {
-                break;
+            match reader.read_line(&mut line).await {
+                Ok(0) => break,
+                Ok(_) => {}
+                Err(_) => continue,
             }
             if let Some(c) = OUT_TIME_RE.captures(&line) {
                 if duration > 0.0 {

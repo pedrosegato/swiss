@@ -1,5 +1,8 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
+import { createDebouncedStorage } from "@/lib/debounced-storage";
+import { ipc } from "@/lib/ipc";
+import { createItemsSlice } from "@/stores/create-items-slice";
 import type { DownloadItem, DownloadFormat, SortOption } from "@/lib/types";
 
 interface DownloadState {
@@ -20,19 +23,20 @@ interface DownloadState {
 export const useDownloadStore = create<DownloadState>()(
   persist(
     (set) => ({
-      items: [],
+      ...createItemsSlice<DownloadItem>(set),
       sortBy: "recent",
       selectedFormat: "mp4",
       selectedQuality: "Máxima",
 
-      addItem: (item) => set((s) => ({ items: [...s.items, item] })),
-      updateItem: (id, updates) =>
-        set((s) => ({
-          items: s.items.map((i) => (i.id === id ? { ...i, ...updates } : i)),
-        })),
-      removeItem: (id) =>
-        set((s) => ({ items: s.items.filter((i) => i.id !== id) })),
-      clearItems: () => set({ items: [] }),
+      clearItems: () => {
+        const { items } = useDownloadStore.getState();
+        for (const i of items) {
+          if (i.stage !== "completed" && i.stage !== "error") {
+            ipc.cancelDownload(i.id);
+          }
+        }
+        set({ items: [] });
+      },
       setSortBy: (sort) => set({ sortBy: sort }),
       setSelectedFormat: (fmt) => set({ selectedFormat: fmt }),
       setSelectedQuality: (q) => set({ selectedQuality: q }),
@@ -40,6 +44,7 @@ export const useDownloadStore = create<DownloadState>()(
     {
       name: "swiss-downloads",
       version: 1,
+      storage: createJSONStorage(() => createDebouncedStorage(750)),
       partialize: (state) => {
         const MAX_PERSISTED = 200;
         const THIRTY_DAYS = 30 * 24 * 3600 * 1000;

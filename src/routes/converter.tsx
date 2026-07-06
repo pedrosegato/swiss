@@ -1,23 +1,8 @@
 import { useShallow } from "zustand/shallow";
 import { createFileRoute } from "@tanstack/react-router";
-import { AnimatePresence, motion } from "motion/react";
-import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@/components/ui/tooltip";
-import { ConfirmDialog } from "@/components/confirm-dialog";
+import { FormatSelect } from "@/components/format-select";
+import { JobQueue } from "@/components/job-queue";
+import { QueueActionsHeader } from "@/components/queue-actions-header";
 import { FileDropZone } from "@/components/file-drop-zone";
 import { formatSize } from "@/lib/utils";
 import { ipc } from "@/lib/ipc";
@@ -30,8 +15,7 @@ import {
   isVideoFormat,
 } from "@/lib/constants";
 import type { ConvertFormat } from "@/lib/types";
-import { FileAudio, Play, Trash2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { FileAudio } from "lucide-react";
 import { EmptyQueue } from "@/components/empty-queue";
 import { useSettingsStore } from "@/stores/settings-store";
 import { toast } from "sonner";
@@ -117,73 +101,31 @@ function ConverterPage() {
           showFormats
           onDrop={handleFilesDropped}
         />
-        <Select value={format} onValueChange={handleFormatChange}>
-          <SelectTrigger className="w-[100px] text-xs h-8">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent position="popper" sideOffset={4}>
-            <SelectGroup>
-              <SelectLabel>Vídeo</SelectLabel>
-              {CONVERT_VIDEO_FORMATS.map((f) => (
-                <SelectItem key={f} value={f}>
-                  {f.toUpperCase()}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-            <SelectGroup>
-              <SelectLabel>Áudio</SelectLabel>
-              {CONVERT_AUDIO_FORMATS.map((f) => (
-                <SelectItem key={f} value={f}>
-                  {f.toUpperCase()}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
+        <FormatSelect
+          value={format}
+          onValueChange={handleFormatChange}
+          groups={[
+            { label: "Vídeo", options: CONVERT_VIDEO_FORMATS },
+            { label: "Áudio", options: CONVERT_AUDIO_FORMATS },
+          ]}
+          triggerClassName="w-[100px] text-xs h-8"
+        />
       </div>
 
       {itemCount > 0 && (
-        <>
-          <Separator />
-          <div className="flex items-center justify-between">
-            <span className="font-mono text-[10px] text-muted-foreground tracking-wider font-medium">
-              {itemCount} {itemCount === 1 ? "arquivo" : "arquivos"}
-            </span>
-            <div className="flex items-center gap-1">
-              <Button
-                className={cn(
-                  "text-[11px] h-7 px-3",
-                  isConverting && "animate-pulse",
-                )}
-                onClick={handleStartAll}
-                disabled={!hasQueued && !isConverting}
-              >
-                <Play className="w-3 h-3" />
-                {isConverting ? "Convertendo..." : "Converter tudo"}
-              </Button>
-              <Tooltip>
-                <ConfirmDialog
-                  trigger={
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-muted-foreground hover:text-destructive"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
-                    </TooltipTrigger>
-                  }
-                  title="Limpar arquivos?"
-                  description="Todos os arquivos da lista serão removidos. Conversões ativas serão canceladas."
-                  confirmLabel="Limpar"
-                  onConfirm={clearItems}
-                />
-                <TooltipContent>Limpar arquivos</TooltipContent>
-              </Tooltip>
-            </div>
-          </div>
-        </>
+        <QueueActionsHeader
+          countLabel={`${itemCount} ${itemCount === 1 ? "arquivo" : "arquivos"}`}
+          primaryLabel="Converter tudo"
+          primaryActiveLabel="Convertendo..."
+          isActive={isConverting}
+          primaryDisabled={!hasQueued && !isConverting}
+          onPrimary={handleStartAll}
+          confirmTitle="Limpar arquivos?"
+          confirmDescription="Todos os arquivos da lista serão removidos. Conversões ativas serão canceladas."
+          confirmLabel="Limpar"
+          clearTooltip="Limpar arquivos"
+          onConfirmClear={clearItems}
+        />
       )}
 
       {itemIds.length === 0 ? (
@@ -193,22 +135,13 @@ function ConverterPage() {
           description="Arraste arquivos ou clique na área acima"
         />
       ) : (
-        <div className="flex flex-col gap-2">
-          <AnimatePresence mode="popLayout">
-            {itemIds.map((id, i) => (
-              <motion.div
-                key={id}
-                layout
-                initial={{ opacity: 0, x: -12 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 12 }}
-                transition={{ duration: 0.2, delay: i < 20 ? i * 0.03 : 0 }}
-              >
-                <FileRow id={id} />
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
+        <JobQueue
+          ids={itemIds}
+          renderRow={(id) => <FileRow id={id} />}
+          containerClassName="flex flex-col gap-2"
+          variant="slideX"
+          staggerCap={20}
+        />
       )}
     </div>
   );

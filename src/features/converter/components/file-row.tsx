@@ -5,15 +5,7 @@ import { useSettingsStore } from "@/stores/settings-store";
 import { ipc } from "@/lib/ipc";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { FormatSelect } from "@/components/format-select";
 import { JobActions } from "@/components/job-actions";
 import { JobProgress } from "@/components/job-progress";
 import {
@@ -52,7 +44,12 @@ export function FileRow({ id }: FileRowProps) {
 
   const handleRetry = async () => {
     const savePath = useSettingsStore.getState().downloadPath;
-    if (!savePath) return;
+    if (!savePath) {
+      toast.warning(
+        "Selecione uma pasta de destino antes de tentar novamente.",
+      );
+      return;
+    }
 
     const missing = await ipc.checkPaths([
       { id: item.id, path: item.inputPath },
@@ -143,32 +140,15 @@ export function FileRow({ id }: FileRowProps) {
           </Badge>
           <ArrowRight className="w-2.5 h-2.5 text-muted-foreground/40" />
           {isQueued ? (
-            <Select
+            <FormatSelect
               value={item.outputFormat}
               onValueChange={(v) => handleFormatChange(v as ConvertFormat)}
-            >
-              <SelectTrigger className="h-5 text-[9px] font-mono w-[68px] px-1.5">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent position="popper" sideOffset={4}>
-                <SelectGroup>
-                  <SelectLabel>Vídeo</SelectLabel>
-                  {CONVERT_VIDEO_FORMATS.map((f) => (
-                    <SelectItem key={f} value={f}>
-                      {f.toUpperCase()}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-                <SelectGroup>
-                  <SelectLabel>Áudio</SelectLabel>
-                  {CONVERT_AUDIO_FORMATS.map((f) => (
-                    <SelectItem key={f} value={f}>
-                      {f.toUpperCase()}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+              groups={[
+                { label: "Vídeo", options: CONVERT_VIDEO_FORMATS },
+                { label: "Áudio", options: CONVERT_AUDIO_FORMATS },
+              ]}
+              triggerClassName="h-5 text-[9px] font-mono w-[68px] px-1.5"
+            />
           ) : (
             <Badge
               variant="outline"

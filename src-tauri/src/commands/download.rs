@@ -2,6 +2,7 @@ use crate::binary::{
     resolver::{get_spawn_path, get_ytdlp_spawn_info},
     BinaryName,
 };
+use crate::commands::process::{spawn_piped, truncate_tail, DISK_FULL_RE};
 use crate::error::AppResult;
 use crate::format::{build_format_string, format_duration};
 use crate::process_registry::DOWNLOADS;
@@ -13,7 +14,6 @@ use std::path::Path;
 use std::sync::{Arc, Mutex};
 use tauri::ipc::Channel;
 use tokio::io::{AsyncBufReadExt, BufReader};
-use tokio::process::Command;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -42,8 +42,6 @@ static DEST_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"\[download\] Destination
 static CONVERT_STAGE_RE: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r"\[Merger\]|\[ExtractAudio\]|\[FFmpegVideoConvertor\]|\[FixupM3u8\]").unwrap()
 });
-static DISK_FULL_RE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"(?i)no space left|disk full|não há espaço").unwrap());
 
 pub fn is_playlist_url(url: &str) -> bool {
     PLAYLIST_RE.is_match(url)
@@ -149,18 +147,25 @@ pub async fn download_start(
     let mut all_args: Vec<String> = ytdlp.prefix_args.clone();
     all_args.extend(args);
 
-    let mut cmd = Command::new(&ytdlp.command);
-    cmd.args(&all_args)
-        .env("PYTHONIOENCODING", "utf-8")
-        .env("PYTHONUTF8", "1")
-        .stdout(std::process::Stdio::piped())
-        .stderr(std::process::Stdio::piped())
-        .kill_on_drop(true);
-
-    let mut child = cmd.spawn()?;
+    let mut child = spawn_piped(&ytdlp.command, &all_args)?;
     let stdout = child.stdout.take().unwrap();
     let stderr = child.stderr.take().unwrap();
-    let cancel_rx = DOWNLOADS.register(id.clone());
+    let cancel_rx = match DOWNLOADS.register(id.clone()) {
+        Some(rx) => rx,
+        None => {
+            let _ = on_event.send(DownloadEvent::Progress {
+                id: id.clone(),
+                kind: MediaKind::Download,
+                progress: 0,
+                stage: Stage::Error,
+                error_message: Some("Job já em andamento".into()),
+                output_path: None,
+                playlist_downloaded: None,
+                playlist_file_size: None,
+            });
+            return Ok(());
+        }
+    };
 
     let state = Arc::new(Mutex::new(PlaylistState::default()));
 
@@ -173,15 +178,13 @@ pub async fn download_start(
         let mut line = String::new();
         loop {
             line.clear();
-            let n = reader.read_line(&mut line).await.unwrap_or(0);
-            if n == 0 {
-                break;
+            match reader.read_line(&mut line).await {
+                Ok(0) => break,
+                Ok(_) => {}
+                Err(_) => continue,
             }
             buf.push_str(&line);
-            if buf.len() > 65536 {
-                let start = buf.len() - 65536;
-                buf = buf[start..].into();
-            }
+            truncate_tail(&mut buf, 65536);
             if CONVERT_STAGE_RE.is_match(&line) {
                 let (total, index, filesize) = {
                     let s = state_stderr.lock().unwrap();
@@ -219,9 +222,10 @@ pub async fn download_start(
 
         loop {
             line.clear();
-            let n = reader.read_line(&mut line).await.unwrap_or(0);
-            if n == 0 {
-                break;
+            match reader.read_line(&mut line).await {
+                Ok(0) => break,
+                Ok(_) => {}
+                Err(_) => continue,
             }
             let trimmed = line.trim();
             if trimmed.is_empty() {

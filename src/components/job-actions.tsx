@@ -14,7 +14,10 @@ interface JobActionsProps {
   onCancel: () => void;
   onRetry: () => void;
   onOpenFolder: () => void;
-  onRemove: () => void;
+  onRemove?: () => void;
+  showRemove?: boolean;
+  openFolderWhenDone?: boolean;
+  stopPropagation?: boolean;
 }
 
 export function JobActions({
@@ -26,7 +29,15 @@ export function JobActions({
   onRetry,
   onOpenFolder,
   onRemove,
+  showRemove = true,
+  openFolderWhenDone = false,
+  stopPropagation = false,
 }: JobActionsProps) {
+  const withStop = (fn?: () => void) => (e: React.MouseEvent) => {
+    if (stopPropagation) e.stopPropagation();
+    fn?.();
+  };
+
   return (
     <div className="flex items-center gap-0.5 shrink-0">
       {isActive && (
@@ -36,7 +47,7 @@ export function JobActions({
               variant="ghost"
               size="icon"
               className="h-5 w-5 text-muted-foreground hover:text-destructive"
-              onClick={onCancel}
+              onClick={withStop(onCancel)}
             >
               <Square className="w-2.5 h-2.5 fill-current" />
             </Button>
@@ -51,7 +62,7 @@ export function JobActions({
               variant="ghost"
               size="icon"
               className="h-5 w-5 text-muted-foreground hover:text-foreground"
-              onClick={onRetry}
+              onClick={withStop(onRetry)}
             >
               <RefreshCw className="w-3 h-3" />
             </Button>
@@ -59,14 +70,14 @@ export function JobActions({
           <TooltipContent>Tentar novamente</TooltipContent>
         </Tooltip>
       )}
-      {isDone && outputPath && (
+      {isDone && (openFolderWhenDone || outputPath) && (
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
               variant="ghost"
               size="icon"
               className="h-5 w-5 text-muted-foreground hover:text-foreground"
-              onClick={onOpenFolder}
+              onClick={withStop(onOpenFolder)}
             >
               <FolderOpen className="w-3 h-3" />
             </Button>
@@ -74,14 +85,14 @@ export function JobActions({
           <TooltipContent>Abrir pasta</TooltipContent>
         </Tooltip>
       )}
-      {!isActive && (
+      {showRemove && !isActive && (
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
               variant="ghost"
               size="icon"
               className="h-5 w-5 text-muted-foreground/30 hover:text-destructive transition-colors"
-              onClick={onRemove}
+              onClick={withStop(onRemove)}
             >
               <X className="w-3 h-3" />
             </Button>

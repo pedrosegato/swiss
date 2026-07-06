@@ -2,6 +2,7 @@ import { create } from "zustand";
 import type { MergeItem, MergeDirection } from "@/lib/types";
 import { ipc } from "@/lib/ipc";
 import { useSettingsStore } from "@/stores/settings-store";
+import { createItemsSlice } from "@/stores/create-items-slice";
 
 interface FileEntry {
   path: string;
@@ -29,9 +30,9 @@ interface MergeState {
 }
 
 export const useMergeStore = create<MergeState>((set) => ({
+  ...createItemsSlice<MergeItem>(set),
   mainFiles: [],
   bgFiles: [],
-  items: [],
   direction: "vertical",
 
   addMainFiles: (files) =>
@@ -44,12 +45,6 @@ export const useMergeStore = create<MergeState>((set) => ({
   clearMainFiles: () => set({ mainFiles: [] }),
   clearBgFiles: () => set({ bgFiles: [] }),
   setDirection: (direction) => set({ direction }),
-  updateItem: (id, updates) =>
-    set((s) => ({
-      items: s.items.map((i) => (i.id === id ? { ...i, ...updates } : i)),
-    })),
-  removeItem: (id) =>
-    set((s) => ({ items: s.items.filter((i) => i.id !== id) })),
   clearCompleted: () =>
     set((s) => ({
       items: s.items.filter((i) => i.stage !== "completed"),

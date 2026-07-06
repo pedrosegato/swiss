@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+import { Minus } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { ErrorLog } from "@/components/error-log";
 import { cn } from "@/lib/utils";
@@ -9,6 +11,10 @@ interface JobProgressProps {
   errorMessage?: string;
   isError: boolean;
   isDone: boolean;
+  isQueued?: boolean;
+  suffix?: ReactNode;
+  onStopPropagation?: boolean;
+  variant?: "row" | "card";
 }
 
 export function JobProgress({
@@ -17,29 +23,54 @@ export function JobProgress({
   errorMessage,
   isError,
   isDone,
+  isQueued = false,
+  suffix,
+  onStopPropagation = false,
+  variant = "row",
 }: JobProgressProps) {
   if (isError) {
-    return <ErrorLog message={errorMessage} />;
+    return (
+      <ErrorLog message={errorMessage} onStopPropagation={onStopPropagation} />
+    );
   }
+
+  const textSize = variant === "card" ? "text-[10.5px]" : "text-[10px]";
+  const headerMargin = variant === "card" ? "mb-1.5" : "mb-1";
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-1">
+      <div className={cn("flex items-center justify-between", headerMargin)}>
         <span
           className={cn(
-            "text-[10px]",
-            isDone ? "text-muted-foreground" : "text-secondary-foreground",
+            textSize,
+            isDone
+              ? "text-muted-foreground"
+              : isQueued
+                ? "text-muted-foreground/60"
+                : "text-secondary-foreground",
           )}
         >
           {stageLabel}
+          {suffix}
         </span>
         <span
           className={cn(
-            "font-mono text-[10px] font-medium tabular-nums",
-            isDone ? "text-muted-foreground" : "text-primary",
+            "font-mono font-medium tabular-nums",
+            textSize,
+            isDone
+              ? "text-muted-foreground"
+              : isQueued
+                ? "text-muted-foreground/60"
+                : "text-primary",
           )}
         >
-          {isDone ? "100%" : `${progress}%`}
+          {isDone ? (
+            "100%"
+          ) : isQueued ? (
+            <Minus className="w-3 h-3" />
+          ) : (
+            `${progress}%`
+          )}
         </span>
       </div>
       <Progress

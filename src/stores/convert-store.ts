@@ -2,6 +2,7 @@ import { create } from "zustand";
 import type { ConvertItem, ConvertFormat } from "@/lib/types";
 import { ipc } from "@/lib/ipc";
 import { useSettingsStore } from "@/stores/settings-store";
+import { createItemsSlice } from "@/stores/create-items-slice";
 
 interface ConvertState {
   items: ConvertItem[];
@@ -19,19 +20,19 @@ interface ConvertState {
 }
 
 export const useConvertStore = create<ConvertState>((set) => ({
-  items: [],
+  ...createItemsSlice<ConvertItem>(set),
   outputFormat: "mp4",
   quality: "Original",
 
-  addItem: (item) => set((s) => ({ items: [...s.items, item] })),
-  addItems: (items) => set((s) => ({ items: [...s.items, ...items] })),
-  updateItem: (id, updates) =>
-    set((s) => ({
-      items: s.items.map((i) => (i.id === id ? { ...i, ...updates } : i)),
-    })),
-  removeItem: (id) =>
-    set((s) => ({ items: s.items.filter((i) => i.id !== id) })),
-  clearItems: () => set({ items: [] }),
+  clearItems: () => {
+    const { items } = useConvertStore.getState();
+    for (const i of items) {
+      if (i.stage !== "completed" && i.stage !== "error") {
+        ipc.cancelConversion(i.id);
+      }
+    }
+    set({ items: [] });
+  },
   setOutputFormat: (fmt) => set({ outputFormat: fmt }),
   setQuality: (q) => set({ quality: q }),
   startAll: () => {
