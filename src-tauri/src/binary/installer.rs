@@ -1,5 +1,5 @@
 use super::{
-    resolver::{clear_path_cache, get_spawn_path},
+    resolver::{clear_path_cache, get_spawn_path, pip_install_ytdlp, which_binary, PipInstallOpts},
     BinaryName,
 };
 use crate::error::AppResult;
@@ -145,55 +145,14 @@ async fn download_file_inner<F: Fn(u32)>(url: &str, tmp: &Path, on_progress: &F)
 
 async fn try_pip_install() -> bool {
     use std::time::Duration;
-    use tokio::time::timeout;
 
     let python = find_python().await;
-    let strategies = [
-        vec![
-            "-m",
-            "pip",
-            "install",
-            "--user",
-            "--upgrade",
-            "--break-system-packages",
-            "yt-dlp",
-        ],
-        vec!["-m", "pip", "install", "--user", "--upgrade", "yt-dlp"],
-    ];
-    let mut installed = false;
-    for args in strategies {
-        if installed {
-            break;
-        }
-        let success = timeout(
-            Duration::from_secs(120),
-            Command::new(&python).args(&args).output(),
-        )
-        .await
-        .ok()
-        .and_then(|r| r.ok())
-        .map(|o| o.status.success())
-        .unwrap_or(false);
-        if success {
-            installed = true;
-        }
-    }
-    if !installed {
-        return false;
-    }
-
-    let ver_ok = timeout(
-        Duration::from_secs(5),
-        Command::new(&python)
-            .args(["-m", "yt_dlp", "--version"])
-            .output(),
-    )
-    .await
-    .ok()
-    .and_then(|r| r.ok())
-    .map(|o| o.status.success())
-    .unwrap_or(false);
-    if !ver_ok {
+    let opts = PipInstallOpts {
+        upgrade: true,
+        timeout: Some(Duration::from_secs(120)),
+        windows_enabled: true,
+    };
+    if !pip_install_ytdlp(&python, &opts).await {
         return false;
     }
 
@@ -266,15 +225,11 @@ pub async fn uninstall_binary(name: BinaryName) -> bool {
     }
     let local_bin_dir = get_local_bin_dir();
     let local_path = get_local_bin_path(name.as_str());
-    let cmd = if cfg!(windows) { "where" } else { "which" };
-    if let Ok(out) = Command::new(cmd).arg(name.as_str()).output().await {
-        if let Some(line) = String::from_utf8_lossy(&out.stdout).lines().next() {
-            let resolved = line.trim();
-            if std::path::Path::new(resolved).starts_with(&local_bin_dir)
-                && fs::remove_file(resolved).await.is_ok()
-            {
-                removed = true;
-            }
+    if let Some(resolved) = which_binary(name.as_str()).await {
+        if Path::new(&resolved).starts_with(&local_bin_dir)
+            && fs::remove_file(&resolved).await.is_ok()
+        {
+            removed = true;
         }
     }
     if fs::remove_file(&local_path).await.is_ok() {
