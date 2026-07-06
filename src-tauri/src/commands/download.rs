@@ -45,6 +45,16 @@ static CONVERT_STAGE_RE: Lazy<Regex> = Lazy::new(|| {
 static DISK_FULL_RE: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(?i)no space left|disk full|não há espaço").unwrap());
 
+pub(crate) fn truncate_tail(buf: &mut String, max: usize) {
+    if buf.len() > max {
+        let mut cut = buf.len() - max;
+        while cut < buf.len() && !buf.is_char_boundary(cut) {
+            cut += 1;
+        }
+        buf.drain(..cut);
+    }
+}
+
 pub fn is_playlist_url(url: &str) -> bool {
     PLAYLIST_RE.is_match(url)
 }
@@ -173,15 +183,13 @@ pub async fn download_start(
         let mut line = String::new();
         loop {
             line.clear();
-            let n = reader.read_line(&mut line).await.unwrap_or(0);
-            if n == 0 {
-                break;
+            match reader.read_line(&mut line).await {
+                Ok(0) => break,
+                Ok(_) => {}
+                Err(_) => continue,
             }
             buf.push_str(&line);
-            if buf.len() > 65536 {
-                let start = buf.len() - 65536;
-                buf = buf[start..].into();
-            }
+            truncate_tail(&mut buf, 65536);
             if CONVERT_STAGE_RE.is_match(&line) {
                 let (total, index, filesize) = {
                     let s = state_stderr.lock().unwrap();
@@ -219,9 +227,10 @@ pub async fn download_start(
 
         loop {
             line.clear();
-            let n = reader.read_line(&mut line).await.unwrap_or(0);
-            if n == 0 {
-                break;
+            match reader.read_line(&mut line).await {
+                Ok(0) => break,
+                Ok(_) => {}
+                Err(_) => continue,
             }
             let trimmed = line.trim();
             if trimmed.is_empty() {
@@ -449,6 +458,17 @@ mod tests {
         assert!(is_playlist_url("https://youtube.com/watch?v=x&list=PLabc"));
         assert!(is_playlist_url("https://soundcloud.com/user/sets/foo"));
         assert!(!is_playlist_url("https://youtube.com/watch?v=x"));
+    }
+
+    #[test]
+    fn truncate_tail_never_splits_multibyte() {
+        let mut s = String::new();
+        while s.len() < 70000 {
+            s.push('ç');
+        }
+        truncate_tail(&mut s, 65536);
+        assert!(s.len() <= 70000);
+        assert!(std::str::from_utf8(s.as_bytes()).is_ok());
     }
 
     #[test]

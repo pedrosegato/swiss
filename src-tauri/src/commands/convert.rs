@@ -168,15 +168,13 @@ pub async fn convert_start(
         let mut line = String::new();
         loop {
             line.clear();
-            let n = reader.read_line(&mut line).await.unwrap_or(0);
-            if n == 0 {
-                break;
+            match reader.read_line(&mut line).await {
+                Ok(0) => break,
+                Ok(_) => {}
+                Err(_) => continue,
             }
             buf.push_str(&line);
-            if buf.len() > 65536 {
-                let s = buf.len() - 65536;
-                buf = buf[s..].into();
-            }
+            crate::commands::download::truncate_tail(&mut buf, 65536);
         }
         buf
     });
@@ -188,9 +186,10 @@ pub async fn convert_start(
         let mut line = String::new();
         loop {
             line.clear();
-            let n = reader.read_line(&mut line).await.unwrap_or(0);
-            if n == 0 {
-                break;
+            match reader.read_line(&mut line).await {
+                Ok(0) => break,
+                Ok(_) => {}
+                Err(_) => continue,
             }
             if let Some(c) = OUT_TIME_RE.captures(&line) {
                 if duration > 0.0 {
