@@ -44,7 +44,12 @@ export function FileRow({ id }: FileRowProps) {
 
   const handleRetry = async () => {
     const savePath = useSettingsStore.getState().downloadPath;
-    if (!savePath) return;
+    if (!savePath) {
+      toast.warning(
+        "Selecione uma pasta de destino antes de tentar novamente.",
+      );
+      return;
+    }
 
     const missing = await ipc.checkPaths([
       { id: item.id, path: item.inputPath },

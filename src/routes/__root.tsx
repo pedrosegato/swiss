@@ -188,20 +188,29 @@ function RootLayout() {
       const converts = useConvertStore.getState().items;
       const merges = useMergeStore.getState().items;
 
-      const paths: { id: string; path: string }[] = [];
+      const paths: {
+        id: string;
+        path: string;
+        kind: "download" | "convert" | "merge";
+      }[] = [];
       for (const i of downloads) {
-        if (i.stage === "completed" && i.outputPath) paths.push({ id: i.id, path: i.outputPath });
+        if (i.stage === "completed" && i.outputPath)
+          paths.push({ id: i.id, path: i.outputPath, kind: "download" });
       }
       for (const i of converts) {
-        if (i.stage === "completed" && i.outputPath) paths.push({ id: i.id, path: i.outputPath });
+        if (i.stage === "completed" && i.outputPath)
+          paths.push({ id: i.id, path: i.outputPath, kind: "convert" });
       }
       for (const i of merges) {
-        if (i.stage === "completed" && i.outputPath) paths.push({ id: i.id, path: i.outputPath });
+        if (i.stage === "completed" && i.outputPath)
+          paths.push({ id: i.id, path: i.outputPath, kind: "merge" });
       }
 
       if (paths.length === 0) return;
 
-      const missing = await ipc.checkPaths(paths);
+      const missing = await ipc.checkPaths(
+        paths.map(({ id, path }) => ({ id, path })),
+      );
       if (missing.length === 0) return;
 
       const missingSet = new Set(missing);
@@ -209,10 +218,11 @@ function RootLayout() {
       const removeConvert = useConvertStore.getState().removeItem;
       const removeMerge = useMergeStore.getState().removeItem;
 
-      for (const id of missingSet) {
-        removeDownload(id);
-        removeConvert(id);
-        removeMerge(id);
+      for (const { id, kind } of paths) {
+        if (!missingSet.has(id)) continue;
+        if (kind === "download") removeDownload(id);
+        else if (kind === "convert") removeConvert(id);
+        else removeMerge(id);
       }
     }, 10_000);
 

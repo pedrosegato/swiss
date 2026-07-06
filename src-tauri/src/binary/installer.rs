@@ -8,11 +8,14 @@ use crate::platform::{
     get_pip_user_bin_dir, platform_variant,
 };
 use futures_util::StreamExt;
+use once_cell::sync::Lazy;
 use std::collections::HashMap;
 use std::path::Path;
 use tokio::fs;
 use tokio::io::AsyncWriteExt;
 use tokio::process::Command;
+
+static HTTP: Lazy<reqwest::Client> = Lazy::new(reqwest::Client::new);
 
 fn ytdlp_urls() -> HashMap<&'static str, &'static str> {
     HashMap::from([
@@ -98,9 +101,9 @@ pub async fn download_file<F: Fn(u32)>(url: &str, dest: &Path, on_progress: F) -
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
-        let mut perms = std::fs::metadata(&tmp)?.permissions();
+        let mut perms = fs::metadata(&tmp).await?.permissions();
         perms.set_mode(0o755);
-        std::fs::set_permissions(&tmp, perms)?;
+        fs::set_permissions(&tmp, perms).await?;
     }
 
     if cfg!(target_os = "macos") {
@@ -116,7 +119,7 @@ pub async fn download_file<F: Fn(u32)>(url: &str, dest: &Path, on_progress: F) -
 }
 
 async fn download_file_inner<F: Fn(u32)>(url: &str, tmp: &Path, on_progress: &F) -> AppResult<()> {
-    let resp = reqwest::Client::new()
+    let resp = HTTP
         .get(url)
         .send()
         .await?
@@ -160,7 +163,7 @@ async fn try_pip_install() -> bool {
         let pip_ytdlp = pip_bin_dir.join("yt-dlp");
         let local_bin = get_local_bin_dir();
         let local_ytdlp = local_bin.join("yt-dlp");
-        if pip_ytdlp.exists() && pip_bin_dir != local_bin {
+        if fs::try_exists(&pip_ytdlp).await.unwrap_or(false) && pip_bin_dir != local_bin {
             let _ = fs::create_dir_all(&local_bin).await;
             let _ = fs::remove_file(&local_ytdlp).await;
             #[cfg(unix)]

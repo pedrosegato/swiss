@@ -132,5 +132,4 @@ export interface BinaryInfo {
   path?: string;
   source?: "system" | "local" | "none";
   downloading?: boolean;
-  downloadProgress?: number;
 }

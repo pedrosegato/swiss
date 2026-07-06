@@ -1,7 +1,10 @@
 import { cn, formatSize } from "@/lib/utils";
 import { useMergeStore } from "@/stores/merge-store";
+import { useBinariesStore } from "@/stores/binaries-store";
+import { useSettingsStore } from "@/stores/settings-store";
 import { MERGE_STAGE_LABELS } from "@/lib/constants";
 import { ipc } from "@/lib/ipc";
+import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { JobActions } from "@/components/job-actions";
 import { JobProgress } from "@/components/job-progress";
@@ -32,6 +35,16 @@ export function MergeJobRow({ id }: MergeJobRowProps) {
   };
 
   const handleRetry = () => {
+    if (!useBinariesStore.getState().ffprobe.installed) {
+      toast.error(
+        "ffprobe é necessário para mesclar vídeos. Instale-o na página de Configurações, em Binários.",
+      );
+      return;
+    }
+    if (!useSettingsStore.getState().downloadPath) {
+      toast.warning("Selecione uma pasta de destino antes de mesclar.");
+      return;
+    }
     updateItem(item.id, {
       stage: "merging",
       progress: 0,

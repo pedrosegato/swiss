@@ -63,9 +63,11 @@ export function DownloadCard({ id }: DownloadCardProps) {
 
   const handleOpenFolder = () => {
     if (item.outputPath) {
-      isPlaylist
-        ? ipc.openPath(item.outputPath)
-        : ipc.showItemInFolder(item.outputPath);
+      if (isPlaylist) {
+        ipc.openPath(item.outputPath);
+      } else {
+        ipc.showItemInFolder(item.outputPath);
+      }
     } else {
       ipc.openPath(item.savePath);
     }

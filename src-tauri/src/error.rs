@@ -8,12 +8,6 @@ pub enum AppError {
     Http(#[from] reqwest::Error),
     #[error("json error: {0}")]
     Json(#[from] serde_json::Error),
-    #[error("process not found: {0}")]
-    ProcessNotFound(String),
-    #[error("binary missing: {0}")]
-    BinaryMissing(String),
-    #[error("ffmpeg failed: {0}")]
-    FfmpegFailed(String),
     #[error("{0}")]
     Other(String),
 }

@@ -71,6 +71,9 @@ export function DownloadBar({
     setUrl("");
   };
 
+  const submitRef = useRef(submit);
+  submitRef.current = submit;
+
   useEffect(() => {
     const handleGlobalKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "v") {
@@ -88,12 +91,12 @@ export function DownloadBar({
       if (document.activeElement === inputRef.current) return;
 
       if (e.key === "Enter") {
-        submit();
+        submitRef.current();
       }
     };
     window.addEventListener("keydown", handleGlobalKey);
     return () => window.removeEventListener("keydown", handleGlobalKey);
-  }, [url]);
+  }, []);
 
   return (
     <div className="flex flex-col gap-1.5">
