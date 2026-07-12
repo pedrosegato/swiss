@@ -144,9 +144,6 @@ pub async fn convert_start(
     args.extend(["-progress".into(), "pipe:1".into()]);
     args.push(output_path.to_string_lossy().to_string());
 
-    let mut child = spawn_piped(&ffmpeg, &args)?;
-    let stdout = child.stdout.take().unwrap();
-    let stderr = child.stderr.take().unwrap();
     let cancel_rx = match CONVERSIONS.register(id.clone()) {
         Some(rx) => rx,
         None => {
@@ -162,6 +159,15 @@ pub async fn convert_start(
             return Ok(());
         }
     };
+    let mut child = match spawn_piped(&ffmpeg, &args) {
+        Ok(c) => c,
+        Err(e) => {
+            CONVERSIONS.remove(&id);
+            return Err(e.into());
+        }
+    };
+    let stdout = child.stdout.take().unwrap();
+    let stderr = child.stderr.take().unwrap();
 
     let stderr_handle = drain_stderr(stderr);
 

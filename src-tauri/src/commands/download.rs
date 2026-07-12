@@ -151,9 +151,6 @@ pub async fn download_start(
     let mut all_args: Vec<String> = ytdlp.prefix_args.clone();
     all_args.extend(args);
 
-    let mut child = spawn_piped(&ytdlp.command, &all_args)?;
-    let stdout = child.stdout.take().unwrap();
-    let stderr = child.stderr.take().unwrap();
     let cancel_rx = match DOWNLOADS.register(id.clone()) {
         Some(rx) => rx,
         None => {
@@ -170,6 +167,15 @@ pub async fn download_start(
             return Ok(());
         }
     };
+    let mut child = match spawn_piped(&ytdlp.command, &all_args) {
+        Ok(c) => c,
+        Err(e) => {
+            DOWNLOADS.remove(&id);
+            return Err(e.into());
+        }
+    };
+    let stdout = child.stdout.take().unwrap();
+    let stderr = child.stderr.take().unwrap();
 
     let state = Arc::new(Mutex::new(PlaylistState::default()));
 
