@@ -55,7 +55,7 @@ export function JobProgress({
         </span>
         <span
           className={cn(
-            "font-mono font-medium tabular-nums",
+            "font-medium tabular-nums",
             textSize,
             isDone
               ? "text-muted-foreground"

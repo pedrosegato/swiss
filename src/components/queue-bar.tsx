@@ -38,7 +38,7 @@ export function QueueBar({ countLabel, primary, clear, children }: QueueBarProps
     <>
       <Separator />
       <div className="flex items-center justify-between">
-        <span className="font-mono text-[11px] text-muted-foreground tracking-wider font-medium">
+        <span className="text-[11px] text-muted-foreground tracking-wider font-medium">
           {countLabel}
         </span>
         <div className="flex items-center gap-2">

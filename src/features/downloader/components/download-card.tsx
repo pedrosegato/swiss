@@ -122,7 +122,7 @@ export function DownloadCard({ id }: DownloadCardProps) {
         ) : null}
 
         {item.duration && (
-          <span className="absolute bottom-1.5 right-1.5 font-mono text-[10px] font-medium text-white bg-black/70 px-1.5 py-0.5 rounded-sm tracking-wide">
+          <span className="absolute bottom-1.5 right-1.5 text-[10px] font-medium text-white bg-black/70 px-1.5 py-0.5 rounded-sm tracking-wide">
             {item.duration}
           </span>
         )}
@@ -136,7 +136,7 @@ export function DownloadCard({ id }: DownloadCardProps) {
 
         <Badge
           variant="outline"
-          className="absolute top-1.5 right-1.5 text-[10px] px-1.5 py-0 bg-black/60 text-white border-white/20 font-mono uppercase tracking-wider"
+          className="absolute top-1.5 right-1.5 text-[10px] px-1.5 py-0 bg-black/60 text-white border-white/20 tracking-wider"
         >
           {item.format}
         </Badge>
@@ -165,7 +165,7 @@ export function DownloadCard({ id }: DownloadCardProps) {
             variant="card"
           />
           <div className="flex items-center justify-between pt-0.5">
-            <span className="font-mono text-[11px] text-muted-foreground flex items-center gap-1.5">
+            <span className="text-[11px] text-muted-foreground flex items-center gap-1.5">
               <span>{item.quality}</span>
               {item.fileSize && (
                 <>

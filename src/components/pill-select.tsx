@@ -22,7 +22,6 @@ interface PillSelectProps {
   onValueChange: (value: string) => void;
   options?: readonly string[];
   groups?: PillSelectGroup[];
-  uppercaseItems?: boolean;
   className?: string;
 }
 
@@ -31,12 +30,11 @@ export function PillSelect({
   onValueChange,
   options,
   groups,
-  uppercaseItems = false,
   className,
 }: PillSelectProps) {
   const renderItem = (o: string) => (
     <SelectItem key={o} value={o}>
-      {uppercaseItems ? o.toUpperCase() : o}
+      {o}
     </SelectItem>
   );
 

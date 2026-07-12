@@ -37,7 +37,7 @@ export function ErrorLog({
       </Button>
       {showLog && message ? (
         <pre
-          className="mt-1 text-[11px] text-destructive/80 bg-muted/50 rounded p-2 max-h-32 overflow-auto whitespace-pre-wrap break-all font-mono cursor-pointer hover:bg-muted/70 transition-colors"
+          className="mt-1 text-[11px] text-destructive/80 bg-muted/50 rounded p-2 max-h-32 overflow-auto whitespace-pre-wrap break-all cursor-pointer hover:bg-muted/70 transition-colors"
           title="Clique para copiar"
           onClick={handleCopy}
         >

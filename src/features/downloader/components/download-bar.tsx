@@ -130,7 +130,6 @@ export function DownloadBar({
             { label: "Vídeo", options: videoFormats },
             { label: "Áudio", options: audioFormats },
           ]}
-          uppercaseItems
         />
         <PillSelect
           value={quality}

@@ -113,13 +113,13 @@ export function FileRow({ id }: FileRowProps) {
             {item.inputName}
           </p>
           <div className="flex items-center gap-2 mt-0.5">
-            <span className="font-mono text-[11px] text-muted-foreground">
+            <span className="text-[11px] text-muted-foreground">
               {item.inputSize}
             </span>
             {isDone && item.outputSize && (
               <>
                 <ArrowRight className="w-2.5 h-2.5 text-muted-foreground/40" />
-                <span className="font-mono text-[11px] text-muted-foreground">
+                <span className="text-[11px] text-muted-foreground">
                   {formatSize(item.outputSize)}
                 </span>
               </>
@@ -130,7 +130,7 @@ export function FileRow({ id }: FileRowProps) {
         <div className="flex items-center gap-1.5 shrink-0">
           <Badge
             variant="outline"
-            className="font-mono text-[10px] px-1.5 py-0 h-5 text-muted-foreground"
+            className="text-[10px] px-1.5 py-0 h-5 text-muted-foreground"
           >
             {item.inputExt.replace(".", "")}
           </Badge>
@@ -148,7 +148,7 @@ export function FileRow({ id }: FileRowProps) {
           ) : (
             <Badge
               variant="outline"
-              className="font-mono text-[10px] px-1.5 py-0 h-5"
+              className="text-[10px] px-1.5 py-0 h-5"
             >
               {item.outputFormat}
             </Badge>

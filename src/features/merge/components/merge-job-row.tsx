@@ -95,7 +95,7 @@ export function MergeJobRow({ id }: MergeJobRowProps) {
         </div>
 
         {isDone && item.outputSize && (
-          <span className="font-mono text-[11px] text-muted-foreground shrink-0">
+          <span className="text-[11px] text-muted-foreground shrink-0">
             {formatSize(item.outputSize)}
           </span>
         )}

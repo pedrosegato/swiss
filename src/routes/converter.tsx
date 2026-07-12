@@ -109,7 +109,6 @@ function ConverterPage() {
             { label: "Vídeo", options: CONVERT_VIDEO_FORMATS },
             { label: "Áudio", options: CONVERT_AUDIO_FORMATS },
           ]}
-          uppercaseItems
         />
         <div className="ml-auto">
           <SavePathButton />

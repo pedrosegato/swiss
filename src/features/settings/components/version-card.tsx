@@ -68,7 +68,7 @@ export function VersionCard({ binary }: VersionCardProps) {
   return (
     <div className="bg-card rounded-xl ring-1 ring-foreground/10 px-3.5 py-3 flex flex-col gap-2">
       <div className="flex items-center justify-between">
-        <span className="font-mono text-[13px] font-medium">{binary.name}</span>
+        <span className="text-[13px] font-medium">{binary.name}</span>
         <div className="flex items-center gap-1.5">
           <div
             className={cn(
@@ -90,7 +90,7 @@ export function VersionCard({ binary }: VersionCardProps) {
         </div>
       </div>
 
-      <span className="font-mono text-[10px] text-muted-foreground/60 truncate">
+      <span className="text-[10px] text-muted-foreground/60 truncate">
         {binary.downloading
           ? "Baixando..."
           : (binary.version ?? "—")}

@@ -37,7 +37,7 @@ export function FormatSelect({
             <SelectLabel>{group.label}</SelectLabel>
             {group.options.map((f) => (
               <SelectItem key={f} value={f}>
-                {f.toUpperCase()}
+                {f}
               </SelectItem>
             ))}
           </SelectGroup>

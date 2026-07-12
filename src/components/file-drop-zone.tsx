@@ -117,7 +117,7 @@ export function FileDropZone({
           )}
         >
           {label && (
-            <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">
+            <span className="text-xs text-muted-foreground tracking-wider font-medium">
               {label}
             </span>
           )}
@@ -149,7 +149,7 @@ export function FileDropZone({
               {extensions.map((fmt) => (
                 <span
                   key={fmt}
-                  className="font-mono text-[10px] uppercase tracking-wide text-muted-foreground bg-muted px-2 py-0.5 rounded-full"
+                  className="text-[10px] tracking-wide text-muted-foreground bg-muted px-2 py-0.5 rounded-full"
                 >
                   {fmt}
                 </span>
@@ -170,7 +170,7 @@ export function FileDropZone({
                 <span className="text-[12px] truncate flex-1 text-muted-foreground">
                   {f.name}
                 </span>
-                <span className="font-mono text-[11px] text-muted-foreground/60 shrink-0">
+                <span className="text-[11px] text-muted-foreground/60 shrink-0">
                   {formatSize(f.size)}
                 </span>
                 {onRemoveFile && (
