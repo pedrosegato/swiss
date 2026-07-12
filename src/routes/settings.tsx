@@ -9,6 +9,8 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { SavePathButton } from "@/components/save-path-button";
+import { pillTriggerClass } from "@/components/pill-select";
+import { cn } from "@/lib/utils";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useBinariesStore } from "@/stores/binaries-store";
 import { VersionCard } from "@/features/settings/components/version-card";
@@ -61,7 +63,7 @@ function SettingsPage() {
               value={cookieBrowser}
               onValueChange={(v) => v && setCookieBrowser(v as Browser)}
             >
-              <SelectTrigger className="w-[110px] text-xs h-8">
+              <SelectTrigger className={cn(pillTriggerClass, "min-w-[110px]")}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent position="popper" sideOffset={4}>
