@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useShallow } from "zustand/shallow";
 import { createFileRoute } from "@tanstack/react-router";
-import { Separator } from "@/components/ui/separator";
 import { JobQueue } from "@/components/job-queue";
 import { DownloadBar } from "@/features/downloader/components/download-bar";
 import {
@@ -121,12 +120,7 @@ function DownloaderPage() {
         onFetch={handleFetch}
       />
 
-      {itemIds.length > 0 && (
-        <>
-          <Separator />
-          <QueueHeader />
-        </>
-      )}
+      {itemIds.length > 0 && <QueueHeader />}
 
       {itemIds.length === 0 ? (
         <EmptyQueue

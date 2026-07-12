@@ -5,18 +5,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@/components/ui/tooltip";
-import { ConfirmDialog } from "@/components/confirm-dialog";
+import { QueueBar } from "@/components/queue-bar";
 import { pillTriggerClass } from "@/components/pill-select";
 import { useDownloadStore } from "@/stores/download-store";
 import type { SortOption } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { Dot, Trash2 } from "lucide-react";
+import { Dot } from "lucide-react";
 
 export function QueueHeader() {
   const itemCount = useDownloadStore((s) => s.items.length);
@@ -31,49 +25,33 @@ export function QueueHeader() {
   const clearItems = useDownloadStore((s) => s.clearItems);
 
   return (
-    <div className="flex items-center justify-between">
-      <span className="font-mono text-[11px] text-muted-foreground tracking-wider font-medium">
-        {itemCount} {itemCount === 1 ? "item" : "itens"}{" "}
-        <Dot className="w-3 h-3 inline" /> {activeCount} ativos
-      </span>
-      <div className="flex items-center gap-2.5">
-        {itemCount > 0 && (
-          <Tooltip>
-            <ConfirmDialog
-              trigger={
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-muted-foreground hover:text-destructive"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
-                </TooltipTrigger>
-              }
-              title="Limpar histórico?"
-              description="Todos os downloads da fila serão removidos. Downloads ativos serão cancelados."
-              confirmLabel="Limpar"
-              onConfirm={clearItems}
-            />
-            <TooltipContent>Limpar histórico</TooltipContent>
-          </Tooltip>
-        )}
-        <Select
-          value={sortBy}
-          onValueChange={(v) => setSortBy(v as SortOption)}
-        >
-          <SelectTrigger className={cn(pillTriggerClass, "min-w-[130px]")}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="recent">Mais recentes</SelectItem>
-            <SelectItem value="oldest">Mais antigos</SelectItem>
-            <SelectItem value="largest">Maior tamanho</SelectItem>
-            <SelectItem value="smallest">Menor tamanho</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-    </div>
+    <QueueBar
+      countLabel={
+        <>
+          {itemCount} {itemCount === 1 ? "item" : "itens"}{" "}
+          <Dot className="w-3 h-3 inline" /> {activeCount} ativos
+        </>
+      }
+      clear={{
+        title: "Limpar histórico?",
+        description:
+          "Todos os downloads da fila serão removidos. Downloads ativos serão cancelados.",
+        confirmLabel: "Limpar",
+        tooltip: "Limpar histórico",
+        onConfirm: clearItems,
+      }}
+    >
+      <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+        <SelectTrigger className={cn(pillTriggerClass, "min-w-[130px]")}>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="recent">Mais recentes</SelectItem>
+          <SelectItem value="oldest">Mais antigos</SelectItem>
+          <SelectItem value="largest">Maior tamanho</SelectItem>
+          <SelectItem value="smallest">Menor tamanho</SelectItem>
+        </SelectContent>
+      </Select>
+    </QueueBar>
   );
 }

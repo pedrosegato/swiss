@@ -2,7 +2,7 @@ import { useShallow } from "zustand/shallow";
 import { createFileRoute } from "@tanstack/react-router";
 import { PillSelect } from "@/components/pill-select";
 import { JobQueue } from "@/components/job-queue";
-import { QueueActionsHeader } from "@/components/queue-actions-header";
+import { QueueBar } from "@/components/queue-bar";
 import { FileDropZone } from "@/components/file-drop-zone";
 import { formatSize } from "@/lib/utils";
 import { ipc } from "@/lib/ipc";
@@ -117,18 +117,23 @@ function ConverterPage() {
       </div>
 
       {itemCount > 0 && (
-        <QueueActionsHeader
+        <QueueBar
           countLabel={`${itemCount} ${itemCount === 1 ? "arquivo" : "arquivos"}`}
-          primaryLabel="Converter tudo"
-          primaryActiveLabel="Convertendo..."
-          isActive={isConverting}
-          primaryDisabled={!hasQueued && !isConverting}
-          onPrimary={handleStartAll}
-          confirmTitle="Limpar arquivos?"
-          confirmDescription="Todos os arquivos da lista serão removidos. Conversões ativas serão canceladas."
-          confirmLabel="Limpar"
-          clearTooltip="Limpar arquivos"
-          onConfirmClear={clearItems}
+          primary={{
+            label: "Converter tudo",
+            activeLabel: "Convertendo...",
+            isActive: isConverting,
+            disabled: !hasQueued && !isConverting,
+            onClick: handleStartAll,
+          }}
+          clear={{
+            title: "Limpar arquivos?",
+            description:
+              "Todos os arquivos da lista serão removidos. Conversões ativas serão canceladas.",
+            confirmLabel: "Limpar",
+            tooltip: "Limpar arquivos",
+            onConfirm: clearItems,
+          }}
         />
       )}
 

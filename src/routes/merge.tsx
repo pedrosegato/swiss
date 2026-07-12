@@ -1,7 +1,7 @@
 import { useShallow } from "zustand/shallow";
 import { createFileRoute } from "@tanstack/react-router";
 import { JobQueue } from "@/components/job-queue";
-import { QueueActionsHeader } from "@/components/queue-actions-header";
+import { QueueBar } from "@/components/queue-bar";
 import {
   Select,
   SelectContent,
@@ -109,18 +109,22 @@ function MergePage() {
       </div>
 
       {itemCount > 0 && (
-        <QueueActionsHeader
+        <QueueBar
           countLabel={`${itemCount} ${itemCount === 1 ? "merge" : "merges"}`}
-          primaryLabel="Mesclar tudo"
-          primaryActiveLabel="Mesclando..."
-          isActive={isMerging}
-          primaryDisabled={!canStart && !hasQueued}
-          onPrimary={handleStartAll}
-          confirmTitle="Limpar merges?"
-          confirmDescription="Todos os merges concluídos serão removidos da lista."
-          confirmLabel="Limpar"
-          clearTooltip="Limpar concluídos"
-          onConfirmClear={clearCompleted}
+          primary={{
+            label: "Mesclar tudo",
+            activeLabel: "Mesclando...",
+            isActive: isMerging,
+            disabled: !canStart && !hasQueued,
+            onClick: handleStartAll,
+          }}
+          clear={{
+            title: "Limpar merges?",
+            description: "Todos os merges concluídos serão removidos da lista.",
+            confirmLabel: "Limpar",
+            tooltip: "Limpar concluídos",
+            onConfirm: clearCompleted,
+          }}
         />
       )}
 
