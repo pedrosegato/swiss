@@ -12,8 +12,10 @@ import {
   TooltipContent,
 } from "@/components/ui/tooltip";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { pillTriggerClass } from "@/components/pill-select";
 import { useDownloadStore } from "@/stores/download-store";
 import type { SortOption } from "@/lib/types";
+import { cn } from "@/lib/utils";
 import { Dot, Trash2 } from "lucide-react";
 
 export function QueueHeader() {
@@ -61,7 +63,7 @@ export function QueueHeader() {
           value={sortBy}
           onValueChange={(v) => setSortBy(v as SortOption)}
         >
-          <SelectTrigger className="h-8 text-[12px] w-[130px]">
+          <SelectTrigger className={cn(pillTriggerClass, "min-w-[130px]")}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

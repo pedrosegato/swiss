@@ -1,6 +1,6 @@
 import { useShallow } from "zustand/shallow";
 import { createFileRoute } from "@tanstack/react-router";
-import { FormatSelect } from "@/components/format-select";
+import { PillSelect } from "@/components/pill-select";
 import { JobQueue } from "@/components/job-queue";
 import { QueueActionsHeader } from "@/components/queue-actions-header";
 import { FileDropZone } from "@/components/file-drop-zone";
@@ -17,6 +17,7 @@ import {
 import type { ConvertFormat } from "@/lib/types";
 import { FileAudio } from "lucide-react";
 import { EmptyQueue } from "@/components/empty-queue";
+import { SavePathButton } from "@/components/save-path-button";
 import { useSettingsStore } from "@/stores/settings-store";
 import { toast } from "sonner";
 
@@ -95,21 +96,24 @@ function ConverterPage() {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-col gap-2.5">
-        <FileDropZone
-          extensions={CONVERT_ALL_FORMATS}
-          showFormats
-          onDrop={handleFilesDropped}
-        />
-        <FormatSelect
+      <FileDropZone
+        extensions={CONVERT_ALL_FORMATS}
+        showFormats
+        onDrop={handleFilesDropped}
+      />
+      <div className="flex items-center gap-2">
+        <PillSelect
           value={format}
           onValueChange={handleFormatChange}
           groups={[
             { label: "Vídeo", options: CONVERT_VIDEO_FORMATS },
             { label: "Áudio", options: CONVERT_AUDIO_FORMATS },
           ]}
-          triggerClassName="w-[100px] text-xs h-8"
+          uppercaseItems
         />
+        <div className="ml-auto">
+          <SavePathButton />
+        </div>
       </div>
 
       {itemCount > 0 && (

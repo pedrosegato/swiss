@@ -16,6 +16,7 @@ import { useMergeStore } from "@/stores/merge-store";
 import { useBinariesStore } from "@/stores/binaries-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { SavePathButton } from "@/components/save-path-button";
+import { pillTriggerClass } from "@/components/pill-select";
 import { Merge } from "lucide-react";
 import { EmptyQueue } from "@/components/empty-queue";
 import { toast } from "sonner";
@@ -89,12 +90,12 @@ function MergePage() {
         />
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         <Select
           value={direction}
           onValueChange={(v) => setDirection(v as MergeDirection)}
         >
-          <SelectTrigger className="w-[120px] text-xs h-8">
+          <SelectTrigger className={pillTriggerClass}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent position="popper" sideOffset={4}>
@@ -102,7 +103,9 @@ function MergePage() {
             <SelectItem value="horizontal">Horizontal</SelectItem>
           </SelectContent>
         </Select>
-        <SavePathButton />
+        <div className="ml-auto">
+          <SavePathButton />
+        </div>
       </div>
 
       {itemCount > 0 && (
