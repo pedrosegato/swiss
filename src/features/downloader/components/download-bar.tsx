@@ -13,7 +13,7 @@ import { FormatSelect } from "@/components/format-select";
 import { isVideoFormat } from "@/lib/constants";
 import { readText } from "@tauri-apps/plugin-clipboard-manager";
 import { validateUrl } from "@/lib/url-validation";
-import { Download } from "lucide-react";
+import { Download, Link2 } from "lucide-react";
 
 interface DownloadBarProps {
   format: string;
@@ -99,8 +99,33 @@ export function DownloadBar({
   }, []);
 
   return (
-    <div className="flex flex-col gap-1.5">
-      <div className="flex items-center">
+    <div className="flex flex-col gap-3">
+      <div
+        className={`flex items-center gap-2.5 h-12 rounded-2xl border bg-card px-3.5 transition-all duration-200 focus-within:border-primary/60 focus-within:ring-4 focus-within:ring-primary/10 ${error ? "border-destructive" : "border-input"}`}
+      >
+        <Link2 className="w-5 h-5 shrink-0 text-primary" />
+        <Input
+          ref={inputRef}
+          className="flex-1 h-full border-0 bg-transparent px-0 text-sm shadow-none focus-visible:ring-0"
+          placeholder="Cole um link para baixar…"
+          value={url}
+          onChange={(e) => {
+            setUrl(e.target.value);
+            if (error) setError(null);
+          }}
+          onKeyDown={(e) => e.key === "Enter" && submit()}
+        />
+        <Button
+          className="h-9 gap-1.5 rounded-xl px-4 font-medium transition-transform duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 active:translate-y-0"
+          onClick={() => submit()}
+          disabled={!url}
+        >
+          <Download className="w-4 h-4" />
+          Baixar
+        </Button>
+      </div>
+
+      <div className="flex items-center gap-2">
         <FormatSelect
           value={format}
           onValueChange={handleFormatChange}
@@ -108,14 +133,14 @@ export function DownloadBar({
             { label: "Vídeo", options: videoFormats },
             { label: "Áudio", options: audioFormats },
           ]}
-          triggerClassName="w-[88px] text-xs h-9 shrink-0 rounded-r-none border-r-0 focus:z-10"
+          triggerClassName="w-auto min-w-[84px] text-xs h-9 rounded-full gap-1.5"
         />
 
         <Select
           value={quality}
           onValueChange={(v: string | null) => v && onQualityChange(v)}
         >
-          <SelectTrigger className="w-[92px] text-xs h-9 shrink-0 rounded-none border-l-0 border-r-0 focus:z-10">
+          <SelectTrigger className="w-auto min-w-[88px] text-xs h-9 rounded-full gap-1.5">
             <SelectValue />
           </SelectTrigger>
           <SelectContent position="popper" sideOffset={4}>
@@ -127,30 +152,10 @@ export function DownloadBar({
           </SelectContent>
         </Select>
 
-        <Input
-          ref={inputRef}
-          className={`flex-1 font-mono text-xs h-9 rounded-none border-l-0 focus:z-10 ${error ? "border-destructive" : ""}`}
-          placeholder="Cole uma URL para baixar..."
-          value={url}
-          onChange={(e) => {
-            setUrl(e.target.value);
-            if (error) setError(null);
-          }}
-          onKeyDown={(e) => e.key === "Enter" && submit()}
-        />
-
-        <Button
-          className="text-xs h-9 rounded-l-none border-l-0"
-          onClick={() => submit()}
-          disabled={!url}
-        >
-          <Download className="w-4 h-4" />
-        </Button>
-      </div>
-
-      <div className="flex items-center justify-between">
-        <SavePathButton />
-        {error && <p className="text-[10px] text-destructive">{error}</p>}
+        <div className="ml-auto flex items-center gap-2">
+          {error && <p className="text-xs text-destructive">{error}</p>}
+          <SavePathButton />
+        </div>
       </div>
     </div>
   );
