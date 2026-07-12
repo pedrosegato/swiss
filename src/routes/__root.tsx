@@ -181,7 +181,6 @@ function RootLayout() {
     };
   }, []);
 
-  // Remove completed items whose output file/folder was deleted or moved
   useEffect(() => {
     const interval = setInterval(async () => {
       const downloads = useDownloadStore.getState().items;

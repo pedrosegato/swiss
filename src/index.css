@@ -10,7 +10,6 @@
   --font-mono: "Figtree Variable", sans-serif;
 }
 
-/* Pocket Knife theme — dark-only. Neutral greys (chroma 0); Swiss red is the only hue. */
 :root {
   --background: oklch(0.16 0 0);
   --foreground: oklch(0.93 0 0);
@@ -21,8 +20,8 @@
   --popover: oklch(0.2 0 0);
   --popover-foreground: oklch(0.93 0 0);
 
-  --primary: oklch(0.5 0.2 20); /* #c41e3a — Swiss red */
-  --primary-foreground: oklch(0.98 0 0); /* white */
+  --primary: oklch(0.5 0.2 20);
+  --primary-foreground: oklch(0.98 0 0);
 
   --secondary: oklch(0.2 0 0);
   --secondary-foreground: oklch(0.64 0 0);
@@ -33,26 +32,24 @@
   --accent: oklch(0.22 0 0);
   --accent-foreground: oklch(0.93 0 0);
 
-  --destructive: oklch(0.6 0.2 25); /* red for errors */
+  --destructive: oklch(0.6 0.2 25);
   --destructive-foreground: oklch(0.98 0 0);
 
-  --success: oklch(0.696 0.17 162.48); /* emerald-500 */
+  --success: oklch(0.696 0.17 162.48);
   --success-foreground: oklch(0.98 0 0);
 
   --border: oklch(0.27 0 0);
   --input: oklch(0.27 0 0);
-  --ring: oklch(0.5 0.2 20); /* Swiss red */
+  --ring: oklch(0.5 0.2 20);
 
   --radius: 0.875rem;
 
-  /* Motion system */
   --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --dur-fast: 150ms;
   --dur: 200ms;
   --dur-slow: 320ms;
 
-  /* Pocket Knife custom tokens */
   --metallic: oklch(0.79 0 0);
   --metallic-dim: oklch(0.52 0 0);
   --accent-soft: oklch(0.5 0.18 15 / 0.12);
