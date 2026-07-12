@@ -223,6 +223,8 @@ pub async fn download_start(
         let mut metadata_sent = false;
         let mut last_title = String::new();
         let mut last_video_id = String::new();
+        let mut last_dest = String::new();
+        let mut last_merger = String::new();
 
         loop {
             line.clear();
@@ -316,8 +318,15 @@ pub async fn download_start(
                     playlist_file_size: if total > 0 { Some(filesize) } else { None },
                 });
             }
+
+            if let Some(c) = DEST_RE.captures(trimmed) {
+                last_dest = c[1].trim().to_string();
+            }
+            if let Some(c) = MERGER_RE.captures(trimmed) {
+                last_merger = c[1].to_string();
+            }
         }
-        (metadata_sent, last_title, last_video_id)
+        (metadata_sent, last_title, last_video_id, last_dest, last_merger)
     });
 
     let id_for_close = id.clone();
@@ -334,10 +343,8 @@ pub async fn download_start(
         };
         DOWNLOADS.remove(&id_for_close);
         let stderr_buf = stderr_handle.await.unwrap_or_default();
-        let (metadata_sent, last_title, last_video_id) =
-            stdout_handle
-                .await
-                .unwrap_or((false, String::new(), String::new()));
+        let (metadata_sent, last_title, last_video_id, last_dest, last_merger) =
+            stdout_handle.await.unwrap_or_default();
 
         if cancelled {
             let _ = on_event_close.send(DownloadEvent::Progress {
@@ -358,13 +365,33 @@ pub async fn download_start(
 
         if is_success(code, metadata_sent, playlist_total) {
             let output_path: Option<String> = if playlist_total > 0 {
-                DEST_RE.captures_iter(&stderr_buf).next().and_then(|c| {
-                    Path::new(c[1].trim())
+                let dest = if !last_dest.is_empty() {
+                    Some(last_dest.clone())
+                } else {
+                    DEST_RE
+                        .captures_iter(&stderr_buf)
+                        .next()
+                        .map(|c| c[1].trim().to_string())
+                };
+                dest.and_then(|d| {
+                    Path::new(&d)
                         .parent()
                         .map(|p| p.to_string_lossy().to_string())
                 })
             } else {
-                extract_merger_path(&stderr_buf)
+                let merger = if !last_merger.is_empty() {
+                    Some(last_merger.clone())
+                } else {
+                    extract_merger_path(&stderr_buf)
+                };
+                merger
+                    .or_else(|| {
+                        if !last_dest.is_empty() {
+                            Some(last_dest.clone())
+                        } else {
+                            None
+                        }
+                    })
                     .or_else(|| {
                         DEST_RE
                             .captures_iter(&stderr_buf)
@@ -465,6 +492,13 @@ mod tests {
             extract_merger_path(stderr),
             Some("/Users/x/video.mp4".into())
         );
+    }
+
+    #[test]
+    fn dest_regex_last_match_is_final_destination() {
+        let out = "[download] Destination: /tmp/a.f137.mp4\n[download] Destination: /tmp/a.mp4\n";
+        let last = DEST_RE.captures_iter(out).last().unwrap();
+        assert_eq!(last[1].trim(), "/tmp/a.mp4");
     }
 
     #[test]
