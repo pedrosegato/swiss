@@ -143,7 +143,7 @@ export function FileRow({ id }: FileRowProps) {
                 { label: "Vídeo", options: CONVERT_VIDEO_FORMATS },
                 { label: "Áudio", options: CONVERT_AUDIO_FORMATS },
               ]}
-              triggerClassName="h-5 text-[10px] font-mono w-[68px] px-1.5"
+              triggerClassName="h-6 text-[10px] rounded-full w-auto min-w-[62px] px-2.5 gap-1"
             />
           ) : (
             <Badge
