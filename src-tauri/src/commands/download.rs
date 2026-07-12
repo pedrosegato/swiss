@@ -78,6 +78,10 @@ pub fn extract_merger_path(stderr: &str) -> Option<String> {
     MERGER_RE.captures(stderr).map(|c| c[1].to_string())
 }
 
+fn is_success(code: i32, metadata_sent: bool, playlist_total: i32) -> bool {
+    code == 0 || (metadata_sent && playlist_total > 0)
+}
+
 #[tauri::command]
 pub async fn download_start(
     options: DownloadOptions,
@@ -351,9 +355,8 @@ pub async fn download_start(
 
         let playlist_total = state_close.lock().unwrap().total;
         let code = status.ok().and_then(|s| s.code()).unwrap_or(-1);
-        let partial = code != 0 && metadata_sent;
 
-        if code == 0 || partial {
+        if is_success(code, metadata_sent, playlist_total) {
             let output_path: Option<String> = if playlist_total > 0 {
                 DEST_RE.captures_iter(&stderr_buf).next().and_then(|c| {
                     Path::new(c[1].trim())
@@ -462,5 +465,23 @@ mod tests {
             extract_merger_path(stderr),
             Some("/Users/x/video.mp4".into())
         );
+    }
+
+    #[test]
+    fn single_video_failure_is_not_success() {
+        assert!(!is_success(1, true, 0));
+        assert!(!is_success(-1, true, 0));
+        assert!(!is_success(1, false, 0));
+    }
+
+    #[test]
+    fn clean_exit_is_success() {
+        assert!(is_success(0, true, 0));
+        assert!(is_success(0, false, 5));
+    }
+
+    #[test]
+    fn playlist_partial_failure_is_success() {
+        assert!(is_success(1, true, 10));
     }
 }
