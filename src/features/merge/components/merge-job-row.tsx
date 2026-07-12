@@ -70,8 +70,10 @@ export function MergeJobRow({ id }: MergeJobRowProps) {
   return (
     <div
       className={cn(
-        "bg-card border border-border rounded-lg group transition-all",
-        isError ? "border-destructive/30" : "hover:border-border/80",
+        "bg-card border border-border rounded-lg group transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
+        isError
+          ? "border-destructive/30"
+          : "hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-md hover:shadow-black/15",
       )}
     >
       <div className="flex items-center gap-3 px-3 py-2.5">
@@ -90,16 +92,16 @@ export function MergeJobRow({ id }: MergeJobRowProps) {
         </div>
 
         <div className="flex-1 min-w-0">
-          <p className="text-[12px] font-medium leading-tight truncate">
+          <p className="text-[13px] font-medium leading-tight truncate">
             {item.mainName}
           </p>
-          <p className="text-[10px] text-muted-foreground leading-tight truncate mt-0.5">
+          <p className="text-[11px] text-muted-foreground leading-tight truncate mt-0.5">
             + {item.bgName}
           </p>
         </div>
 
         {isDone && item.outputSize && (
-          <span className="font-mono text-[10px] text-muted-foreground shrink-0">
+          <span className="font-mono text-[11px] text-muted-foreground shrink-0">
             {formatSize(item.outputSize)}
           </span>
         )}

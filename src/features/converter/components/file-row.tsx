@@ -91,8 +91,10 @@ export function FileRow({ id }: FileRowProps) {
   return (
     <div
       className={cn(
-        "bg-card border border-border rounded-lg group transition-all",
-        isError ? "border-destructive/30" : "hover:border-border/80",
+        "bg-card border border-border rounded-lg group transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
+        isError
+          ? "border-destructive/30"
+          : "hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-md hover:shadow-black/15",
       )}
     >
       <div className="flex items-center gap-3 px-3 py-2.5">
@@ -113,17 +115,17 @@ export function FileRow({ id }: FileRowProps) {
         </div>
 
         <div className="flex-1 min-w-0">
-          <p className="text-[12px] font-medium leading-tight truncate">
+          <p className="text-[13px] font-medium leading-tight truncate">
             {item.inputName}
           </p>
           <div className="flex items-center gap-2 mt-0.5">
-            <span className="font-mono text-[10px] text-muted-foreground">
+            <span className="font-mono text-[11px] text-muted-foreground">
               {item.inputSize}
             </span>
             {isDone && item.outputSize && (
               <>
                 <ArrowRight className="w-2.5 h-2.5 text-muted-foreground/40" />
-                <span className="font-mono text-[10px] text-muted-foreground">
+                <span className="font-mono text-[11px] text-muted-foreground">
                   {formatSize(item.outputSize)}
                 </span>
               </>
@@ -134,7 +136,7 @@ export function FileRow({ id }: FileRowProps) {
         <div className="flex items-center gap-1.5 shrink-0">
           <Badge
             variant="outline"
-            className="font-mono text-[9px] px-1.5 py-0 h-5 text-muted-foreground"
+            className="font-mono text-[10px] px-1.5 py-0 h-5 text-muted-foreground"
           >
             {item.inputExt.replace(".", "")}
           </Badge>
@@ -147,12 +149,12 @@ export function FileRow({ id }: FileRowProps) {
                 { label: "Vídeo", options: CONVERT_VIDEO_FORMATS },
                 { label: "Áudio", options: CONVERT_AUDIO_FORMATS },
               ]}
-              triggerClassName="h-5 text-[9px] font-mono w-[68px] px-1.5"
+              triggerClassName="h-5 text-[10px] font-mono w-[68px] px-1.5"
             />
           ) : (
             <Badge
               variant="outline"
-              className="font-mono text-[9px] px-1.5 py-0 h-5"
+              className="font-mono text-[10px] px-1.5 py-0 h-5"
             >
               {item.outputFormat}
             </Badge>
