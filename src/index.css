@@ -12,28 +12,28 @@
   --font-mono: "IBM Plex Mono", monospace;
 }
 
-/* Pocket Knife theme — dark-only */
+/* Pocket Knife theme — dark-only. Neutral greys (chroma 0); Swiss red is the only hue. */
 :root {
-  --background: oklch(0.16 0.005 260); /* #121416 */
-  --foreground: oklch(0.93 0.003 260); /* #e8eaed */
+  --background: oklch(0.16 0 0);
+  --foreground: oklch(0.93 0 0);
 
-  --card: oklch(0.2 0.005 260); /* #1a1d21 */
-  --card-foreground: oklch(0.93 0.003 260);
+  --card: oklch(0.2 0 0);
+  --card-foreground: oklch(0.93 0 0);
 
-  --popover: oklch(0.2 0.005 260);
-  --popover-foreground: oklch(0.93 0.003 260);
+  --popover: oklch(0.2 0 0);
+  --popover-foreground: oklch(0.93 0 0);
 
   --primary: oklch(0.5 0.2 20); /* #c41e3a — Swiss red */
   --primary-foreground: oklch(0.98 0 0); /* white */
 
-  --secondary: oklch(0.2 0.005 260); /* #1a1d21 */
-  --secondary-foreground: oklch(0.64 0.01 250); /* #8b9099 */
+  --secondary: oklch(0.2 0 0);
+  --secondary-foreground: oklch(0.64 0 0);
 
-  --muted: oklch(0.22 0.005 260); /* #1f2227 */
-  --muted-foreground: oklch(0.52 0.01 250); /* #6b7078 */
+  --muted: oklch(0.22 0 0);
+  --muted-foreground: oklch(0.54 0 0);
 
-  --accent: oklch(0.22 0.005 260);
-  --accent-foreground: oklch(0.93 0.003 260);
+  --accent: oklch(0.22 0 0);
+  --accent-foreground: oklch(0.93 0 0);
 
   --destructive: oklch(0.6 0.2 25); /* red for errors */
   --destructive-foreground: oklch(0.98 0 0);
@@ -41,31 +41,38 @@
   --success: oklch(0.696 0.17 162.48); /* emerald-500 */
   --success-foreground: oklch(0.98 0 0);
 
-  --border: oklch(0.27 0.005 250); /* #2a2d32 */
-  --input: oklch(0.27 0.005 250);
+  --border: oklch(0.27 0 0);
+  --input: oklch(0.27 0 0);
   --ring: oklch(0.5 0.2 20); /* Swiss red */
 
-  --radius: 0.625rem;
+  --radius: 0.875rem;
+
+  /* Motion system */
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 150ms;
+  --dur: 200ms;
+  --dur-slow: 320ms;
 
   /* Pocket Knife custom tokens */
-  --metallic: oklch(0.79 0.01 250); /* #b8bcc2 */
-  --metallic-dim: oklch(0.52 0.01 250); /* #6b7078 */
+  --metallic: oklch(0.79 0 0);
+  --metallic-dim: oklch(0.52 0 0);
   --accent-soft: oklch(0.5 0.18 15 / 0.12);
-  --border-hover: oklch(0.32 0.005 250); /* #3a3d42 */
+  --border-hover: oklch(0.32 0 0);
 
   --chart-1: oklch(0.5 0.2 20);
   --chart-2: oklch(0.6 0.15 30);
   --chart-3: oklch(0.45 0.15 15);
-  --chart-4: oklch(0.55 0.1 250);
-  --chart-5: oklch(0.4 0.08 250);
+  --chart-4: oklch(0.55 0 0);
+  --chart-5: oklch(0.4 0 0);
 
-  --sidebar: oklch(0.16 0.005 260);
-  --sidebar-foreground: oklch(0.93 0.003 260);
+  --sidebar: oklch(0.16 0 0);
+  --sidebar-foreground: oklch(0.93 0 0);
   --sidebar-primary: oklch(0.5 0.2 20);
   --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent: oklch(0.22 0.005 260);
-  --sidebar-accent-foreground: oklch(0.93 0.003 260);
-  --sidebar-border: oklch(0.27 0.005 250);
+  --sidebar-accent: oklch(0.22 0 0);
+  --sidebar-accent-foreground: oklch(0.93 0 0);
+  --sidebar-border: oklch(0.27 0 0);
   --sidebar-ring: oklch(0.5 0.2 20);
 }
 
@@ -96,12 +103,12 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: oklch(0.3 0.005 250);
+  background: oklch(0.3 0 0);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: oklch(0.4 0.005 250);
+  background: oklch(0.4 0 0);
 }
 
 ::-webkit-scrollbar-corner {
