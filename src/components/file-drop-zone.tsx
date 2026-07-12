@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import { ipc } from "@/lib/ipc";
 import { formatSize, cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Dot, Download, X } from "lucide-react";
+import { Upload, X } from "lucide-react";
 
 interface FileEntry {
   path: string;
@@ -109,11 +109,11 @@ export function FileDropZone({
         <div
           onClick={handleBrowse}
           className={cn(
-            "flex flex-col items-center justify-center gap-2 rounded-2xl border-[1.5px] border-dashed px-4 py-7 text-center cursor-pointer transition-all duration-200",
-            hasFiles ? "rounded-b-none border-b-0 pb-5" : "",
+            "group/drop flex flex-col items-center justify-center gap-3 rounded-2xl px-4 py-8 text-center cursor-pointer ring-1 ring-inset transition-all duration-200",
+            hasFiles ? "rounded-b-none" : "",
             isDragging
-              ? "border-primary/60 bg-primary/5"
-              : "border-border hover:border-primary/40 hover:bg-primary/[0.03]",
+              ? "bg-primary/[0.07] ring-primary/50"
+              : "bg-muted/30 ring-border hover:bg-muted/50 hover:ring-primary/30",
           )}
         >
           {label && (
@@ -121,27 +121,36 @@ export function FileDropZone({
               {label}
             </span>
           )}
-          <Download
+          <div
             className={cn(
-              "w-6 h-6 transition-transform duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
-              isDragging ? "text-primary -translate-y-1" : "text-muted-foreground",
+              "flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 transition-transform duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover/drop:-translate-y-0.5",
+              isDragging && "-translate-y-1 scale-110",
             )}
-          />
-          <div className="text-sm text-secondary-foreground">
+          >
+            <Upload className="w-5 h-5 text-primary" />
+          </div>
+          <div className="text-sm">
             {isDragging ? (
-              <span className="text-primary font-medium">Solte aqui</span>
+              <span className="text-primary font-medium">Solte os arquivos</span>
             ) : (
               <>
-                Solte arquivos ou{" "}
-                <strong className="text-primary font-medium">procure</strong>
+                <span className="text-foreground font-medium">
+                  Arraste arquivos
+                </span>
+                <span className="text-muted-foreground">
+                  {" "}
+                  ou clique para procurar
+                </span>
               </>
             )}
           </div>
           {showFormats && !isDragging && (
-            <div className="font-mono text-[11px] text-muted-foreground flex items-center flex-wrap justify-center">
-              {extensions.map((fmt, i) => (
-                <span key={fmt} className="flex items-center">
-                  {i > 0 && <Dot className="w-3 h-3" />}
+            <div className="flex items-center flex-wrap justify-center gap-1.5">
+              {extensions.map((fmt) => (
+                <span
+                  key={fmt}
+                  className="font-mono text-[10px] uppercase tracking-wide text-muted-foreground bg-muted px-2 py-0.5 rounded-full"
+                >
                   {fmt}
                 </span>
               ))}
@@ -151,12 +160,12 @@ export function FileDropZone({
       </div>
 
       {hasFiles && (
-        <div className="border-[1.5px] border-dashed border-t-0 border-border rounded-b-2xl">
-          <div className="max-h-[140px] overflow-y-auto">
+        <div className="bg-muted/30 ring-1 ring-inset ring-border rounded-b-2xl overflow-hidden">
+          <div className="max-h-[140px] overflow-y-auto divide-y divide-border/50">
             {files.map((f) => (
               <div
                 key={f.path}
-                className="flex items-center gap-2 px-3 py-2 group border-t border-border/40 first:border-t-0"
+                className="flex items-center gap-2 px-3 py-2 group"
               >
                 <span className="text-[12px] truncate flex-1 text-muted-foreground">
                   {f.name}
@@ -178,7 +187,7 @@ export function FileDropZone({
             ))}
           </div>
           {onClear && files.length > 1 && (
-            <div className="border-t border-border/40 px-3 py-1.5">
+            <div className="border-t border-border/50 px-3 py-1.5">
               <Button
                 variant="ghost"
                 size="sm"
