@@ -41,12 +41,15 @@ export function QueueActionsHeader({
     <>
       <Separator />
       <div className="flex items-center justify-between">
-        <span className="font-mono text-[10px] text-muted-foreground tracking-wider font-medium">
+        <span className="font-mono text-[11px] text-muted-foreground tracking-wider font-medium">
           {countLabel}
         </span>
         <div className="flex items-center gap-1">
           <Button
-            className={cn("text-[11px] h-7 px-3", isActive && "animate-pulse")}
+            className={cn(
+              "text-[12px] h-8 px-3.5 transition-transform duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 active:translate-y-0",
+              isActive && "animate-pulse",
+            )}
             onClick={onPrimary}
             disabled={primaryDisabled}
           >

@@ -34,7 +34,7 @@ export function JobProgress({
     );
   }
 
-  const textSize = variant === "card" ? "text-[10.5px]" : "text-[10px]";
+  const textSize = "text-[11px]";
   const headerMargin = variant === "card" ? "mb-1.5" : "mb-1";
 
   return (

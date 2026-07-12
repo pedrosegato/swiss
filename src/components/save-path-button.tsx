@@ -25,7 +25,7 @@ export function SavePathButton({
     <Button
       variant="ghost"
       onClick={handleSelectFolder}
-      className="h-auto gap-1.5 text-[10px] text-muted-foreground hover:text-foreground"
+      className="h-auto gap-1.5 text-[11px] text-muted-foreground hover:text-foreground"
     >
       <FolderOpen className="w-3 h-3" />
       <span className={cn("font-mono truncate", maxWidthClassName)}>

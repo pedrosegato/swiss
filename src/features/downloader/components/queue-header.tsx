@@ -30,7 +30,7 @@ export function QueueHeader() {
 
   return (
     <div className="flex items-center justify-between">
-      <span className="font-mono text-[10px] text-muted-foreground tracking-wider font-medium">
+      <span className="font-mono text-[11px] text-muted-foreground tracking-wider font-medium">
         {itemCount} {itemCount === 1 ? "item" : "itens"}{" "}
         <Dot className="w-3 h-3 inline" /> {activeCount} ativos
       </span>
@@ -61,7 +61,7 @@ export function QueueHeader() {
           value={sortBy}
           onValueChange={(v) => setSortBy(v as SortOption)}
         >
-          <SelectTrigger className="h-7 text-[11px] w-[130px]">
+          <SelectTrigger className="h-8 text-[12px] w-[130px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

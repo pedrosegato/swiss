@@ -117,7 +117,7 @@ export function FileDropZone({
           )}
         >
           {label && !isDragging && (
-            <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium block mb-1.5">
+            <span className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium block mb-1.5">
               {label}
             </span>
           )}
@@ -129,7 +129,7 @@ export function FileDropZone({
                 : "text-muted-foreground",
             )}
           />
-          <div className="text-[11px] text-secondary-foreground">
+          <div className="text-[12px] text-secondary-foreground">
             {isDragging ? (
               <span className="text-primary/80 font-medium">Solte aqui</span>
             ) : (
@@ -142,7 +142,7 @@ export function FileDropZone({
             )}
           </div>
           {showFormats && !isDragging && (
-            <div className="font-mono text-[10px] text-muted-foreground flex items-center flex-wrap justify-center mt-1">
+            <div className="font-mono text-[11px] text-muted-foreground flex items-center flex-wrap justify-center mt-1">
               {extensions.map((fmt, i) => (
                 <span key={fmt} className="flex items-center">
                   {i > 0 && <Dot className="w-3 h-3" />}
@@ -162,10 +162,10 @@ export function FileDropZone({
                 key={f.path}
                 className="flex items-center gap-2 px-2.5 py-1.5 group border-t border-border/40 first:border-t-0"
               >
-                <span className="text-[10px] truncate flex-1 text-muted-foreground">
+                <span className="text-[11px] truncate flex-1 text-muted-foreground">
                   {f.name}
                 </span>
-                <span className="font-mono text-[9px] text-muted-foreground/60 shrink-0">
+                <span className="font-mono text-[10px] text-muted-foreground/60 shrink-0">
                   {formatSize(f.size)}
                 </span>
                 {onRemoveFile && (
@@ -186,7 +186,7 @@ export function FileDropZone({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-4 px-0 text-[9px] text-muted-foreground/60 hover:text-destructive"
+                className="h-4 px-0 text-[10px] text-muted-foreground/60 hover:text-destructive"
                 onClick={onClear}
               >
                 Limpar todos

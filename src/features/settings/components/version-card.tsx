@@ -66,9 +66,9 @@ export function VersionCard({ binary }: VersionCardProps) {
   };
 
   return (
-    <div className="bg-card border border-border rounded-lg px-3 py-2.5 flex flex-col gap-2">
+    <div className="bg-card border border-border rounded-lg px-3.5 py-3 flex flex-col gap-2">
       <div className="flex items-center justify-between">
-        <span className="font-mono text-[11px] font-medium">{binary.name}</span>
+        <span className="font-mono text-[12px] font-medium">{binary.name}</span>
         <div className="flex items-center gap-1.5">
           <div
             className={cn(
@@ -80,7 +80,7 @@ export function VersionCard({ binary }: VersionCardProps) {
                   : "bg-destructive",
             )}
           />
-          <span className="text-[9px] text-muted-foreground">
+          <span className="text-[10px] text-muted-foreground">
             {binary.downloading
               ? "Baixando"
               : binary.installed
@@ -90,7 +90,7 @@ export function VersionCard({ binary }: VersionCardProps) {
         </div>
       </div>
 
-      <span className="font-mono text-[9px] text-muted-foreground/60 truncate">
+      <span className="font-mono text-[10px] text-muted-foreground/60 truncate">
         {binary.downloading
           ? "Baixando..."
           : (binary.version ?? "—")}
@@ -101,7 +101,7 @@ export function VersionCard({ binary }: VersionCardProps) {
           <Button
             variant="outline"
             size="sm"
-            className="h-6 text-[10px] px-2 flex-1"
+            className="h-6 text-[11px] px-2.5 flex-1"
             onClick={handleInstall}
           >
             <Download className="w-3 h-3" />
@@ -113,7 +113,7 @@ export function VersionCard({ binary }: VersionCardProps) {
             <Button
               variant="outline"
               size="sm"
-              className="h-6 text-[10px] px-2 flex-1"
+              className="h-6 text-[11px] px-2.5 flex-1"
               onClick={handleUpdate}
             >
               <RefreshCw className="w-3 h-3" />
@@ -124,7 +124,7 @@ export function VersionCard({ binary }: VersionCardProps) {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-6 text-[10px] px-1.5 text-muted-foreground hover:text-destructive"
+                  className="h-6 text-[11px] px-2 text-muted-foreground hover:text-destructive"
                 >
                   <Trash2 className="w-3 h-3" />
                 </Button>

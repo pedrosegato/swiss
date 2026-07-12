@@ -98,7 +98,7 @@ function Section({
 }) {
   return (
     <div className="flex flex-col gap-2.5">
-      <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
+      <span className="font-mono text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
         {title}
       </span>
       {children}
@@ -118,8 +118,8 @@ function SettingRow({
   return (
     <div className="flex items-center justify-between gap-4 py-1.5">
       <div className="flex-1 min-w-0">
-        <div className="text-[12px] font-medium">{label}</div>
-        <div className="text-[10px] text-muted-foreground leading-snug">
+        <div className="text-[13px] font-medium">{label}</div>
+        <div className="text-[11px] text-muted-foreground leading-snug">
           {description}
         </div>
       </div>
