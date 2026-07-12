@@ -175,16 +175,17 @@ pub async fn get_spawn_path(name: BinaryName) -> String {
 }
 
 async fn resolve_pip_python() -> Option<String> {
+    use std::time::Duration;
     if cfg!(windows) {
         return None;
     }
     let python = find_python().await;
-    if python_has_ytdlp(&python, None).await {
+    if python_has_ytdlp(&python, Some(Duration::from_secs(10))).await {
         return Some(python);
     }
     let opts = PipInstallOpts {
         upgrade: false,
-        timeout: None,
+        timeout: Some(Duration::from_secs(60)),
         windows_enabled: false,
     };
     if pip_install_ytdlp(&python, &opts).await {

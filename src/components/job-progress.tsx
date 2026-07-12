@@ -34,7 +34,7 @@ export function JobProgress({
     );
   }
 
-  const textSize = variant === "card" ? "text-[10.5px]" : "text-[10px]";
+  const textSize = "text-[11px]";
   const headerMargin = variant === "card" ? "mb-1.5" : "mb-1";
 
   return (
@@ -55,7 +55,7 @@ export function JobProgress({
         </span>
         <span
           className={cn(
-            "font-mono font-medium tabular-nums",
+            "font-medium tabular-nums",
             textSize,
             isDone
               ? "text-muted-foreground"

@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import { ipc } from "@/lib/ipc";
 import { formatSize, cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Dot, Download, X } from "lucide-react";
+import { Upload, X } from "lucide-react";
 
 interface FileEntry {
   path: string;
@@ -109,43 +109,48 @@ export function FileDropZone({
         <div
           onClick={handleBrowse}
           className={cn(
-            "border-[1.5px] border-dashed rounded-md p-4 text-center transition-colors cursor-pointer",
-            hasFiles ? "rounded-b-none border-b-0" : "",
+            "group/drop flex flex-col items-center justify-center gap-3 rounded-2xl px-4 py-8 text-center cursor-pointer ring-1 ring-inset transition-all duration-200",
+            hasFiles ? "rounded-b-none" : "",
             isDragging
-              ? "border-primary/60 bg-primary/5"
-              : "border-border hover:border-border-hover",
+              ? "bg-primary/[0.07] ring-primary/50"
+              : "bg-muted/30 ring-border hover:bg-muted/50 hover:ring-primary/30",
           )}
         >
-          {label && !isDragging && (
-            <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium block mb-1.5">
+          {label && (
+            <span className="text-xs text-muted-foreground tracking-wider font-medium">
               {label}
             </span>
           )}
-          <Download
+          <div
             className={cn(
-              "mx-auto mb-1.5 w-4 h-4 transition-transform duration-200",
-              isDragging
-                ? "text-primary/60 -translate-y-1"
-                : "text-muted-foreground",
+              "flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 transition-transform duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover/drop:-translate-y-0.5",
+              isDragging && "-translate-y-1 scale-110",
             )}
-          />
-          <div className="text-[11px] text-secondary-foreground">
+          >
+            <Upload className="w-5 h-5 text-primary" />
+          </div>
+          <div className="text-sm">
             {isDragging ? (
-              <span className="text-primary/80 font-medium">Solte aqui</span>
+              <span className="text-primary font-medium">Solte os arquivos</span>
             ) : (
               <>
-                Solte arquivos ou{" "}
-                <strong className="text-primary font-medium cursor-pointer">
-                  procure
-                </strong>
+                <span className="text-foreground font-medium">
+                  Arraste arquivos
+                </span>
+                <span className="text-muted-foreground">
+                  {" "}
+                  ou clique para procurar
+                </span>
               </>
             )}
           </div>
           {showFormats && !isDragging && (
-            <div className="font-mono text-[10px] text-muted-foreground flex items-center flex-wrap justify-center mt-1">
-              {extensions.map((fmt, i) => (
-                <span key={fmt} className="flex items-center">
-                  {i > 0 && <Dot className="w-3 h-3" />}
+            <div className="flex items-center flex-wrap justify-center gap-1.5">
+              {extensions.map((fmt) => (
+                <span
+                  key={fmt}
+                  className="text-[10px] tracking-wide text-muted-foreground bg-muted px-2 py-0.5 rounded-full"
+                >
                   {fmt}
                 </span>
               ))}
@@ -155,38 +160,38 @@ export function FileDropZone({
       </div>
 
       {hasFiles && (
-        <div className="border-[1.5px] border-dashed border-t-0 border-border rounded-b-md">
-          <div className="max-h-[140px] overflow-y-auto">
+        <div className="bg-muted/30 ring-1 ring-inset ring-border rounded-b-2xl overflow-hidden">
+          <div className="max-h-[140px] overflow-y-auto divide-y divide-border/50">
             {files.map((f) => (
               <div
                 key={f.path}
-                className="flex items-center gap-2 px-2.5 py-1.5 group border-t border-border/40 first:border-t-0"
+                className="flex items-center gap-2 px-3 py-2 group"
               >
-                <span className="text-[10px] truncate flex-1 text-muted-foreground">
+                <span className="text-[12px] truncate flex-1 text-muted-foreground">
                   {f.name}
                 </span>
-                <span className="font-mono text-[9px] text-muted-foreground/60 shrink-0">
+                <span className="text-[11px] text-muted-foreground/60 shrink-0">
                   {formatSize(f.size)}
                 </span>
                 {onRemoveFile && (
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                    className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
                     onClick={() => onRemoveFile(f.path)}
                   >
-                    <X className="w-2.5 h-2.5" />
+                    <X className="w-3 h-3" />
                   </Button>
                 )}
               </div>
             ))}
           </div>
           {onClear && files.length > 1 && (
-            <div className="border-t border-border/40 px-2.5 py-1">
+            <div className="border-t border-border/50 px-3 py-1.5">
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-4 px-0 text-[9px] text-muted-foreground/60 hover:text-destructive"
+                className="h-5 px-0 text-[11px] text-muted-foreground/60 hover:text-destructive"
                 onClick={onClear}
               >
                 Limpar todos

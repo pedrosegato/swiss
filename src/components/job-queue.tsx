@@ -43,7 +43,12 @@ export function JobQueue({
             initial={transitions.initial}
             animate={transitions.animate}
             exit={transitions.exit}
-            transition={{ duration: 0.2, delay: i < staggerCap ? i * 0.03 : 0 }}
+            transition={{
+              type: "spring",
+              stiffness: 420,
+              damping: 28,
+              delay: i < staggerCap ? i * 0.035 : 0,
+            }}
           >
             {renderRow(id)}
           </motion.div>

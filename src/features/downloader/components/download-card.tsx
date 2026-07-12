@@ -1,10 +1,9 @@
 import { DOWNLOAD_STAGE_LABELS } from "@/lib/constants";
-import { Card } from "@/components/ui/card";
+import { JobShell } from "@/components/job-shell";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { JobActions } from "@/components/job-actions";
 import { JobProgress } from "@/components/job-progress";
-import { cn } from "@/lib/utils";
 import { motion } from "motion/react";
 import { ipc } from "@/lib/ipc";
 import { useDownloadStore } from "@/stores/download-store";
@@ -75,7 +74,7 @@ export function DownloadCard({ id }: DownloadCardProps) {
 
   if (isFetching) {
     return (
-      <Card className="overflow-hidden flex flex-col p-0 gap-0">
+      <JobShell className="flex flex-col">
         <div className="w-full aspect-video bg-muted/20 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
           <div className="absolute inset-0 flex items-center justify-center">
@@ -104,17 +103,12 @@ export function DownloadCard({ id }: DownloadCardProps) {
             </div>
           </div>
         </div>
-      </Card>
+      </JobShell>
     );
   }
 
   return (
-    <Card
-      className={cn(
-        "overflow-hidden flex flex-col p-0 gap-0 transition-all hover:border-border/80 hover:-translate-y-px",
-        isError && "border-destructive/30",
-      )}
-    >
+    <JobShell isError={isError} className="flex flex-col">
       <div
         className="w-full aspect-video bg-muted/20 relative overflow-hidden cursor-pointer"
         onClick={() => item.url && ipc.openExternal(item.url)}
@@ -128,13 +122,13 @@ export function DownloadCard({ id }: DownloadCardProps) {
         ) : null}
 
         {item.duration && (
-          <span className="absolute bottom-1.5 right-1.5 font-mono text-[9.5px] font-medium text-white bg-black/70 px-1.5 py-0.5 rounded-sm tracking-wide">
+          <span className="absolute bottom-1.5 right-1.5 text-[10px] font-medium text-white bg-black/70 px-1.5 py-0.5 rounded-sm tracking-wide">
             {item.duration}
           </span>
         )}
 
         {isPlaylist && item.playlistCount ? (
-          <span className="absolute bottom-1.5 left-1.5 flex items-center gap-1 text-[9.5px] font-medium text-white bg-black/70 px-1.5 py-0.5 rounded-sm">
+          <span className="absolute bottom-1.5 left-1.5 flex items-center gap-1 text-[10px] font-medium text-white bg-black/70 px-1.5 py-0.5 rounded-sm">
             <ListVideo className="w-3 h-3" />
             {item.playlistCount} vídeos
           </span>
@@ -142,14 +136,14 @@ export function DownloadCard({ id }: DownloadCardProps) {
 
         <Badge
           variant="outline"
-          className="absolute top-1.5 right-1.5 text-[9px] px-1.5 py-0 bg-black/60 text-white border-white/20 font-mono uppercase tracking-wider"
+          className="absolute top-1.5 right-1.5 text-[10px] px-1.5 py-0 bg-black/60 text-white border-white/20 tracking-wider"
         >
           {item.format}
         </Badge>
       </div>
 
-      <div className="px-3 pt-2.5 pb-3 flex flex-col flex-1">
-        <p className="text-[12.5px] font-medium leading-snug line-clamp-2 mb-2">
+      <div className="px-3.5 pt-3 pb-3.5 flex flex-col flex-1">
+        <p className="text-[13.5px] font-medium leading-snug line-clamp-2 mb-2.5">
           {isPlaylist ? item.playlistTitle : item.title}
         </p>
 
@@ -171,7 +165,7 @@ export function DownloadCard({ id }: DownloadCardProps) {
             variant="card"
           />
           <div className="flex items-center justify-between pt-0.5">
-            <span className="font-mono text-[10px] text-muted-foreground flex items-center gap-1.5">
+            <span className="text-[11px] text-muted-foreground flex items-center gap-1.5">
               <span>{item.quality}</span>
               {item.fileSize && (
                 <>
@@ -194,6 +188,6 @@ export function DownloadCard({ id }: DownloadCardProps) {
           </div>
         </div>
       </div>
-    </Card>
+    </JobShell>
   );
 }

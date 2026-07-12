@@ -35,8 +35,8 @@ export function EmptyQueue({ icon: Icon, title, description }: EmptyQueueProps) 
               <Icon className="w-8 h-8 text-muted-foreground" />
             </motion.div>
           </EmptyMedia>
-          <EmptyTitle className="text-[14px]">{title}</EmptyTitle>
-          <EmptyDescription className="text-[12px]">
+          <EmptyTitle className="text-[15px]">{title}</EmptyTitle>
+          <EmptyDescription className="text-[13px]">
             {description}
           </EmptyDescription>
         </EmptyHeader>

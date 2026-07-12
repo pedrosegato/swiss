@@ -7,30 +7,20 @@ export interface NavItem {
   icon: LucideIcon;
 }
 
-export interface NavGroup {
-  label: string;
-  items: NavItem[];
-}
-
-export const navGroups: NavGroup[] = [
+export const navItems: NavItem[] = [
   {
-    label: "Vídeos",
-    items: [
-      {
-        to: "/downloader",
-        label: "Download",
-        icon: DownloadCloud,
-      },
-      {
-        to: "/converter",
-        label: "Converter",
-        icon: RefreshCw,
-      },
-      {
-        to: "/merge",
-        label: "Mesclagem",
-        icon: Merge,
-      },
-    ],
+    to: "/downloader",
+    label: "Download",
+    icon: DownloadCloud,
+  },
+  {
+    to: "/converter",
+    label: "Converter",
+    icon: RefreshCw,
+  },
+  {
+    to: "/merge",
+    label: "Mesclagem",
+    icon: Merge,
   },
 ];

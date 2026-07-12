@@ -1,4 +1,5 @@
-import { cn, formatSize } from "@/lib/utils";
+import { formatSize } from "@/lib/utils";
+import { JobShell } from "@/components/job-shell";
 import { useMergeStore } from "@/stores/merge-store";
 import { useBinariesStore } from "@/stores/binaries-store";
 import { useSettingsStore } from "@/stores/settings-store";
@@ -68,12 +69,7 @@ export function MergeJobRow({ id }: MergeJobRowProps) {
   };
 
   return (
-    <div
-      className={cn(
-        "bg-card border border-border rounded-lg group transition-all",
-        isError ? "border-destructive/30" : "hover:border-border/80",
-      )}
-    >
+    <JobShell isError={isError} className="group">
       <div className="flex items-center gap-3 px-3 py-2.5">
         <div className="w-[52px] h-[36px] shrink-0 rounded overflow-hidden">
           {item.thumbnail ? (
@@ -90,16 +86,16 @@ export function MergeJobRow({ id }: MergeJobRowProps) {
         </div>
 
         <div className="flex-1 min-w-0">
-          <p className="text-[12px] font-medium leading-tight truncate">
+          <p className="text-[13px] font-medium leading-tight truncate">
             {item.mainName}
           </p>
-          <p className="text-[10px] text-muted-foreground leading-tight truncate mt-0.5">
+          <p className="text-[11px] text-muted-foreground leading-tight truncate mt-0.5">
             + {item.bgName}
           </p>
         </div>
 
         {isDone && item.outputSize && (
-          <span className="font-mono text-[10px] text-muted-foreground shrink-0">
+          <span className="text-[11px] text-muted-foreground shrink-0">
             {formatSize(item.outputSize)}
           </span>
         )}
@@ -128,6 +124,6 @@ export function MergeJobRow({ id }: MergeJobRowProps) {
           />
         </div>
       )}
-    </div>
+    </JobShell>
   );
 }

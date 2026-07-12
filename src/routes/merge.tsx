@@ -1,7 +1,7 @@
 import { useShallow } from "zustand/shallow";
 import { createFileRoute } from "@tanstack/react-router";
 import { JobQueue } from "@/components/job-queue";
-import { QueueActionsHeader } from "@/components/queue-actions-header";
+import { QueueBar } from "@/components/queue-bar";
 import {
   Select,
   SelectContent,
@@ -16,6 +16,7 @@ import { useMergeStore } from "@/stores/merge-store";
 import { useBinariesStore } from "@/stores/binaries-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { SavePathButton } from "@/components/save-path-button";
+import { pillTriggerClass } from "@/components/pill-select";
 import { Merge } from "lucide-react";
 import { EmptyQueue } from "@/components/empty-queue";
 import { toast } from "sonner";
@@ -89,12 +90,12 @@ function MergePage() {
         />
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         <Select
           value={direction}
           onValueChange={(v) => setDirection(v as MergeDirection)}
         >
-          <SelectTrigger className="w-[120px] text-xs h-8">
+          <SelectTrigger className={pillTriggerClass}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent position="popper" sideOffset={4}>
@@ -102,22 +103,28 @@ function MergePage() {
             <SelectItem value="horizontal">Horizontal</SelectItem>
           </SelectContent>
         </Select>
-        <SavePathButton />
+        <div className="ml-auto">
+          <SavePathButton />
+        </div>
       </div>
 
       {itemCount > 0 && (
-        <QueueActionsHeader
+        <QueueBar
           countLabel={`${itemCount} ${itemCount === 1 ? "merge" : "merges"}`}
-          primaryLabel="Mesclar tudo"
-          primaryActiveLabel="Mesclando..."
-          isActive={isMerging}
-          primaryDisabled={!canStart && !hasQueued}
-          onPrimary={handleStartAll}
-          confirmTitle="Limpar merges?"
-          confirmDescription="Todos os merges concluídos serão removidos da lista."
-          confirmLabel="Limpar"
-          clearTooltip="Limpar concluídos"
-          onConfirmClear={clearCompleted}
+          primary={{
+            label: "Mesclar tudo",
+            activeLabel: "Mesclando...",
+            isActive: isMerging,
+            disabled: !canStart && !hasQueued,
+            onClick: handleStartAll,
+          }}
+          clear={{
+            title: "Limpar merges?",
+            description: "Todos os merges concluídos serão removidos da lista.",
+            confirmLabel: "Limpar",
+            tooltip: "Limpar concluídos",
+            onConfirm: clearCompleted,
+          }}
         />
       )}
 

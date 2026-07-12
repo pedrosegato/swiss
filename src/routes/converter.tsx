@@ -1,8 +1,8 @@
 import { useShallow } from "zustand/shallow";
 import { createFileRoute } from "@tanstack/react-router";
-import { FormatSelect } from "@/components/format-select";
+import { PillSelect } from "@/components/pill-select";
 import { JobQueue } from "@/components/job-queue";
-import { QueueActionsHeader } from "@/components/queue-actions-header";
+import { QueueBar } from "@/components/queue-bar";
 import { FileDropZone } from "@/components/file-drop-zone";
 import { formatSize } from "@/lib/utils";
 import { ipc } from "@/lib/ipc";
@@ -17,6 +17,7 @@ import {
 import type { ConvertFormat } from "@/lib/types";
 import { FileAudio } from "lucide-react";
 import { EmptyQueue } from "@/components/empty-queue";
+import { SavePathButton } from "@/components/save-path-button";
 import { useSettingsStore } from "@/stores/settings-store";
 import { toast } from "sonner";
 
@@ -95,36 +96,43 @@ function ConverterPage() {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-col gap-2.5">
-        <FileDropZone
-          extensions={CONVERT_ALL_FORMATS}
-          showFormats
-          onDrop={handleFilesDropped}
-        />
-        <FormatSelect
+      <FileDropZone
+        extensions={CONVERT_ALL_FORMATS}
+        showFormats
+        onDrop={handleFilesDropped}
+      />
+      <div className="flex items-center gap-2">
+        <PillSelect
           value={format}
           onValueChange={handleFormatChange}
           groups={[
             { label: "Vídeo", options: CONVERT_VIDEO_FORMATS },
             { label: "Áudio", options: CONVERT_AUDIO_FORMATS },
           ]}
-          triggerClassName="w-[100px] text-xs h-8"
         />
+        <div className="ml-auto">
+          <SavePathButton />
+        </div>
       </div>
 
       {itemCount > 0 && (
-        <QueueActionsHeader
+        <QueueBar
           countLabel={`${itemCount} ${itemCount === 1 ? "arquivo" : "arquivos"}`}
-          primaryLabel="Converter tudo"
-          primaryActiveLabel="Convertendo..."
-          isActive={isConverting}
-          primaryDisabled={!hasQueued && !isConverting}
-          onPrimary={handleStartAll}
-          confirmTitle="Limpar arquivos?"
-          confirmDescription="Todos os arquivos da lista serão removidos. Conversões ativas serão canceladas."
-          confirmLabel="Limpar"
-          clearTooltip="Limpar arquivos"
-          onConfirmClear={clearItems}
+          primary={{
+            label: "Converter tudo",
+            activeLabel: "Convertendo...",
+            isActive: isConverting,
+            disabled: !hasQueued && !isConverting,
+            onClick: handleStartAll,
+          }}
+          clear={{
+            title: "Limpar arquivos?",
+            description:
+              "Todos os arquivos da lista serão removidos. Conversões ativas serão canceladas.",
+            confirmLabel: "Limpar",
+            tooltip: "Limpar arquivos",
+            onConfirm: clearItems,
+          }}
         />
       )}
 

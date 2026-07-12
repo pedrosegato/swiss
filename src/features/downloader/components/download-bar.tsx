@@ -1,19 +1,13 @@
 import { useState, useRef, useEffect } from "react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SavePathButton } from "@/components/save-path-button";
-import { FormatSelect } from "@/components/format-select";
+import { PillSelect } from "@/components/pill-select";
 import { isVideoFormat } from "@/lib/constants";
 import { readText } from "@tauri-apps/plugin-clipboard-manager";
 import { validateUrl } from "@/lib/url-validation";
-import { Download } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Download, Link2 } from "lucide-react";
 
 interface DownloadBarProps {
   format: string;
@@ -99,58 +93,54 @@ export function DownloadBar({
   }, []);
 
   return (
-    <div className="flex flex-col gap-1.5">
-      <div className="flex items-center">
-        <FormatSelect
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <Link2 className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
+          <Input
+            ref={inputRef}
+            className={cn(
+              "h-12 rounded-2xl bg-transparent pl-11 pr-4 text-sm",
+              error && "border-destructive",
+            )}
+            placeholder="Cole um link para baixar…"
+            value={url}
+            onChange={(e) => {
+              setUrl(e.target.value);
+              if (error) setError(null);
+            }}
+            onKeyDown={(e) => e.key === "Enter" && submit()}
+          />
+        </div>
+        <Button
+          className="h-12 gap-1.5 rounded-2xl px-5 font-medium"
+          onClick={() => submit()}
+          disabled={!url}
+        >
+          <Download className="w-4 h-4" />
+          Baixar
+        </Button>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <PillSelect
           value={format}
           onValueChange={handleFormatChange}
           groups={[
             { label: "Vídeo", options: videoFormats },
             { label: "Áudio", options: audioFormats },
           ]}
-          triggerClassName="w-[88px] text-xs h-9 shrink-0 rounded-r-none border-r-0 focus:z-10"
         />
-
-        <Select
+        <PillSelect
           value={quality}
-          onValueChange={(v: string | null) => v && onQualityChange(v)}
-        >
-          <SelectTrigger className="w-[92px] text-xs h-9 shrink-0 rounded-none border-l-0 border-r-0 focus:z-10">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent position="popper" sideOffset={4}>
-            {qualities.map((q) => (
-              <SelectItem key={q} value={q}>
-                {q}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Input
-          ref={inputRef}
-          className={`flex-1 font-mono text-xs h-9 rounded-none border-l-0 focus:z-10 ${error ? "border-destructive" : ""}`}
-          placeholder="Cole uma URL para baixar..."
-          value={url}
-          onChange={(e) => {
-            setUrl(e.target.value);
-            if (error) setError(null);
-          }}
-          onKeyDown={(e) => e.key === "Enter" && submit()}
+          onValueChange={(v) => v && onQualityChange(v)}
+          options={qualities}
         />
 
-        <Button
-          className="text-xs h-9 rounded-l-none border-l-0"
-          onClick={() => submit()}
-          disabled={!url}
-        >
-          <Download className="w-4 h-4" />
-        </Button>
-      </div>
-
-      <div className="flex items-center justify-between">
-        <SavePathButton />
-        {error && <p className="text-[10px] text-destructive">{error}</p>}
+        <div className="ml-auto flex items-center gap-2">
+          {error && <p className="text-xs text-destructive">{error}</p>}
+          <SavePathButton />
+        </div>
       </div>
     </div>
   );

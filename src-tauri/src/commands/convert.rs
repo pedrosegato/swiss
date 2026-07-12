@@ -4,13 +4,24 @@ use crate::error::AppResult;
 use crate::process_registry::CONVERSIONS;
 use crate::progress::{MediaKind, ProgressEvent, Stage};
 use base64::{engine::general_purpose::STANDARD, Engine};
+use once_cell::sync::Lazy;
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use tauri::ipc::Channel;
 use tauri::{AppHandle, Manager};
 use tauri_plugin_notification::NotificationExt;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
+use tokio::sync::Semaphore;
+
+static CONVERT_SEMAPHORE: Lazy<Arc<Semaphore>> = Lazy::new(|| {
+    let n = std::thread::available_parallelism()
+        .map(|c| c.get())
+        .unwrap_or(2)
+        .clamp(1, 4);
+    Arc::new(Semaphore::new(n))
+});
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -126,79 +137,118 @@ pub async fn convert_start(
     on_event: Channel<ProgressEvent>,
 ) -> AppResult<()> {
     let id = options.id.clone();
-    let ffmpeg = get_spawn_path(BinaryName::Ffmpeg).await;
-    let duration = media_duration(&options.input_path).await;
-    let output_path = build_output_path(
-        &options.input_path,
-        &options.output_format,
-        &options.save_path,
-    );
-    let input_ext = Path::new(&options.input_path)
-        .extension()
-        .map(|s| s.to_string_lossy().to_lowercase())
-        .unwrap_or_default();
-    let qargs = quality_args(&options.output_format, &options.quality, &input_ext);
 
-    let mut args: Vec<String> = vec!["-i".into(), options.input_path.clone(), "-y".into()];
-    args.extend(qargs);
-    args.extend(["-progress".into(), "pipe:1".into()]);
-    args.push(output_path.to_string_lossy().to_string());
-
-    let mut child = spawn_piped(&ffmpeg, &args)?;
-    let stdout = child.stdout.take().unwrap();
-    let stderr = child.stderr.take().unwrap();
-    let cancel_rx = match CONVERSIONS.register(id.clone()) {
-        Some(rx) => rx,
-        None => {
-            let _ = on_event.send(ProgressEvent {
-                id: id.clone(),
-                kind: MediaKind::Convert,
-                progress: 0,
-                stage: Stage::Error,
-                error_message: Some("Job já em andamento".into()),
-                output_size: None,
-                output_path: None,
-            });
-            return Ok(());
-        }
-    };
-
-    let stderr_handle = drain_stderr(stderr);
-
-    let id_stdout = id.clone();
-    let on_event_stdout = on_event.clone();
-    let stdout_handle = tokio::spawn(async move {
-        let mut reader = BufReader::new(stdout);
-        let mut line = String::new();
-        loop {
-            line.clear();
-            match reader.read_line(&mut line).await {
-                Ok(0) => break,
-                Ok(_) => {}
-                Err(_) => continue,
+    tokio::spawn(async move {
+        let mut cancel_rx = match CONVERSIONS.register(id.clone()) {
+            Some(rx) => rx,
+            None => {
+                let _ = on_event.send(ProgressEvent {
+                    id: id.clone(),
+                    kind: MediaKind::Convert,
+                    progress: 0,
+                    stage: Stage::Error,
+                    error_message: Some("Job já em andamento".into()),
+                    output_size: None,
+                    output_path: None,
+                });
+                return;
             }
-            if let Some(c) = OUT_TIME_RE.captures(&line) {
-                if duration > 0.0 {
-                    let current: f64 = c[1].parse::<f64>().unwrap_or(0.0) / 1_000_000.0;
-                    let progress = ((current / duration) * 100.0).round() as i32;
-                    let _ = on_event_stdout.send(ProgressEvent {
-                        id: id_stdout.clone(),
-                        kind: MediaKind::Convert,
-                        progress: progress.min(99),
-                        stage: Stage::Converting,
-                        error_message: None,
-                        output_size: None,
-                        output_path: None,
-                    });
+        };
+
+        let _permit = tokio::select! {
+            p = CONVERT_SEMAPHORE.clone().acquire_owned() => match p {
+                Ok(p) => p,
+                Err(_) => {
+                    CONVERSIONS.remove(&id);
+                    return;
+                }
+            },
+            _ = &mut cancel_rx => {
+                CONVERSIONS.remove(&id);
+                let _ = on_event.send(ProgressEvent {
+                    id: id.clone(),
+                    kind: MediaKind::Convert,
+                    progress: 0,
+                    stage: Stage::Error,
+                    error_message: Some("Cancelado".into()),
+                    output_size: None,
+                    output_path: None,
+                });
+                return;
+            }
+        };
+
+        let ffmpeg = get_spawn_path(BinaryName::Ffmpeg).await;
+        let duration = media_duration(&options.input_path).await;
+        let output_path = build_output_path(
+            &options.input_path,
+            &options.output_format,
+            &options.save_path,
+        );
+        let input_ext = Path::new(&options.input_path)
+            .extension()
+            .map(|s| s.to_string_lossy().to_lowercase())
+            .unwrap_or_default();
+        let qargs = quality_args(&options.output_format, &options.quality, &input_ext);
+
+        let mut args: Vec<String> = vec!["-i".into(), options.input_path.clone(), "-y".into()];
+        args.extend(qargs);
+        args.extend(["-progress".into(), "pipe:1".into()]);
+        args.push(output_path.to_string_lossy().to_string());
+
+        let mut child = match spawn_piped(&ffmpeg, &args) {
+            Ok(c) => c,
+            Err(e) => {
+                CONVERSIONS.remove(&id);
+                let _ = on_event.send(ProgressEvent {
+                    id: id.clone(),
+                    kind: MediaKind::Convert,
+                    progress: 0,
+                    stage: Stage::Error,
+                    error_message: Some(e.to_string()),
+                    output_size: None,
+                    output_path: None,
+                });
+                return;
+            }
+        };
+        let stdout = child.stdout.take().unwrap();
+        let stderr = child.stderr.take().unwrap();
+
+        let stderr_handle = drain_stderr(stderr);
+
+        let id_stdout = id.clone();
+        let on_event_stdout = on_event.clone();
+        let stdout_handle = tokio::spawn(async move {
+            let mut reader = BufReader::new(stdout);
+            let mut line = String::new();
+            loop {
+                line.clear();
+                match reader.read_line(&mut line).await {
+                    Ok(0) => break,
+                    Ok(_) => {}
+                    Err(_) => continue,
+                }
+                if let Some(c) = OUT_TIME_RE.captures(&line) {
+                    if duration > 0.0 {
+                        let current: f64 = c[1].parse::<f64>().unwrap_or(0.0) / 1_000_000.0;
+                        let progress = ((current / duration) * 100.0).round() as i32;
+                        let _ = on_event_stdout.send(ProgressEvent {
+                            id: id_stdout.clone(),
+                            kind: MediaKind::Convert,
+                            progress: progress.min(99),
+                            stage: Stage::Converting,
+                            error_message: None,
+                            output_size: None,
+                            output_path: None,
+                        });
+                    }
                 }
             }
-        }
-    });
+        });
 
-    let id_close = id.clone();
-    let out_path_close = output_path.clone();
-    let app_close = app.clone();
-    tokio::spawn(async move {
+        let id_close = id.clone();
+        let out_path_close = output_path.clone();
         let (status, cancelled) = tokio::select! {
             s = child.wait() => (s, false),
             _ = cancel_rx => {
@@ -231,7 +281,7 @@ pub async fn convert_start(
                 .await
                 .ok()
                 .map(|m| m.len());
-            let _ = app_close
+            let _ = app
                 .notification()
                 .builder()
                 .title("Conversão concluída")

@@ -9,6 +9,8 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { SavePathButton } from "@/components/save-path-button";
+import { pillTriggerClass } from "@/components/pill-select";
+import { cn } from "@/lib/utils";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useBinariesStore } from "@/stores/binaries-store";
 import { VersionCard } from "@/features/settings/components/version-card";
@@ -61,7 +63,7 @@ function SettingsPage() {
               value={cookieBrowser}
               onValueChange={(v) => v && setCookieBrowser(v as Browser)}
             >
-              <SelectTrigger className="w-[110px] text-xs h-8">
+              <SelectTrigger className={cn(pillTriggerClass, "min-w-[110px]")}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent position="popper" sideOffset={4}>
@@ -98,7 +100,7 @@ function Section({
 }) {
   return (
     <div className="flex flex-col gap-2.5">
-      <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
+      <span className="text-[11px] text-muted-foreground tracking-wider font-medium">
         {title}
       </span>
       {children}
@@ -118,8 +120,8 @@ function SettingRow({
   return (
     <div className="flex items-center justify-between gap-4 py-1.5">
       <div className="flex-1 min-w-0">
-        <div className="text-[12px] font-medium">{label}</div>
-        <div className="text-[10px] text-muted-foreground leading-snug">
+        <div className="text-[13px] font-medium">{label}</div>
+        <div className="text-[11px] text-muted-foreground leading-snug">
           {description}
         </div>
       </div>

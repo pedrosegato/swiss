@@ -21,18 +21,18 @@ export function UpdateBanner() {
   return (
     <div className="flex items-center gap-2 mr-2 [-webkit-app-region:no-drag]">
       {update.status === "downloading" ? (
-        <span className="text-[10.5px] text-muted-foreground">
+        <span className="text-[11px] text-muted-foreground">
           Baixando v{update.version}... {update.percent}%
         </span>
       ) : update.status === "ready" ? (
         <>
-          <span className="text-[10.5px] text-muted-foreground">
+          <span className="text-[11px] text-muted-foreground">
             v{update.version} pronta
           </span>
           <Button
             variant="outline"
             size="sm"
-            className="h-6 text-[10px] px-2"
+            className="h-6 text-[11px] px-2.5"
             onClick={() => ipc.installUpdate()}
           >
             <RefreshCw className="w-3 h-3" />
@@ -40,7 +40,7 @@ export function UpdateBanner() {
           </Button>
         </>
       ) : (
-        <span className="text-[10.5px] text-muted-foreground flex items-center gap-1">
+        <span className="text-[11px] text-muted-foreground flex items-center gap-1">
           <Download className="w-3 h-3" />
           v{update.version} disponível
         </span>

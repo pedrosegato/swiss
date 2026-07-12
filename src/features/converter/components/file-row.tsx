@@ -1,5 +1,6 @@
 import type { ConvertFormat } from "@/lib/types";
-import { cn, formatSize } from "@/lib/utils";
+import { formatSize } from "@/lib/utils";
+import { JobShell } from "@/components/job-shell";
 import { useConvertStore } from "@/stores/convert-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { ipc } from "@/lib/ipc";
@@ -89,12 +90,7 @@ export function FileRow({ id }: FileRowProps) {
   const Icon = isVideoFormat(item.inputExt.replace(".", "")) ? Film : Music;
 
   return (
-    <div
-      className={cn(
-        "bg-card border border-border rounded-lg group transition-all",
-        isError ? "border-destructive/30" : "hover:border-border/80",
-      )}
-    >
+    <JobShell isError={isError} className="group">
       <div className="flex items-center gap-3 px-3 py-2.5">
         <div className="w-[52px] h-[36px] shrink-0 rounded overflow-hidden">
           {item.thumbnailLoading ? (
@@ -113,17 +109,17 @@ export function FileRow({ id }: FileRowProps) {
         </div>
 
         <div className="flex-1 min-w-0">
-          <p className="text-[12px] font-medium leading-tight truncate">
+          <p className="text-[13px] font-medium leading-tight truncate">
             {item.inputName}
           </p>
           <div className="flex items-center gap-2 mt-0.5">
-            <span className="font-mono text-[10px] text-muted-foreground">
+            <span className="text-[11px] text-muted-foreground">
               {item.inputSize}
             </span>
             {isDone && item.outputSize && (
               <>
                 <ArrowRight className="w-2.5 h-2.5 text-muted-foreground/40" />
-                <span className="font-mono text-[10px] text-muted-foreground">
+                <span className="text-[11px] text-muted-foreground">
                   {formatSize(item.outputSize)}
                 </span>
               </>
@@ -134,7 +130,7 @@ export function FileRow({ id }: FileRowProps) {
         <div className="flex items-center gap-1.5 shrink-0">
           <Badge
             variant="outline"
-            className="font-mono text-[9px] px-1.5 py-0 h-5 text-muted-foreground"
+            className="text-[10px] px-1.5 py-0 h-5 text-muted-foreground"
           >
             {item.inputExt.replace(".", "")}
           </Badge>
@@ -147,12 +143,12 @@ export function FileRow({ id }: FileRowProps) {
                 { label: "Vídeo", options: CONVERT_VIDEO_FORMATS },
                 { label: "Áudio", options: CONVERT_AUDIO_FORMATS },
               ]}
-              triggerClassName="h-5 text-[9px] font-mono w-[68px] px-1.5"
+              triggerClassName="h-6 text-[10px] rounded-full w-auto min-w-[62px] px-2.5 gap-1"
             />
           ) : (
             <Badge
               variant="outline"
-              className="font-mono text-[9px] px-1.5 py-0 h-5"
+              className="text-[10px] px-1.5 py-0 h-5"
             >
               {item.outputFormat}
             </Badge>
@@ -183,6 +179,6 @@ export function FileRow({ id }: FileRowProps) {
           />
         </div>
       )}
-    </div>
+    </JobShell>
   );
 }
