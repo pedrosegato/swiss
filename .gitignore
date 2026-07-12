@@ -42,6 +42,12 @@ Thumbs.db
 .claude/
 .claude.worktrees/
 .worktrees/
-plans/
 showcase/
 CLAUDE.md
+
+# Superpowers / planning artifacts — never commit plans or implementation specs
+plans/
+advisor-plans/
+docs/superpowers/
+specs/
+*-design.md
