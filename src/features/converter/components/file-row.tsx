@@ -1,5 +1,6 @@
 import type { ConvertFormat } from "@/lib/types";
-import { cn, formatSize } from "@/lib/utils";
+import { formatSize } from "@/lib/utils";
+import { JobShell } from "@/components/job-shell";
 import { useConvertStore } from "@/stores/convert-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { ipc } from "@/lib/ipc";
@@ -89,14 +90,7 @@ export function FileRow({ id }: FileRowProps) {
   const Icon = isVideoFormat(item.inputExt.replace(".", "")) ? Film : Music;
 
   return (
-    <div
-      className={cn(
-        "bg-card border border-border rounded-lg group transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
-        isError
-          ? "border-destructive/30"
-          : "hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-md hover:shadow-black/15",
-      )}
-    >
+    <JobShell isError={isError} className="group">
       <div className="flex items-center gap-3 px-3 py-2.5">
         <div className="w-[52px] h-[36px] shrink-0 rounded overflow-hidden">
           {item.thumbnailLoading ? (
@@ -185,6 +179,6 @@ export function FileRow({ id }: FileRowProps) {
           />
         </div>
       )}
-    </div>
+    </JobShell>
   );
 }

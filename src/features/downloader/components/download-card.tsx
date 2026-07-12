@@ -1,10 +1,9 @@
 import { DOWNLOAD_STAGE_LABELS } from "@/lib/constants";
-import { Card } from "@/components/ui/card";
+import { JobShell } from "@/components/job-shell";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { JobActions } from "@/components/job-actions";
 import { JobProgress } from "@/components/job-progress";
-import { cn } from "@/lib/utils";
 import { motion } from "motion/react";
 import { ipc } from "@/lib/ipc";
 import { useDownloadStore } from "@/stores/download-store";
@@ -75,7 +74,7 @@ export function DownloadCard({ id }: DownloadCardProps) {
 
   if (isFetching) {
     return (
-      <Card className="overflow-hidden flex flex-col p-0 gap-0">
+      <JobShell className="flex flex-col">
         <div className="w-full aspect-video bg-muted/20 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
           <div className="absolute inset-0 flex items-center justify-center">
@@ -104,17 +103,12 @@ export function DownloadCard({ id }: DownloadCardProps) {
             </div>
           </div>
         </div>
-      </Card>
+      </JobShell>
     );
   }
 
   return (
-    <Card
-      className={cn(
-        "overflow-hidden flex flex-col p-0 gap-0 transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:border-primary/40 hover:-translate-y-1 hover:shadow-lg hover:shadow-black/20",
-        isError && "border-destructive/30",
-      )}
-    >
+    <JobShell isError={isError} className="flex flex-col">
       <div
         className="w-full aspect-video bg-muted/20 relative overflow-hidden cursor-pointer"
         onClick={() => item.url && ipc.openExternal(item.url)}
@@ -194,6 +188,6 @@ export function DownloadCard({ id }: DownloadCardProps) {
           </div>
         </div>
       </div>
-    </Card>
+    </JobShell>
   );
 }
