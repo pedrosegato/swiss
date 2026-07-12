@@ -111,7 +111,7 @@ export function DownloadCard({ id }: DownloadCardProps) {
   return (
     <Card
       className={cn(
-        "overflow-hidden flex flex-col p-0 gap-0 transition-all hover:border-border/80 hover:-translate-y-px",
+        "overflow-hidden flex flex-col p-0 gap-0 transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:border-primary/40 hover:-translate-y-1 hover:shadow-lg hover:shadow-black/20",
         isError && "border-destructive/30",
       )}
     >
@@ -128,13 +128,13 @@ export function DownloadCard({ id }: DownloadCardProps) {
         ) : null}
 
         {item.duration && (
-          <span className="absolute bottom-1.5 right-1.5 font-mono text-[9.5px] font-medium text-white bg-black/70 px-1.5 py-0.5 rounded-sm tracking-wide">
+          <span className="absolute bottom-1.5 right-1.5 font-mono text-[10px] font-medium text-white bg-black/70 px-1.5 py-0.5 rounded-sm tracking-wide">
             {item.duration}
           </span>
         )}
 
         {isPlaylist && item.playlistCount ? (
-          <span className="absolute bottom-1.5 left-1.5 flex items-center gap-1 text-[9.5px] font-medium text-white bg-black/70 px-1.5 py-0.5 rounded-sm">
+          <span className="absolute bottom-1.5 left-1.5 flex items-center gap-1 text-[10px] font-medium text-white bg-black/70 px-1.5 py-0.5 rounded-sm">
             <ListVideo className="w-3 h-3" />
             {item.playlistCount} vídeos
           </span>
@@ -142,14 +142,14 @@ export function DownloadCard({ id }: DownloadCardProps) {
 
         <Badge
           variant="outline"
-          className="absolute top-1.5 right-1.5 text-[9px] px-1.5 py-0 bg-black/60 text-white border-white/20 font-mono uppercase tracking-wider"
+          className="absolute top-1.5 right-1.5 text-[10px] px-1.5 py-0 bg-black/60 text-white border-white/20 font-mono uppercase tracking-wider"
         >
           {item.format}
         </Badge>
       </div>
 
-      <div className="px-3 pt-2.5 pb-3 flex flex-col flex-1">
-        <p className="text-[12.5px] font-medium leading-snug line-clamp-2 mb-2">
+      <div className="px-3.5 pt-3 pb-3.5 flex flex-col flex-1">
+        <p className="text-[13.5px] font-medium leading-snug line-clamp-2 mb-2.5">
           {isPlaylist ? item.playlistTitle : item.title}
         </p>
 
@@ -171,7 +171,7 @@ export function DownloadCard({ id }: DownloadCardProps) {
             variant="card"
           />
           <div className="flex items-center justify-between pt-0.5">
-            <span className="font-mono text-[10px] text-muted-foreground flex items-center gap-1.5">
+            <span className="font-mono text-[11px] text-muted-foreground flex items-center gap-1.5">
               <span>{item.quality}</span>
               {item.fileSize && (
                 <>

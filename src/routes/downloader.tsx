@@ -138,7 +138,7 @@ function DownloaderPage() {
         <JobQueue
           ids={itemIds}
           renderRow={(id) => <DownloadCard id={id} />}
-          containerClassName="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-2.5"
+          containerClassName="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-3"
           variant="scale"
           staggerCap={12}
         />
