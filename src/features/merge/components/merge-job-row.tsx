@@ -1,14 +1,15 @@
-import { formatSize } from "@/lib/utils";
-import { JobShell } from "@/components/job-shell";
-import { useMergeStore } from "@/stores/merge-store";
-import { useBinariesStore } from "@/stores/binaries-store";
-import { useSettingsStore } from "@/stores/settings-store";
-import { MERGE_STAGE_LABELS } from "@/lib/constants";
-import { ipc } from "@/lib/ipc";
 import { toast } from "sonner";
-import { Skeleton } from "@/components/ui/skeleton";
+
 import { JobActions } from "@/components/job-actions";
 import { JobProgress } from "@/components/job-progress";
+import { JobShell } from "@/components/job-shell";
+import { Skeleton } from "@/components/ui/skeleton";
+import { MERGE_STAGE_LABELS } from "@/lib/constants";
+import { ipc } from "@/lib/ipc";
+import { formatSize } from "@/lib/utils";
+import { useBinariesStore } from "@/stores/binaries-store";
+import { useMergeStore } from "@/stores/merge-store";
+import { useSettingsStore } from "@/stores/settings-store";
 
 interface MergeJobRowProps {
   id: string;
@@ -71,31 +72,25 @@ export function MergeJobRow({ id }: MergeJobRowProps) {
   return (
     <JobShell isError={isError} className="group">
       <div className="flex items-center gap-3 px-3 py-2.5">
-        <div className="w-[52px] h-[36px] shrink-0 rounded overflow-hidden">
+        <div className="h-[36px] w-[52px] shrink-0 overflow-hidden rounded">
           {item.thumbnail ? (
-            <img
-              src={item.thumbnail}
-              alt=""
-              className="w-full h-full object-cover"
-            />
+            <img src={item.thumbnail} alt="" className="h-full w-full object-cover" />
           ) : isError ? (
-            <div className="w-full h-full bg-muted/20 rounded" />
+            <div className="bg-muted/20 h-full w-full rounded" />
           ) : (
-            <Skeleton className="w-full h-full" />
+            <Skeleton className="h-full w-full" />
           )}
         </div>
 
-        <div className="flex-1 min-w-0">
-          <p className="text-[13px] font-medium leading-tight truncate">
-            {item.mainName}
-          </p>
-          <p className="text-[11px] text-muted-foreground leading-tight truncate mt-0.5">
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[13px] leading-tight font-medium">{item.mainName}</p>
+          <p className="text-muted-foreground mt-0.5 truncate text-[11px] leading-tight">
             + {item.bgName}
           </p>
         </div>
 
         {isDone && item.outputSize && (
-          <span className="text-[11px] text-muted-foreground shrink-0">
+          <span className="text-muted-foreground shrink-0 text-[11px]">
             {formatSize(item.outputSize)}
           </span>
         )}

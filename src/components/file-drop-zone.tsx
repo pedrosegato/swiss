@@ -1,8 +1,9 @@
 import { useCallback, useRef, useState } from "react";
-import { ipc } from "@/lib/ipc";
-import { formatSize, cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { Upload, X } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { ipc } from "@/lib/ipc";
+import { cn, formatSize } from "@/lib/utils";
 
 interface FileEntry {
   path: string;
@@ -18,9 +19,7 @@ interface FileDropZoneProps {
   onAddFiles?: (files: FileEntry[]) => void;
   onRemoveFile?: (path: string) => void;
   onClear?: () => void;
-  onDrop?: (
-    files: { path: string; name: string; size: number; ext: string }[],
-  ) => void;
+  onDrop?: (files: { path: string; name: string; size: number; ext: string }[]) => void;
   className?: string;
 }
 
@@ -76,16 +75,14 @@ export function FileDropZone({
         })),
       );
     } else if (onAddFiles) {
-      onAddFiles(
-        selected.map((f) => ({ path: f.path, name: f.name, size: f.size })),
-      );
+      onAddFiles(selected.map((f) => ({ path: f.path, name: f.name, size: f.size })));
     }
   }, [extensions, onDrop, onAddFiles]);
 
   const hasFiles = files && files.length > 0;
 
   return (
-    <div className={cn("min-w-0 w-full", className)}>
+    <div className={cn("w-full min-w-0", className)}>
       <div
         onDrop={(e) => {
           dragCounter.current = 0;
@@ -109,7 +106,7 @@ export function FileDropZone({
         <div
           onClick={handleBrowse}
           className={cn(
-            "group/drop flex flex-col items-center justify-center gap-3 rounded-2xl px-4 py-8 text-center cursor-pointer ring-1 ring-inset transition-all duration-200",
+            "group/drop flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl px-4 py-8 text-center ring-1 transition-all duration-200 ring-inset",
             hasFiles ? "rounded-b-none" : "",
             isDragging
               ? "bg-primary/[0.07] ring-primary/50"
@@ -117,39 +114,34 @@ export function FileDropZone({
           )}
         >
           {label && (
-            <span className="text-xs text-muted-foreground tracking-wider font-medium">
+            <span className="text-muted-foreground text-xs font-medium tracking-wider">
               {label}
             </span>
           )}
           <div
             className={cn(
-              "flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 transition-transform duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover/drop:-translate-y-0.5",
+              "bg-primary/10 flex h-12 w-12 items-center justify-center rounded-full transition-transform duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover/drop:-translate-y-0.5",
               isDragging && "-translate-y-1 scale-110",
             )}
           >
-            <Upload className="w-5 h-5 text-primary" />
+            <Upload className="text-primary h-5 w-5" />
           </div>
           <div className="text-sm">
             {isDragging ? (
               <span className="text-primary font-medium">Solte os arquivos</span>
             ) : (
               <>
-                <span className="text-foreground font-medium">
-                  Arraste arquivos
-                </span>
-                <span className="text-muted-foreground">
-                  {" "}
-                  ou clique para procurar
-                </span>
+                <span className="text-foreground font-medium">Arraste arquivos</span>
+                <span className="text-muted-foreground"> ou clique para procurar</span>
               </>
             )}
           </div>
           {showFormats && !isDragging && (
-            <div className="flex items-center flex-wrap justify-center gap-1.5">
+            <div className="flex flex-wrap items-center justify-center gap-1.5">
               {extensions.map((fmt) => (
                 <span
                   key={fmt}
-                  className="text-[10px] tracking-wide text-muted-foreground bg-muted px-2 py-0.5 rounded-full"
+                  className="text-muted-foreground bg-muted rounded-full px-2 py-0.5 text-[10px] tracking-wide"
                 >
                   {fmt}
                 </span>
@@ -160,38 +152,33 @@ export function FileDropZone({
       </div>
 
       {hasFiles && (
-        <div className="bg-muted/30 ring-1 ring-inset ring-border rounded-b-2xl overflow-hidden">
-          <div className="max-h-[140px] overflow-y-auto divide-y divide-border/50">
+        <div className="bg-muted/30 ring-border overflow-hidden rounded-b-2xl ring-1 ring-inset">
+          <div className="divide-border/50 max-h-[140px] divide-y overflow-y-auto">
             {files.map((f) => (
-              <div
-                key={f.path}
-                className="flex items-center gap-2 px-3 py-2 group"
-              >
-                <span className="text-[12px] truncate flex-1 text-muted-foreground">
-                  {f.name}
-                </span>
-                <span className="text-[11px] text-muted-foreground/60 shrink-0">
+              <div key={f.path} className="group flex items-center gap-2 px-3 py-2">
+                <span className="text-muted-foreground flex-1 truncate text-[12px]">{f.name}</span>
+                <span className="text-muted-foreground/60 shrink-0 text-[11px]">
                   {formatSize(f.size)}
                 </span>
                 {onRemoveFile && (
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                    className="text-muted-foreground hover:text-destructive h-5 w-5 opacity-0 transition-opacity group-hover:opacity-100"
                     onClick={() => onRemoveFile(f.path)}
                   >
-                    <X className="w-3 h-3" />
+                    <X className="h-3 w-3" />
                   </Button>
                 )}
               </div>
             ))}
           </div>
           {onClear && files.length > 1 && (
-            <div className="border-t border-border/50 px-3 py-1.5">
+            <div className="border-border/50 border-t px-3 py-1.5">
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-5 px-0 text-[11px] text-muted-foreground/60 hover:text-destructive"
+                className="text-muted-foreground/60 hover:text-destructive h-5 px-0 text-[11px]"
                 onClick={onClear}
               >
                 Limpar todos

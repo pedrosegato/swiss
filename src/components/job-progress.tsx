@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 import { Minus } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
+
 import { ErrorLog } from "@/components/error-log";
+import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
 interface JobProgressProps {
@@ -29,9 +30,7 @@ export function JobProgress({
   variant = "row",
 }: JobProgressProps) {
   if (isError) {
-    return (
-      <ErrorLog message={errorMessage} onStopPropagation={onStopPropagation} />
-    );
+    return <ErrorLog message={errorMessage} onStopPropagation={onStopPropagation} />;
   }
 
   const textSize = "text-[11px]";
@@ -64,21 +63,12 @@ export function JobProgress({
                 : "text-primary",
           )}
         >
-          {isDone ? (
-            "100%"
-          ) : isQueued ? (
-            <Minus className="w-3 h-3" />
-          ) : (
-            `${progress}%`
-          )}
+          {isDone ? "100%" : isQueued ? <Minus className="h-3 w-3" /> : `${progress}%`}
         </span>
       </div>
       <Progress
         value={progress}
-        className={cn(
-          "h-[3px]",
-          isDone && "[&_[data-slot=progress-indicator]]:bg-success",
-        )}
+        className={cn("h-[3px]", isDone && "[&_[data-slot=progress-indicator]]:bg-success")}
       />
     </div>
   );

@@ -1,4 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
+
+import { pillTriggerClass } from "@/components/pill-select";
+import { SavePathButton } from "@/components/save-path-button";
 import {
   Select,
   SelectContent,
@@ -6,16 +9,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { SavePathButton } from "@/components/save-path-button";
-import { pillTriggerClass } from "@/components/pill-select";
-import { cn } from "@/lib/utils";
-import { useSettingsStore } from "@/stores/settings-store";
-import { useBinariesStore } from "@/stores/binaries-store";
+import { Switch } from "@/components/ui/switch";
 import { VersionCard } from "@/features/settings/components/version-card";
 import { BROWSERS } from "@/lib/constants";
 import type { Browser } from "@/lib/types";
+import { cn } from "@/lib/utils";
+import { useBinariesStore } from "@/stores/binaries-store";
+import { useSettingsStore } from "@/stores/settings-store";
 
 export const Route = createFileRoute("/settings")({
   component: SettingsPage,
@@ -33,14 +34,8 @@ function SettingsPage() {
   return (
     <div className="flex flex-col gap-5">
       <Section title="Downloads">
-        <SettingRow
-          label="Pasta padrão"
-          description="Onde os arquivos são salvos por padrão"
-        >
-          <SavePathButton
-            maxWidthClassName="max-w-[280px]"
-            placeholder="Selecione uma pasta"
-          />
+        <SettingRow label="Pasta padrão" description="Onde os arquivos são salvos por padrão">
+          <SavePathButton maxWidthClassName="max-w-[280px]" placeholder="Selecione uma pasta" />
         </SettingRow>
       </Section>
 
@@ -55,10 +50,7 @@ function SettingsPage() {
         </SettingRow>
 
         {useCookies && (
-          <SettingRow
-            label="Navegador"
-            description="De qual navegador extrair os cookies"
-          >
+          <SettingRow label="Navegador" description="De qual navegador extrair os cookies">
             <Select
               value={cookieBrowser}
               onValueChange={(v) => v && setCookieBrowser(v as Browser)}
@@ -81,7 +73,7 @@ function SettingsPage() {
       <Separator />
 
       <Section title="Binários">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           <VersionCard binary={ytdlp} />
           <VersionCard binary={ffmpeg} />
           <VersionCard binary={ffprobe} />
@@ -91,18 +83,10 @@ function SettingsPage() {
   );
 }
 
-function Section({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-2.5">
-      <span className="text-[11px] text-muted-foreground tracking-wider font-medium">
-        {title}
-      </span>
+      <span className="text-muted-foreground text-[11px] font-medium tracking-wider">{title}</span>
       {children}
     </div>
   );
@@ -119,11 +103,9 @@ function SettingRow({
 }) {
   return (
     <div className="flex items-center justify-between gap-4 py-1.5">
-      <div className="flex-1 min-w-0">
+      <div className="min-w-0 flex-1">
         <div className="text-[13px] font-medium">{label}</div>
-        <div className="text-[11px] text-muted-foreground leading-snug">
-          {description}
-        </div>
+        <div className="text-muted-foreground text-[11px] leading-snug">{description}</div>
       </div>
       <div className="shrink-0">{children}</div>
     </div>

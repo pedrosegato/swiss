@@ -1,8 +1,9 @@
 import { create } from "zustand";
-import type { MergeItem, MergeDirection } from "@/lib/types";
+
 import { ipc } from "@/lib/ipc";
-import { useSettingsStore } from "@/stores/settings-store";
+import type { MergeDirection, MergeItem } from "@/lib/types";
 import { createItemsSlice } from "@/stores/create-items-slice";
+import { useSettingsStore } from "@/stores/settings-store";
 
 interface FileEntry {
   path: string;
@@ -35,13 +36,10 @@ export const useMergeStore = create<MergeState>((set) => ({
   bgFiles: [],
   direction: "vertical",
 
-  addMainFiles: (files) =>
-    set((s) => ({ mainFiles: [...s.mainFiles, ...files] })),
+  addMainFiles: (files) => set((s) => ({ mainFiles: [...s.mainFiles, ...files] })),
   addBgFiles: (files) => set((s) => ({ bgFiles: [...s.bgFiles, ...files] })),
-  removeMainFile: (path) =>
-    set((s) => ({ mainFiles: s.mainFiles.filter((f) => f.path !== path) })),
-  removeBgFile: (path) =>
-    set((s) => ({ bgFiles: s.bgFiles.filter((f) => f.path !== path) })),
+  removeMainFile: (path) => set((s) => ({ mainFiles: s.mainFiles.filter((f) => f.path !== path) })),
+  removeBgFile: (path) => set((s) => ({ bgFiles: s.bgFiles.filter((f) => f.path !== path) })),
   clearMainFiles: () => set({ mainFiles: [] }),
   clearBgFiles: () => set({ bgFiles: [] }),
   setDirection: (direction) => set({ direction }),

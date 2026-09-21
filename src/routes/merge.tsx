@@ -1,7 +1,14 @@
-import { useShallow } from "zustand/shallow";
 import { createFileRoute } from "@tanstack/react-router";
+import { Merge } from "lucide-react";
+import { toast } from "sonner";
+import { useShallow } from "zustand/shallow";
+
+import { EmptyQueue } from "@/components/empty-queue";
+import { FileDropZone } from "@/components/file-drop-zone";
 import { JobQueue } from "@/components/job-queue";
+import { pillTriggerClass } from "@/components/pill-select";
 import { QueueBar } from "@/components/queue-bar";
+import { SavePathButton } from "@/components/save-path-button";
 import {
   Select,
   SelectContent,
@@ -9,18 +16,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FileDropZone } from "@/components/file-drop-zone";
-import { MERGE_VIDEO_EXTENSIONS } from "@/lib/constants";
 import { MergeJobRow } from "@/features/merge/components/merge-job-row";
-import { useMergeStore } from "@/stores/merge-store";
-import { useBinariesStore } from "@/stores/binaries-store";
-import { useSettingsStore } from "@/stores/settings-store";
-import { SavePathButton } from "@/components/save-path-button";
-import { pillTriggerClass } from "@/components/pill-select";
-import { Merge } from "lucide-react";
-import { EmptyQueue } from "@/components/empty-queue";
-import { toast } from "sonner";
+import { MERGE_VIDEO_EXTENSIONS } from "@/lib/constants";
 import type { MergeDirection } from "@/lib/types";
+import { useBinariesStore } from "@/stores/binaries-store";
+import { useMergeStore } from "@/stores/merge-store";
+import { useSettingsStore } from "@/stores/settings-store";
 
 export const Route = createFileRoute("/merge")({
   component: MergePage,
@@ -34,9 +35,7 @@ function MergePage() {
   const ffprobeInstalled = useBinariesStore((s) => s.ffprobe.installed);
   const itemIds = useMergeStore(useShallow((s) => s.items.map((i) => i.id)));
   const itemCount = useMergeStore((s) => s.items.length);
-  const isMerging = useMergeStore((s) =>
-    s.items.some((i) => i.stage === "merging"),
-  );
+  const isMerging = useMergeStore((s) => s.items.some((i) => i.stage === "merging"));
 
   const addMainFiles = useMergeStore((s) => s.addMainFiles);
   const addBgFiles = useMergeStore((s) => s.addBgFiles);
@@ -48,12 +47,9 @@ function MergePage() {
   const startAll = useMergeStore((s) => s.startAll);
   const clearCompleted = useMergeStore((s) => s.clearCompleted);
 
-  const canStart =
-    mainFiles.length > 0 && bgFiles.length > 0 && !!savePath && !isMerging;
+  const canStart = mainFiles.length > 0 && bgFiles.length > 0 && !!savePath && !isMerging;
 
-  const hasQueued = useMergeStore((s) =>
-    s.items.some((i) => i.stage === "queued"),
-  );
+  const hasQueued = useMergeStore((s) => s.items.some((i) => i.stage === "queued"));
 
   const handleStartAll = () => {
     if (!ffprobeInstalled) {
@@ -71,7 +67,7 @@ function MergePage() {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row">
         <FileDropZone
           extensions={MERGE_VIDEO_EXTENSIONS}
           label="Vídeos Principais"
@@ -91,10 +87,7 @@ function MergePage() {
       </div>
 
       <div className="flex items-center gap-2">
-        <Select
-          value={direction}
-          onValueChange={(v) => setDirection(v as MergeDirection)}
-        >
+        <Select value={direction} onValueChange={(v) => setDirection(v as MergeDirection)}>
           <SelectTrigger className={pillTriggerClass}>
             <SelectValue />
           </SelectTrigger>

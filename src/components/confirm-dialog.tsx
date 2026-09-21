@@ -35,9 +35,7 @@ export function ConfirmDialog({
       <AlertDialogContent size="sm">
         <AlertDialogHeader>
           <AlertDialogTitle className="text-[14px]">{title}</AlertDialogTitle>
-          <AlertDialogDescription className="text-[12px]">
-            {description}
-          </AlertDialogDescription>
+          <AlertDialogDescription className="text-[12px]">{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel size="sm">{cancelLabel}</AlertDialogCancel>

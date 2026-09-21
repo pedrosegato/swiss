@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+
 import type { Browser } from "@/lib/types";
 
 interface SettingsState {
@@ -26,11 +27,12 @@ export const useSettingsStore = create<SettingsState>()(
     {
       name: "swiss-settings",
       version: 2,
-      migrate: (persisted: any, version: number) => {
-        if (version < 2 && persisted.downloadPath === "~/Downloads") {
-          persisted.downloadPath = "";
+      migrate: (persisted, version) => {
+        const state = persisted as SettingsState;
+        if (version < 2 && state.downloadPath === "~/Downloads") {
+          state.downloadPath = "";
         }
-        return persisted;
+        return state;
       },
     },
   ),

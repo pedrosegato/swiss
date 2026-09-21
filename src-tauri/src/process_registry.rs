@@ -79,7 +79,9 @@ mod tests {
     fn cancel_before_register_fires_immediately_on_register() {
         let reg = ProcessRegistry::default();
         reg.cancel("a");
-        let mut rx = reg.register("a".into()).expect("registers with fired receiver");
+        let mut rx = reg
+            .register("a".into())
+            .expect("registers with fired receiver");
         assert!(rx.try_recv().is_ok());
     }
 

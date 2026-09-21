@@ -1,21 +1,18 @@
-import { useState, useEffect, useRef } from "react";
-import {
-  createRootRoute,
-  Outlet,
-  useRouterState,
-} from "@tanstack/react-router";
+import { useEffect, useRef, useState } from "react";
+import { createRootRoute, Outlet, useRouterState } from "@tanstack/react-router";
 import { motion } from "motion/react";
-import { Navbar } from "@/components/navbar";
+
 import { BinaryInstallDialog } from "@/components/binary-install-dialog";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { Navbar } from "@/components/navbar";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { ipc } from "@/lib/ipc";
 import { formatSize } from "@/lib/utils";
 import { useBinariesStore } from "@/stores/binaries-store";
-import { useDownloadStore } from "@/stores/download-store";
 import { useConvertStore } from "@/stores/convert-store";
+import { useDownloadStore } from "@/stores/download-store";
 import { useMergeStore } from "@/stores/merge-store";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 const TERMINAL_STAGES = new Set(["completed", "error"]);
 
@@ -59,29 +56,19 @@ function RootLayout() {
   useEffect(() => {
     const unsubscribe = ipc.onProgress((msg) => {
       if (msg.type === "download") {
-        const current = useDownloadStore
-          .getState()
-          .items.find((i) => i.id === msg.id);
+        const current = useDownloadStore.getState().items.find((i) => i.id === msg.id);
         if (!shouldApplyProgress(current, msg.stage)) return;
         updateDownload(msg.id, {
           progress: msg.progress,
           stage: msg.stage,
           errorMessage: msg.errorMessage ?? undefined,
           outputPath: msg.outputPath ?? undefined,
-          ...(msg.playlistDownloaded != null
-            ? { playlistDownloaded: msg.playlistDownloaded }
-            : {}),
-          ...(msg.playlistFileSize
-            ? { fileSize: formatSize(msg.playlistFileSize) }
-            : {}),
-          ...(msg.playlistFileSize
-            ? { fileSizeBytes: msg.playlistFileSize }
-            : {}),
+          ...(msg.playlistDownloaded != null ? { playlistDownloaded: msg.playlistDownloaded } : {}),
+          ...(msg.playlistFileSize ? { fileSize: formatSize(msg.playlistFileSize) } : {}),
+          ...(msg.playlistFileSize ? { fileSizeBytes: msg.playlistFileSize } : {}),
         });
       } else if (msg.type === "convert") {
-        const current = useConvertStore
-          .getState()
-          .items.find((i) => i.id === msg.id);
+        const current = useConvertStore.getState().items.find((i) => i.id === msg.id);
         if (!shouldApplyProgress(current, msg.stage)) return;
         updateConvert(msg.id, {
           progress: msg.progress,
@@ -91,9 +78,7 @@ function RootLayout() {
           outputPath: msg.outputPath ?? undefined,
         });
       } else if (msg.type === "merge") {
-        const current = useMergeStore
-          .getState()
-          .items.find((i) => i.id === msg.id);
+        const current = useMergeStore.getState().items.find((i) => i.id === msg.id);
         if (!shouldApplyProgress(current, msg.stage)) return;
         updateMerge(msg.id, {
           progress: msg.progress,
@@ -119,9 +104,7 @@ function RootLayout() {
   useEffect(() => {
     const unsubscribe = ipc.onMetadata((data) => {
       const update = useDownloadStore.getState().updateItem;
-      const existing = useDownloadStore
-        .getState()
-        .items.find((i) => i.id === data.id);
+      const existing = useDownloadStore.getState().items.find((i) => i.id === data.id);
       const displayQuality = data.resolution ?? existing?.quality;
       update(data.id, {
         videoId: data.videoId,
@@ -156,9 +139,7 @@ function RootLayout() {
         const converts = useConvertStore.getState().items;
         const merges = useMergeStore.getState().items;
         const active = [
-          ...downloads.filter(
-            (i) => i.stage === "downloading" || i.stage === "converting",
-          ),
+          ...downloads.filter((i) => i.stage === "downloading" || i.stage === "converting"),
           ...converts.filter((i) => i.stage === "converting"),
           ...merges.filter((i) => i.stage === "merging"),
         ];
@@ -166,8 +147,7 @@ function RootLayout() {
         if (active.length === 0) {
           ipc.setDockProgress(-1);
         } else {
-          const avg =
-            active.reduce((sum, i) => sum + i.progress, 0) / active.length;
+          const avg = active.reduce((sum, i) => sum + i.progress, 0) / active.length;
           ipc.setDockProgress(avg / 100);
         }
       });
@@ -207,9 +187,7 @@ function RootLayout() {
 
       if (paths.length === 0) return;
 
-      const missing = await ipc.checkPaths(
-        paths.map(({ id, path }) => ({ id, path })),
-      );
+      const missing = await ipc.checkPaths(paths.map(({ id, path }) => ({ id, path })));
       if (missing.length === 0) return;
 
       const missingSet = new Set(missing);
@@ -243,10 +221,7 @@ function RootLayout() {
         </motion.main>
       </ScrollArea>
 
-      <BinaryInstallDialog
-        open={showInstallDialog}
-        onOpenChange={setShowInstallDialog}
-      />
+      <BinaryInstallDialog open={showInstallDialog} onOpenChange={setShowInstallDialog} />
       <Toaster position="bottom-right" />
     </TooltipProvider>
   );

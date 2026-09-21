@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { ipc } from "@/lib/ipc";
-import { Button } from "@/components/ui/button";
 import { Download, RefreshCw } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { ipc } from "@/lib/ipc";
 
 type UpdateStatus = {
   status: "available" | "downloading" | "ready";
@@ -19,30 +20,27 @@ export function UpdateBanner() {
   if (!update) return null;
 
   return (
-    <div className="flex items-center gap-2 mr-2 [-webkit-app-region:no-drag]">
+    <div className="mr-2 flex items-center gap-2 [-webkit-app-region:no-drag]">
       {update.status === "downloading" ? (
-        <span className="text-[11px] text-muted-foreground">
+        <span className="text-muted-foreground text-[11px]">
           Baixando v{update.version}... {update.percent}%
         </span>
       ) : update.status === "ready" ? (
         <>
-          <span className="text-[11px] text-muted-foreground">
-            v{update.version} pronta
-          </span>
+          <span className="text-muted-foreground text-[11px]">v{update.version} pronta</span>
           <Button
             variant="outline"
             size="sm"
-            className="h-6 text-[11px] px-2.5"
+            className="h-6 px-2.5 text-[11px]"
             onClick={() => ipc.installUpdate()}
           >
-            <RefreshCw className="w-3 h-3" />
+            <RefreshCw className="h-3 w-3" />
             Reiniciar
           </Button>
         </>
       ) : (
-        <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-          <Download className="w-3 h-3" />
-          v{update.version} disponível
+        <span className="text-muted-foreground flex items-center gap-1 text-[11px]">
+          <Download className="h-3 w-3" />v{update.version} disponível
         </span>
       )}
     </div>

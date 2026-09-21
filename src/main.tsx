@@ -1,11 +1,13 @@
+import "./index.css";
+
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { RouterProvider, createRouter, createHashHistory } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { createHashHistory, createRouter, RouterProvider } from "@tanstack/react-router";
 import { ThemeProvider } from "next-themes";
-import { ipc, initIpc } from "./lib/ipc";
+
+import { initIpc, ipc } from "./lib/ipc";
 import { routeTree } from "./routeTree.gen";
-import "./index.css";
 
 const hashHistory = createHashHistory();
 const router = createRouter({ routeTree, history: hashHistory });
@@ -33,4 +35,6 @@ async function bootstrap() {
   );
 }
 
-bootstrap().catch((e) => { console.error(e); });
+bootstrap().catch((e) => {
+  console.error(e);
+});

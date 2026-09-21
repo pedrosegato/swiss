@@ -1,14 +1,11 @@
 import type { ReactNode } from "react";
-import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@/components/ui/tooltip";
-import { ConfirmDialog } from "@/components/confirm-dialog";
-import { cn } from "@/lib/utils";
 import { Play, Trash2 } from "lucide-react";
+
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 interface PrimaryAction {
   label: string;
@@ -38,21 +35,18 @@ export function QueueBar({ countLabel, primary, clear, children }: QueueBarProps
     <>
       <Separator />
       <div className="flex items-center justify-between">
-        <span className="text-[11px] text-muted-foreground tracking-wider font-medium">
+        <span className="text-muted-foreground text-[11px] font-medium tracking-wider">
           {countLabel}
         </span>
         <div className="flex items-center gap-2">
           {children}
           {primary && (
             <Button
-              className={cn(
-                "h-8 gap-1.5 px-3.5 text-[12px]",
-                primary.isActive && "animate-pulse",
-              )}
+              className={cn("h-8 gap-1.5 px-3.5 text-[12px]", primary.isActive && "animate-pulse")}
               onClick={primary.onClick}
               disabled={primary.disabled}
             >
-              <Play className="w-3 h-3" />
+              <Play className="h-3 w-3" />
               {primary.isActive ? primary.activeLabel : primary.label}
             </Button>
           )}
@@ -66,7 +60,7 @@ export function QueueBar({ countLabel, primary, clear, children }: QueueBarProps
                       size="icon"
                       className="text-muted-foreground hover:text-destructive"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </TooltipTrigger>
                 }

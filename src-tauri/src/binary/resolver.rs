@@ -236,9 +236,7 @@ mod tests {
             .all(|s| s.contains(&"--upgrade".to_string())));
 
         let plain = install_strategies(&opts(false));
-        assert!(plain
-            .iter()
-            .all(|s| !s.contains(&"--upgrade".to_string())));
+        assert!(plain.iter().all(|s| !s.contains(&"--upgrade".to_string())));
     }
 
     #[test]

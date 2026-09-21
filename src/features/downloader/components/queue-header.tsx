@@ -1,3 +1,7 @@
+import { Dot } from "lucide-react";
+
+import { pillTriggerClass } from "@/components/pill-select";
+import { QueueBar } from "@/components/queue-bar";
 import {
   Select,
   SelectContent,
@@ -5,20 +9,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { QueueBar } from "@/components/queue-bar";
-import { pillTriggerClass } from "@/components/pill-select";
-import { useDownloadStore } from "@/stores/download-store";
 import type { SortOption } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { Dot } from "lucide-react";
+import { useDownloadStore } from "@/stores/download-store";
 
 export function QueueHeader() {
   const itemCount = useDownloadStore((s) => s.items.length);
   const activeCount = useDownloadStore(
-    (s) =>
-      s.items.filter(
-        (i) => i.stage === "downloading" || i.stage === "converting",
-      ).length,
+    (s) => s.items.filter((i) => i.stage === "downloading" || i.stage === "converting").length,
   );
   const sortBy = useDownloadStore((s) => s.sortBy);
   const setSortBy = useDownloadStore((s) => s.setSortBy);
@@ -28,8 +26,8 @@ export function QueueHeader() {
     <QueueBar
       countLabel={
         <>
-          {itemCount} {itemCount === 1 ? "item" : "itens"}{" "}
-          <Dot className="w-3 h-3 inline" /> {activeCount} ativos
+          {itemCount} {itemCount === 1 ? "item" : "itens"} <Dot className="inline h-3 w-3" />{" "}
+          {activeCount} ativos
         </>
       }
       clear={{

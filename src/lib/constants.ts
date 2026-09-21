@@ -1,74 +1,19 @@
-import type {
-  VideoFormat,
-  AudioFormat,
-  ConvertVideoFormat,
-  ConvertAudioFormat,
-} from "./types";
+import type { AudioFormat, ConvertAudioFormat, ConvertVideoFormat, VideoFormat } from "./types";
 
 export const VIDEO_FORMATS: VideoFormat[] = ["mp4", "mkv", "webm"];
 export const AUDIO_FORMATS: AudioFormat[] = ["mp3", "wav", "flac", "aac"];
 
-export const CONVERT_VIDEO_FORMATS: ConvertVideoFormat[] = [
-  "mp4",
-  "mkv",
-  "avi",
-  "webm",
-  "mov",
-];
-export const CONVERT_AUDIO_FORMATS: ConvertAudioFormat[] = [
-  "mp3",
-  "wav",
-  "flac",
-  "aac",
-  "wma",
-];
+export const CONVERT_VIDEO_FORMATS: ConvertVideoFormat[] = ["mp4", "mkv", "avi", "webm", "mov"];
+export const CONVERT_AUDIO_FORMATS: ConvertAudioFormat[] = ["mp3", "wav", "flac", "aac", "wma"];
 
-export const VIDEO_QUALITIES = [
-  "Máxima",
-  "4K",
-  "2K",
-  "1440p",
-  "1080p",
-  "720p",
-  "480p",
-  "360p",
-];
-export const AUDIO_QUALITIES = [
-  "Máxima",
-  "320 kbps",
-  "256 kbps",
-  "192 kbps",
-  "128 kbps",
-];
-export const CONVERT_VIDEO_QUALITIES = [
-  "Original",
-  "4K",
-  "2K",
-  "1440p",
-  "1080p",
-  "720p",
-  "480p",
-];
-export const CONVERT_AUDIO_QUALITIES = [
-  "320 kbps",
-  "256 kbps",
-  "192 kbps",
-  "128 kbps",
-];
+export const VIDEO_QUALITIES = ["Máxima", "4K", "2K", "1440p", "1080p", "720p", "480p", "360p"];
+export const AUDIO_QUALITIES = ["Máxima", "320 kbps", "256 kbps", "192 kbps", "128 kbps"];
+export const CONVERT_VIDEO_QUALITIES = ["Original", "4K", "2K", "1440p", "1080p", "720p", "480p"];
+export const CONVERT_AUDIO_QUALITIES = ["320 kbps", "256 kbps", "192 kbps", "128 kbps"];
 
-export const BROWSERS = [
-  "chrome",
-  "firefox",
-  "safari",
-  "edge",
-  "brave",
-  "opera",
-] as const;
+export const BROWSERS = ["chrome", "firefox", "safari", "edge", "brave", "opera"] as const;
 
-export const CONVERT_ALL_FORMATS = [
-  ...CONVERT_VIDEO_FORMATS,
-  ...CONVERT_AUDIO_FORMATS,
-] as const;
+export const CONVERT_ALL_FORMATS = [...CONVERT_VIDEO_FORMATS, ...CONVERT_AUDIO_FORMATS] as const;
 
 export function isVideoFormat(fmt: string): boolean {
   return (
@@ -100,16 +45,7 @@ export const MERGE_STAGE_LABELS: Record<string, string> = {
   error: "Erro",
 };
 
-export const MERGE_VIDEO_EXTENSIONS = [
-  "mp4",
-  "mkv",
-  "avi",
-  "webm",
-  "mov",
-  "flv",
-  "wmv",
-  "m4v",
-];
+export const MERGE_VIDEO_EXTENSIONS = ["mp4", "mkv", "avi", "webm", "mov", "flv", "wmv", "m4v"];
 
 export const SORT_LABELS: Record<string, string> = {
   recent: "Mais recentes",

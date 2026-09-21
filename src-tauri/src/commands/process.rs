@@ -90,10 +90,7 @@ mod tests {
     async fn run_streams_stdout_and_stderr() {
         let mut child = spawn_piped(
             "sh",
-            &[
-                "-c".into(),
-                "printf 'a\\nb\\n'; printf 'err' 1>&2".into(),
-            ],
+            &["-c".into(), "printf 'a\\nb\\n'; printf 'err' 1>&2".into()],
         )
         .expect("spawn");
         let stdout = child.stdout.take().unwrap();

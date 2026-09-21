@@ -1,13 +1,14 @@
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
+import { readText } from "@tauri-apps/plugin-clipboard-manager";
+import { Download, Link2 } from "lucide-react";
+
+import { PillSelect } from "@/components/pill-select";
+import { SavePathButton } from "@/components/save-path-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { SavePathButton } from "@/components/save-path-button";
-import { PillSelect } from "@/components/pill-select";
 import { isVideoFormat } from "@/lib/constants";
-import { readText } from "@tauri-apps/plugin-clipboard-manager";
 import { validateUrl } from "@/lib/url-validation";
 import { cn } from "@/lib/utils";
-import { Download, Link2 } from "lucide-react";
 
 interface DownloadBarProps {
   format: string;
@@ -66,7 +67,9 @@ export function DownloadBar({
   };
 
   const submitRef = useRef(submit);
-  submitRef.current = submit;
+  useEffect(() => {
+    submitRef.current = submit;
+  });
 
   useEffect(() => {
     const handleGlobalKey = (e: KeyboardEvent) => {
@@ -96,11 +99,11 @@ export function DownloadBar({
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
-          <Link2 className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
+          <Link2 className="text-primary pointer-events-none absolute top-1/2 left-3.5 h-5 w-5 -translate-y-1/2" />
           <Input
             ref={inputRef}
             className={cn(
-              "h-12 rounded-2xl bg-transparent pl-11 pr-4 text-sm",
+              "h-12 rounded-2xl bg-transparent pr-4 pl-11 text-sm",
               error && "border-destructive",
             )}
             placeholder="Cole um link para baixar…"
@@ -117,7 +120,7 @@ export function DownloadBar({
           onClick={() => submit()}
           disabled={!url}
         >
-          <Download className="w-4 h-4" />
+          <Download className="h-4 w-4" />
           Baixar
         </Button>
       </div>
@@ -138,7 +141,7 @@ export function DownloadBar({
         />
 
         <div className="ml-auto flex items-center gap-2">
-          {error && <p className="text-xs text-destructive">{error}</p>}
+          {error && <p className="text-destructive text-xs">{error}</p>}
           <SavePathButton />
         </div>
       </div>

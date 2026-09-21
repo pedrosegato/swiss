@@ -1,9 +1,10 @@
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
+
 import { createDebouncedStorage } from "@/lib/debounced-storage";
 import { ipc } from "@/lib/ipc";
+import type { DownloadFormat, DownloadItem, SortOption } from "@/lib/types";
 import { createItemsSlice } from "@/stores/create-items-slice";
-import type { DownloadItem, DownloadFormat, SortOption } from "@/lib/types";
 
 interface DownloadState {
   items: DownloadItem[];
@@ -51,10 +52,7 @@ export const useDownloadStore = create<DownloadState>()(
         const now = Date.now();
 
         const items = state.items
-          .filter(
-            (i) =>
-              i.stage !== "completed" || now - (i.createdAt ?? 0) < THIRTY_DAYS,
-          )
+          .filter((i) => i.stage !== "completed" || now - (i.createdAt ?? 0) < THIRTY_DAYS)
           .slice(-MAX_PERSISTED);
 
         return {
@@ -67,9 +65,7 @@ export const useDownloadStore = create<DownloadState>()(
       onRehydrateStorage: () => (state) => {
         if (!state) return;
         state.items = state.items.map((item) =>
-          item.stage === "downloading" ||
-          item.stage === "fetching" ||
-          item.stage === "converting"
+          item.stage === "downloading" || item.stage === "fetching" || item.stage === "converting"
             ? {
                 ...item,
                 stage: "error",

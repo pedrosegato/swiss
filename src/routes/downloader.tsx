@@ -1,25 +1,21 @@
 import { useState } from "react";
-import { useShallow } from "zustand/shallow";
 import { createFileRoute } from "@tanstack/react-router";
+import { Download } from "lucide-react";
+import { toast } from "sonner";
+import { useShallow } from "zustand/shallow";
+
+import { BinaryInstallDialog } from "@/components/binary-install-dialog";
+import { EmptyQueue } from "@/components/empty-queue";
 import { JobQueue } from "@/components/job-queue";
 import { DownloadBar } from "@/features/downloader/components/download-bar";
-import {
-  VIDEO_FORMATS,
-  AUDIO_FORMATS,
-  VIDEO_QUALITIES,
-  AUDIO_QUALITIES,
-} from "@/lib/constants";
-import type { DownloadFormat } from "@/lib/types";
-import { QueueHeader } from "@/features/downloader/components/queue-header";
 import { DownloadCard } from "@/features/downloader/components/download-card";
-import { BinaryInstallDialog } from "@/components/binary-install-dialog";
+import { QueueHeader } from "@/features/downloader/components/queue-header";
+import { AUDIO_FORMATS, AUDIO_QUALITIES, VIDEO_FORMATS, VIDEO_QUALITIES } from "@/lib/constants";
+import { ipc } from "@/lib/ipc";
+import type { DownloadFormat } from "@/lib/types";
+import { useBinariesStore } from "@/stores/binaries-store";
 import { useDownloadStore } from "@/stores/download-store";
 import { useSettingsStore } from "@/stores/settings-store";
-import { useBinariesStore } from "@/stores/binaries-store";
-import { ipc } from "@/lib/ipc";
-import { toast } from "sonner";
-import { Download } from "lucide-react";
-import { EmptyQueue } from "@/components/empty-queue";
 
 export const Route = createFileRoute("/downloader")({
   component: DownloaderPage,
@@ -138,10 +134,7 @@ function DownloaderPage() {
         />
       )}
 
-      <BinaryInstallDialog
-        open={showInstallDialog}
-        onOpenChange={setShowInstallDialog}
-      />
+      <BinaryInstallDialog open={showInstallDialog} onOpenChange={setShowInstallDialog} />
     </div>
   );
 }

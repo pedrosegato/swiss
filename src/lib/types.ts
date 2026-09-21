@@ -10,12 +10,7 @@ export type ConvertAudioFormat = "mp3" | "wav" | "flac" | "aac" | "wma";
 export type ConvertFormat = ConvertVideoFormat | ConvertAudioFormat;
 
 export type DownloadStage =
-  | "queued"
-  | "fetching"
-  | "downloading"
-  | "converting"
-  | "completed"
-  | "error";
+  "queued" | "fetching" | "downloading" | "converting" | "completed" | "error";
 
 export type ConvertStage = "queued" | "converting" | "completed" | "error";
 
@@ -115,13 +110,7 @@ export interface ConvertItem {
   errorMessage?: string;
 }
 
-export type Browser =
-  | "chrome"
-  | "firefox"
-  | "safari"
-  | "edge"
-  | "brave"
-  | "opera";
+export type Browser = "chrome" | "firefox" | "safari" | "edge" | "brave" | "opera";
 
 export type SortOption = "recent" | "oldest" | "largest" | "smallest";
 

@@ -1,25 +1,26 @@
-import { useShallow } from "zustand/shallow";
 import { createFileRoute } from "@tanstack/react-router";
-import { PillSelect } from "@/components/pill-select";
-import { JobQueue } from "@/components/job-queue";
-import { QueueBar } from "@/components/queue-bar";
+import { FileAudio } from "lucide-react";
+import { toast } from "sonner";
+import { useShallow } from "zustand/shallow";
+
+import { EmptyQueue } from "@/components/empty-queue";
 import { FileDropZone } from "@/components/file-drop-zone";
-import { formatSize } from "@/lib/utils";
-import { ipc } from "@/lib/ipc";
+import { JobQueue } from "@/components/job-queue";
+import { PillSelect } from "@/components/pill-select";
+import { QueueBar } from "@/components/queue-bar";
+import { SavePathButton } from "@/components/save-path-button";
 import { FileRow } from "@/features/converter/components/file-row";
-import { useConvertStore } from "@/stores/convert-store";
 import {
-  CONVERT_VIDEO_FORMATS,
-  CONVERT_AUDIO_FORMATS,
   CONVERT_ALL_FORMATS,
+  CONVERT_AUDIO_FORMATS,
+  CONVERT_VIDEO_FORMATS,
   isVideoFormat,
 } from "@/lib/constants";
+import { ipc } from "@/lib/ipc";
 import type { ConvertFormat } from "@/lib/types";
-import { FileAudio } from "lucide-react";
-import { EmptyQueue } from "@/components/empty-queue";
-import { SavePathButton } from "@/components/save-path-button";
+import { formatSize } from "@/lib/utils";
+import { useConvertStore } from "@/stores/convert-store";
 import { useSettingsStore } from "@/stores/settings-store";
-import { toast } from "sonner";
 
 export const Route = createFileRoute("/converter")({
   component: ConverterPage,
@@ -36,12 +37,8 @@ function ConverterPage() {
   const setFormat = useConvertStore((s) => s.setOutputFormat);
   const quality = useConvertStore((s) => s.quality);
   const savePath = useSettingsStore((s) => s.downloadPath);
-  const hasQueued = useConvertStore((s) =>
-    s.items.some((i) => i.stage === "queued"),
-  );
-  const isConverting = useConvertStore((s) =>
-    s.items.some((i) => i.stage === "converting"),
-  );
+  const hasQueued = useConvertStore((s) => s.items.some((i) => i.stage === "queued"));
+  const isConverting = useConvertStore((s) => s.items.some((i) => i.stage === "converting"));
 
   const handleStartAll = () => {
     if (!savePath) {
@@ -55,9 +52,7 @@ function ConverterPage() {
     files: { path: string; name: string; size: number; ext: string }[],
   ) => {
     if (!savePath) {
-      toast.warning(
-        "Selecione uma pasta de destino antes de adicionar arquivos.",
-      );
+      toast.warning("Selecione uma pasta de destino antes de adicionar arquivos.");
       return;
     }
     if (files.length === 0) return;
@@ -96,11 +91,7 @@ function ConverterPage() {
 
   return (
     <div className="flex flex-col gap-3">
-      <FileDropZone
-        extensions={CONVERT_ALL_FORMATS}
-        showFormats
-        onDrop={handleFilesDropped}
-      />
+      <FileDropZone extensions={CONVERT_ALL_FORMATS} showFormats onDrop={handleFilesDropped} />
       <div className="flex items-center gap-2">
         <PillSelect
           value={format}

@@ -1,4 +1,5 @@
 import { create } from "zustand";
+
 import type { BinaryInfo } from "@/lib/types";
 
 interface BinariesState {

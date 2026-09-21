@@ -1,8 +1,9 @@
 import { create } from "zustand";
-import type { ConvertItem, ConvertFormat } from "@/lib/types";
+
 import { ipc } from "@/lib/ipc";
-import { useSettingsStore } from "@/stores/settings-store";
+import type { ConvertFormat, ConvertItem } from "@/lib/types";
 import { createItemsSlice } from "@/stores/create-items-slice";
+import { useSettingsStore } from "@/stores/settings-store";
 
 interface ConvertState {
   items: ConvertItem[];
@@ -44,9 +45,7 @@ export const useConvertStore = create<ConvertState>((set) => ({
 
     set((s) => ({
       items: s.items.map((i) =>
-        i.stage === "queued"
-          ? { ...i, stage: "converting" as const, progress: 0 }
-          : i,
+        i.stage === "queued" ? { ...i, stage: "converting" as const, progress: 0 } : i,
       ),
     }));
 

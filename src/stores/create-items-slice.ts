@@ -9,8 +9,7 @@ export interface ItemsSlice<TItem extends { id: string }> {
 
 type ItemsSetState<TItem extends { id: string }> = (
   partial:
-    | Partial<{ items: TItem[] }>
-    | ((state: { items: TItem[] }) => Partial<{ items: TItem[] }>),
+    Partial<{ items: TItem[] }> | ((state: { items: TItem[] }) => Partial<{ items: TItem[] }>),
 ) => void;
 
 export function createItemsSlice<TItem extends { id: string }>(
@@ -24,8 +23,7 @@ export function createItemsSlice<TItem extends { id: string }>(
       set((s) => ({
         items: s.items.map((i) => (i.id === id ? { ...i, ...updates } : i)),
       })),
-    removeItem: (id) =>
-      set((s) => ({ items: s.items.filter((i) => i.id !== id) })),
+    removeItem: (id) => set((s) => ({ items: s.items.filter((i) => i.id !== id) })),
     clearItems: () => set({ items: [] }),
   };
 }

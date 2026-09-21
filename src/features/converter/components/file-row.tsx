@@ -1,22 +1,23 @@
-import type { ConvertFormat } from "@/lib/types";
-import { formatSize } from "@/lib/utils";
-import { JobShell } from "@/components/job-shell";
-import { useConvertStore } from "@/stores/convert-store";
-import { useSettingsStore } from "@/stores/settings-store";
-import { ipc } from "@/lib/ipc";
+import { ArrowRight, Film, Music } from "lucide-react";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
+
 import { FormatSelect } from "@/components/format-select";
 import { JobActions } from "@/components/job-actions";
 import { JobProgress } from "@/components/job-progress";
+import { JobShell } from "@/components/job-shell";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
-  CONVERT_VIDEO_FORMATS,
   CONVERT_AUDIO_FORMATS,
   CONVERT_STAGE_LABELS,
+  CONVERT_VIDEO_FORMATS,
   isVideoFormat,
 } from "@/lib/constants";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowRight, Film, Music } from "lucide-react";
+import { ipc } from "@/lib/ipc";
+import type { ConvertFormat } from "@/lib/types";
+import { formatSize } from "@/lib/utils";
+import { useConvertStore } from "@/stores/convert-store";
+import { useSettingsStore } from "@/stores/settings-store";
 
 interface FileRowProps {
   id: string;
@@ -46,15 +47,11 @@ export function FileRow({ id }: FileRowProps) {
   const handleRetry = async () => {
     const savePath = useSettingsStore.getState().downloadPath;
     if (!savePath) {
-      toast.warning(
-        "Selecione uma pasta de destino antes de tentar novamente.",
-      );
+      toast.warning("Selecione uma pasta de destino antes de tentar novamente.");
       return;
     }
 
-    const missing = await ipc.checkPaths([
-      { id: item.id, path: item.inputPath },
-    ]);
+    const missing = await ipc.checkPaths([{ id: item.id, path: item.inputPath }]);
     if (missing.length > 0) {
       toast.warning("Arquivo de entrada não encontrado.");
       removeItem(item.id);
@@ -92,34 +89,26 @@ export function FileRow({ id }: FileRowProps) {
   return (
     <JobShell isError={isError} className="group">
       <div className="flex items-center gap-3 px-3 py-2.5">
-        <div className="w-[52px] h-[36px] shrink-0 rounded overflow-hidden">
+        <div className="h-[36px] w-[52px] shrink-0 overflow-hidden rounded">
           {item.thumbnailLoading ? (
-            <Skeleton className="w-full h-full" />
+            <Skeleton className="h-full w-full" />
           ) : item.thumbnail ? (
-            <img
-              src={item.thumbnail}
-              alt=""
-              className="w-full h-full object-cover"
-            />
+            <img src={item.thumbnail} alt="" className="h-full w-full object-cover" />
           ) : (
-            <div className="w-full h-full bg-muted/30 flex items-center justify-center">
-              <Icon className="w-3.5 h-3.5 text-muted-foreground" />
+            <div className="bg-muted/30 flex h-full w-full items-center justify-center">
+              <Icon className="text-muted-foreground h-3.5 w-3.5" />
             </div>
           )}
         </div>
 
-        <div className="flex-1 min-w-0">
-          <p className="text-[13px] font-medium leading-tight truncate">
-            {item.inputName}
-          </p>
-          <div className="flex items-center gap-2 mt-0.5">
-            <span className="text-[11px] text-muted-foreground">
-              {item.inputSize}
-            </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[13px] leading-tight font-medium">{item.inputName}</p>
+          <div className="mt-0.5 flex items-center gap-2">
+            <span className="text-muted-foreground text-[11px]">{item.inputSize}</span>
             {isDone && item.outputSize && (
               <>
-                <ArrowRight className="w-2.5 h-2.5 text-muted-foreground/40" />
-                <span className="text-[11px] text-muted-foreground">
+                <ArrowRight className="text-muted-foreground/40 h-2.5 w-2.5" />
+                <span className="text-muted-foreground text-[11px]">
                   {formatSize(item.outputSize)}
                 </span>
               </>
@@ -127,14 +116,11 @@ export function FileRow({ id }: FileRowProps) {
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 shrink-0">
-          <Badge
-            variant="outline"
-            className="text-[10px] px-1.5 py-0 h-5 text-muted-foreground"
-          >
+        <div className="flex shrink-0 items-center gap-1.5">
+          <Badge variant="outline" className="text-muted-foreground h-5 px-1.5 py-0 text-[10px]">
             {item.inputExt.replace(".", "")}
           </Badge>
-          <ArrowRight className="w-2.5 h-2.5 text-muted-foreground/40" />
+          <ArrowRight className="text-muted-foreground/40 h-2.5 w-2.5" />
           {isQueued ? (
             <FormatSelect
               value={item.outputFormat}
@@ -146,10 +132,7 @@ export function FileRow({ id }: FileRowProps) {
               triggerClassName="h-6 text-[10px] rounded-full w-auto min-w-[62px] px-2.5 gap-1"
             />
           ) : (
-            <Badge
-              variant="outline"
-              className="text-[10px] px-1.5 py-0 h-5"
-            >
+            <Badge variant="outline" className="h-5 px-1.5 py-0 text-[10px]">
               {item.outputFormat}
             </Badge>
           )}

@@ -1,7 +1,8 @@
-import { invoke, Channel } from "@tauri-apps/api/core";
+import { Channel, invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { type as osType } from "@tauri-apps/plugin-os";
-import type { ProgressMessage, MetadataMessage } from "@/lib/types";
+
+import type { MetadataMessage, ProgressMessage } from "@/lib/types";
 
 let cachedPlatform = "linux";
 
@@ -48,7 +49,9 @@ function makeProgressStarter<TOptions>(command: string) {
 }
 
 export const ipc = {
-  get platform() { return cachedPlatform; },
+  get platform() {
+    return cachedPlatform;
+  },
 
   minimizeWindow: () => invoke<void>("window_minimize"),
   maximizeWindow: () => invoke<void>("window_maximize"),
@@ -63,7 +66,8 @@ export const ipc = {
 
   installBinary: (name: "yt-dlp" | "ffmpeg" | "ffprobe") => {
     const onEvent = new Channel<{ name: string; percent: number }>();
-    onEvent.onmessage = (msg) => window.dispatchEvent(new CustomEvent("binaries:install-progress", { detail: msg }));
+    onEvent.onmessage = (msg) =>
+      window.dispatchEvent(new CustomEvent("binaries:install-progress", { detail: msg }));
     return invoke<InstallResult>("binaries_install", { name, onEvent });
   },
 
@@ -74,11 +78,15 @@ export const ipc = {
     invoke<InstallResult>("binaries_uninstall", { name }),
 
   startDownload: (options: {
-    id: string; url: string; format: string; quality: string; savePath: string; cookieBrowser?: string;
+    id: string;
+    url: string;
+    format: string;
+    quality: string;
+    savePath: string;
+    cookieBrowser?: string;
   }) => {
     const onEvent = new Channel<
-      | { event: "metadata"; data: MetadataMessage }
-      | { event: "progress"; data: ProgressMessage }
+      { event: "metadata"; data: MetadataMessage } | { event: "progress"; data: ProgressMessage }
     >();
     onEvent.onmessage = (msg) => {
       if (msg.event === "metadata") {
@@ -103,8 +111,7 @@ export const ipc = {
   extractMergeThumbnail: (filePath: string) =>
     invoke<string | null>("merge_thumbnail", { filePath }),
 
-  extractThumbnail: (filePath: string) =>
-    invoke<string | null>("convert_thumbnail", { filePath }),
+  extractThumbnail: (filePath: string) => invoke<string | null>("convert_thumbnail", { filePath }),
 
   selectFolder: () => invoke<string | null>("dialog_select_folder"),
 
@@ -116,16 +123,14 @@ export const ipc = {
 
   openExternal: (url: string) => invoke<void>("shell_open_external", { url }),
 
-  showItemInFolder: (filePath: string) =>
-    invoke<void>("shell_show_item_in_folder", { filePath }),
+  showItemInFolder: (filePath: string) => invoke<void>("shell_show_item_in_folder", { filePath }),
 
   openPath: (dirPath: string) => invoke<void>("shell_open_path", { dirPath }),
 
   checkPaths: (paths: { id: string; path: string }[]) =>
     invoke<string[]>("fs_check_paths", { paths }),
 
-  setDockProgress: (progress: number) =>
-    invoke<void>("dock_set_progress", { progress }),
+  setDockProgress: (progress: number) => invoke<void>("dock_set_progress", { progress }),
 
   installUpdate: () => invoke<void>("updater_install"),
 
@@ -136,16 +141,20 @@ export const ipc = {
       percent?: number;
     }) => void,
   ): (() => void) => {
-    const promise = listen<{ status: string; version?: string; percent?: number; message?: string }>(
-      "updater:status",
-      (event) => {
-        const p = event.payload;
-        if (p.status === "available" || p.status === "downloading" || p.status === "ready") {
-          callback({ status: p.status, version: p.version, percent: p.percent });
-        }
-      },
-    );
-    return () => { promise.then((u) => u()); };
+    const promise = listen<{
+      status: string;
+      version?: string;
+      percent?: number;
+      message?: string;
+    }>("updater:status", (event) => {
+      const p = event.payload;
+      if (p.status === "available" || p.status === "downloading" || p.status === "ready") {
+        callback({ status: p.status, version: p.version, percent: p.percent });
+      }
+    });
+    return () => {
+      promise.then((u) => u());
+    };
   },
 
   onMetadata: (callback: (data: MetadataMessage) => void): (() => void) => {

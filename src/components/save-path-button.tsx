@@ -1,8 +1,9 @@
+import { FolderOpen } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
-import { useSettingsStore } from "@/stores/settings-store";
 import { ipc } from "@/lib/ipc";
 import { cn } from "@/lib/utils";
-import { FolderOpen } from "lucide-react";
+import { useSettingsStore } from "@/stores/settings-store";
 
 interface SavePathButtonProps {
   maxWidthClassName?: string;
@@ -25,12 +26,10 @@ export function SavePathButton({
     <Button
       variant="ghost"
       onClick={handleSelectFolder}
-      className="h-auto gap-1.5 text-[11px] text-muted-foreground hover:text-foreground"
+      className="text-muted-foreground hover:text-foreground h-auto gap-1.5 text-[11px]"
     >
-      <FolderOpen className="w-3 h-3" />
-      <span className={cn("truncate", maxWidthClassName)}>
-        {savePath || placeholder}
-      </span>
+      <FolderOpen className="h-3 w-3" />
+      <span className={cn("truncate", maxWidthClassName)}>{savePath || placeholder}</span>
     </Button>
   );
 }

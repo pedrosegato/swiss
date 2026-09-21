@@ -1,10 +1,11 @@
-import type { BinaryInfo } from "@/lib/types";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { ipc } from "@/lib/ipc";
-import { useBinariesStore } from "@/stores/binaries-store";
+import { Download, RefreshCw, Trash2 } from "lucide-react";
+
 import { ConfirmDialog } from "@/components/confirm-dialog";
-import { Download, Trash2, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ipc } from "@/lib/ipc";
+import type { BinaryInfo } from "@/lib/types";
+import { cn } from "@/lib/utils";
+import { useBinariesStore } from "@/stores/binaries-store";
 
 interface VersionCardProps {
   binary: BinaryInfo;
@@ -66,34 +67,28 @@ export function VersionCard({ binary }: VersionCardProps) {
   };
 
   return (
-    <div className="bg-card rounded-xl ring-1 ring-foreground/10 px-3.5 py-3 flex flex-col gap-2">
+    <div className="bg-card ring-foreground/10 flex flex-col gap-2 rounded-xl px-3.5 py-3 ring-1">
       <div className="flex items-center justify-between">
         <span className="text-[13px] font-medium">{binary.name}</span>
         <div className="flex items-center gap-1.5">
           <div
             className={cn(
-              "w-[5px] h-[5px] rounded-full",
+              "h-[5px] w-[5px] rounded-full",
               binary.downloading
-                ? "bg-yellow-500 animate-pulse"
+                ? "animate-pulse bg-yellow-500"
                 : binary.installed
                   ? "bg-success"
                   : "bg-destructive",
             )}
           />
-          <span className="text-[10px] text-muted-foreground">
-            {binary.downloading
-              ? "Baixando"
-              : binary.installed
-                ? "Instalado"
-                : "Ausente"}
+          <span className="text-muted-foreground text-[10px]">
+            {binary.downloading ? "Baixando" : binary.installed ? "Instalado" : "Ausente"}
           </span>
         </div>
       </div>
 
-      <span className="text-[10px] text-muted-foreground/60 truncate">
-        {binary.downloading
-          ? "Baixando..."
-          : (binary.version ?? "—")}
+      <span className="text-muted-foreground/60 truncate text-[10px]">
+        {binary.downloading ? "Baixando..." : (binary.version ?? "—")}
       </span>
 
       <div className="flex items-center gap-1.5">
@@ -101,10 +96,10 @@ export function VersionCard({ binary }: VersionCardProps) {
           <Button
             variant="outline"
             size="sm"
-            className="h-7 text-[11px] px-2.5 flex-1"
+            className="h-7 flex-1 px-2.5 text-[11px]"
             onClick={handleInstall}
           >
-            <Download className="w-3 h-3" />
+            <Download className="h-3 w-3" />
             Instalar
           </Button>
         )}
@@ -113,10 +108,10 @@ export function VersionCard({ binary }: VersionCardProps) {
             <Button
               variant="outline"
               size="sm"
-              className="h-7 text-[11px] px-2.5 flex-1"
+              className="h-7 flex-1 px-2.5 text-[11px]"
               onClick={handleUpdate}
             >
-              <RefreshCw className="w-3 h-3" />
+              <RefreshCw className="h-3 w-3" />
               Atualizar
             </Button>
             <ConfirmDialog
@@ -124,9 +119,9 @@ export function VersionCard({ binary }: VersionCardProps) {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-7 text-[11px] px-2 text-muted-foreground hover:text-destructive"
+                  className="text-muted-foreground hover:text-destructive h-7 px-2 text-[11px]"
                 >
-                  <Trash2 className="w-3 h-3" />
+                  <Trash2 className="h-3 w-3" />
                 </Button>
               }
               title={`Remover ${binary.name}?`}

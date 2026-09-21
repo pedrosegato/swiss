@@ -1,5 +1,5 @@
-import { DownloadCloud, RefreshCw, Merge } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { DownloadCloud, Merge, RefreshCw } from "lucide-react";
 
 export interface NavItem {
   to: string;

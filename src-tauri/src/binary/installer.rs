@@ -119,11 +119,7 @@ pub async fn download_file<F: Fn(u32)>(url: &str, dest: &Path, on_progress: F) -
 }
 
 async fn download_file_inner<F: Fn(u32)>(url: &str, tmp: &Path, on_progress: &F) -> AppResult<()> {
-    let resp = HTTP
-        .get(url)
-        .send()
-        .await?
-        .error_for_status()?;
+    let resp = HTTP.get(url).send().await?.error_for_status()?;
     let total = resp.content_length().unwrap_or(0);
     let mut downloaded: u64 = 0;
     let mut stream = resp.bytes_stream();

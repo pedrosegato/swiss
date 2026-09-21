@@ -78,7 +78,9 @@
   body {
     @apply bg-background text-foreground;
     text-rendering: geometricPrecision;
-    font-feature-settings: "kern" 1, "liga" 1;
+    font-feature-settings:
+      "kern" 1,
+      "liga" 1;
     font-optical-sizing: auto;
   }
   /* macOS: grayscale AA looks better than subpixel on Retina */

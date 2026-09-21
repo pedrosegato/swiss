@@ -1,12 +1,13 @@
+import type { LucideIcon } from "lucide-react";
 import { motion } from "motion/react";
+
 import {
   Empty,
+  EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-  EmptyDescription,
 } from "@/components/ui/empty";
-import type { LucideIcon } from "lucide-react";
 
 interface EmptyQueueProps {
   icon: LucideIcon;
@@ -16,12 +17,8 @@ interface EmptyQueueProps {
 
 export function EmptyQueue({ icon: Icon, title, description }: EmptyQueueProps) {
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ delay: 0.1 }}
-    >
-      <Empty className="py-12 border-0">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}>
+      <Empty className="border-0 py-12">
         <EmptyHeader>
           <EmptyMedia>
             <motion.div
@@ -32,13 +29,11 @@ export function EmptyQueue({ icon: Icon, title, description }: EmptyQueueProps) 
                 ease: "easeInOut",
               }}
             >
-              <Icon className="w-8 h-8 text-muted-foreground" />
+              <Icon className="text-muted-foreground h-8 w-8" />
             </motion.div>
           </EmptyMedia>
           <EmptyTitle className="text-[15px]">{title}</EmptyTitle>
-          <EmptyDescription className="text-[13px]">
-            {description}
-          </EmptyDescription>
+          <EmptyDescription className="text-[13px]">{description}</EmptyDescription>
         </EmptyHeader>
       </Empty>
     </motion.div>

@@ -9,8 +9,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-export const pillTriggerClass =
-  "h-9 w-auto min-w-[92px] rounded-full text-xs gap-1.5";
+export const pillTriggerClass = "h-9 w-auto min-w-[92px] rounded-full text-xs gap-1.5";
 
 interface PillSelectGroup {
   label: string;
@@ -25,13 +24,7 @@ interface PillSelectProps {
   className?: string;
 }
 
-export function PillSelect({
-  value,
-  onValueChange,
-  options,
-  groups,
-  className,
-}: PillSelectProps) {
+export function PillSelect({ value, onValueChange, options, groups, className }: PillSelectProps) {
   const renderItem = (o: string) => (
     <SelectItem key={o} value={o}>
       {o}

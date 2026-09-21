@@ -332,7 +332,13 @@ pub async fn download_start(
                 last_merger = c[1].to_string();
             }
         }
-        (metadata_sent, last_title, last_video_id, last_dest, last_merger)
+        (
+            metadata_sent,
+            last_title,
+            last_video_id,
+            last_dest,
+            last_merger,
+        )
     });
 
     let id_for_close = id.clone();

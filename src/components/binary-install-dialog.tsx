@@ -1,25 +1,22 @@
 import {
   AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogAction,
-  AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
-import { useBinariesStore } from "@/stores/binaries-store";
 import { ipc } from "@/lib/ipc";
+import { useBinariesStore } from "@/stores/binaries-store";
 
 interface BinaryInstallDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function BinaryInstallDialog({
-  open,
-  onOpenChange,
-}: BinaryInstallDialogProps) {
+export function BinaryInstallDialog({ open, onOpenChange }: BinaryInstallDialogProps) {
   const ytdlp = useBinariesStore((s) => s.ytdlp);
   const ffmpeg = useBinariesStore((s) => s.ffmpeg);
   const setYtdlp = useBinariesStore((s) => s.setYtdlp);
@@ -83,12 +80,8 @@ export function BinaryInstallDialog({
         </AlertDialogHeader>
         {isDownloading ? null : (
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => onOpenChange(false)}>
-              Agora não
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={handleInstall}>
-              Instalar
-            </AlertDialogAction>
+            <AlertDialogCancel onClick={() => onOpenChange(false)}>Agora não</AlertDialogCancel>
+            <AlertDialogAction onClick={handleInstall}>Instalar</AlertDialogAction>
           </AlertDialogFooter>
         )}
       </AlertDialogContent>
