@@ -1,0 +1,8 @@
+[global]
+preserve_patterns = [
+  "@ts-nocheck",
+  "noinspection",
+  "automatically generated",
+  "You should NOT make any changes",
+  "exclude this file from your linter",
+]

@@ -54,10 +54,21 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
-      # uncomment --dry-run always exits 0, so write and diff instead.
+      # The uncomment-cli npm package ships the publisher's macOS binary and its
+      # postinstall skips the download whenever bin/ is already populated, so it
+      # is unusable on Linux. Fetch the pinned release build directly instead.
+      # --dry-run always exits 0, so write and let git diff fail the job.
       - name: No stray comments
+        env:
+          UNCOMMENT_VERSION: "3.7.0"
+          UNCOMMENT_SHA256: 574ba5014e3f6d4130ac861e294b1e2f606251587e2a250031d300bff0704b4a
         run: |
-          pnpm uncomment
+          archive="$RUNNER_TEMP/uncomment.tar.gz"
+          curl -sSfL -o "$archive" \
+            "https://github.com/Goldziher/uncomment/releases/download/v$UNCOMMENT_VERSION/uncomment-x86_64-unknown-linux-gnu.tar.gz"
+          echo "$UNCOMMENT_SHA256  $archive" | sha256sum -c -
+          tar -xzf "$archive" -C "$RUNNER_TEMP"
+          "$RUNNER_TEMP/uncomment" src src-tauri/src vite.config.ts eslint.config.js
           git diff --exit-code
 
       - name: Build frontend

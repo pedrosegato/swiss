@@ -83,7 +83,7 @@
       "liga" 1;
     font-optical-sizing: auto;
   }
-  /* macOS: grayscale AA looks better than subpixel on Retina */
+  /* macOS: grayscale AA looks better than subpixel on Retina ~keep */
   body.platform-darwin {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;

@@ -36,4 +36,9 @@ Requires Node ≥ 20, pnpm ≥ 9, Rust ≥ 1.77, and platform webview deps ([Tau
 pnpm install
 pnpm dev        # tauri dev (Vite + Rust hot-reload)
 pnpm build      # release bundle → src-tauri/target/release/bundle/
+pnpm format     # eslint --fix + prettier
 ```
+
+CI also enforces `cargo fmt`, `cargo clippy -D warnings`, and a no-stray-comments
+check. The comment check needs [uncomment](https://github.com/Goldziher/uncomment)
+on PATH (`cargo install uncomment`); its rules live in `.uncommentrc.toml`.

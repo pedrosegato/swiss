@@ -19,8 +19,8 @@
     "lint:fix": "eslint . --fix",
     "format": "eslint . --fix && prettier --write .",
     "format:check": "eslint . && prettier --check .",
-    "uncomment": "pnpm dlx uncomment-cli@3.7.0 -i ts-nocheck -i noinspection -i \"automatically generated\" -i \"You should NOT\" -i \"exclude this file\" src src-tauri/src vite.config.ts eslint.config.js",
-    "uncomment:check": "pnpm dlx uncomment-cli@3.7.0 --dry-run -i ts-nocheck -i noinspection -i \"automatically generated\" -i \"You should NOT\" -i \"exclude this file\" src src-tauri/src vite.config.ts eslint.config.js"
+    "uncomment": "uncomment src src-tauri/src vite.config.ts eslint.config.js",
+    "uncomment:check": "uncomment --dry-run --diff src src-tauri/src vite.config.ts eslint.config.js"
   },
   "dependencies": {
     "@fontsource-variable/dm-sans": "^5.2.8",
