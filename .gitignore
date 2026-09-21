@@ -38,16 +38,28 @@ lerna-debug.log*
 .DS_Store
 Thumbs.db
 
-# Claude
+# Lint / format cache
+.eslintcache
+.prettiercache
+
+# AI assistants
 .claude/
 .claude.worktrees/
 .worktrees/
-showcase/
+.cursor/
+.windsurf/
+.aider*
 CLAUDE.md
+AGENTS.md
+GEMINI.md
+.github/copilot-instructions.md
 
-# Plans & specs
+# Plans, specs & local helpers
+docs/
 plans/
 advisor-plans/
-docs/superpowers/
 specs/
+showcase/
+scripts/
+*.plan.md
 *-design.md

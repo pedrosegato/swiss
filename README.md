@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="build/icon.png" width="128" height="128" alt="Swiss">
+  <img src="public/icon.png" width="128" height="128" alt="Swiss">
 </p>
 
 <h1 align="center">swiss</h1>
